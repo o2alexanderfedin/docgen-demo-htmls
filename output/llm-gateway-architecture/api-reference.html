@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>api-reference</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="llm-gateway-api-reference">LLM Gateway API Reference</h1>
+<p>This document provides detailed information about the API endpoints exposed by the LLM Gateway.</p>
+<ul>
+<li><a href="#rest-api">REST API</a></li>
+<li><a href="#prompt-execution">Prompt Execution</a></li>
+<li><a href="#prompt-management">Prompt Management</a></li>
+<li><a href="#llm-registry-management">LLM Registry Management</a></li>
+<li><a href="#grpc-api">gRPC API</a></li>
+<li><a href="#service-definition">Service Definition</a></li>
+<li><a href="#message-types">Message Types</a></li>
+<li><a href="#common-data-structures">Common Data Structures</a></li>
+<li><a href="#error-handling">Error Handling</a></li>
+</ul>
+<h2 id="rest-api">REST API</h2>
+<p>The LLM Gateway exposes RESTful APIs for executing prompts and managing the prompt registry. All API requests and responses use JSON format.</p>
+<p>Base URL: <code>/api/v1</code></p>
+<h3 id="prompt-execution">Prompt Execution</h3>
+<h4 id="execute-prompt-fetch">Execute Prompt (Fetch)</h4>
+<p>Executes a prompt and returns a response from an LLM.</p>
+<ul>
+<li><strong>URL</strong>: <code>/prompt/fetch</code></li>
+<li><strong>Method</strong>: <code>POST</code></li>
+<li><strong>Auth Required</strong>: Yes</li>
+</ul>
+<p><strong>Request Body:</strong></p>
+<pre><code class="language-json">{
+  &quot;tenantId&quot;: &quot;string&quot;,
+  &quot;promptName&quot;: &quot;string&quot;,
+  &quot;requestParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;value&quot;: &quot;any&quot;
+    }
+  ],
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;isDebug&quot;: false,
+  &quot;botId&quot;: 0,
+  &quot;useCache&quot;: false,
+  &quot;detectPromptInjection&quot;: false
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 200,
+  &quot;errorMessage&quot;: &quot;string&quot;,
+  &quot;responseParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;value&quot;: &quot;any&quot;
+    }
+  ],
+  &quot;llmDebugInfos&quot;: [
+    {
+      &quot;tenantId&quot;: &quot;string&quot;,
+      &quot;promptGroupName&quot;: &quot;string&quot;,
+      &quot;promptName&quot;: &quot;string&quot;,
+      &quot;appliedTemplate&quot;: &quot;string&quot;,
+      &quot;requestParams&quot;: [
+        {
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;any&quot;
+        }
+      ],
+      &quot;responseParams&quot;: [
+        {
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;any&quot;
+        }
+      ],
+      &quot;responseMessage&quot;: &quot;string&quot;,
+      &quot;timeCostInMillis&quot;: 0,
+      &quot;config&quot;: {
+        &quot;property1&quot;: &quot;any&quot;,
+        &quot;property2&quot;: &quot;any&quot;
+      },
+      &quot;messages&quot;: [
+        {
+          &quot;role&quot;: &quot;string&quot;,
+          &quot;content&quot;: &quot;string&quot;,
+          &quot;contentType&quot;: &quot;TEXT&quot;,
+          &quot;functionCall&quot;: {
+            &quot;name&quot;: &quot;string&quot;,
+            &quot;arguments&quot;: &quot;string&quot;
+          }
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+<p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>200 OK</code>: Request successful</li>
+<li><code>400 Bad Request</code>: Invalid input parameters</li>
+<li><code>404 Not Found</code>: Prompt not found</li>
+<li><code>500 Internal Server Error</code>: Server-side error</li>
+</ul>
+<h4 id="execute-chat-prompt-fetchchat">Execute Chat Prompt (FetchChat)</h4>
+<p>Executes a chat-style prompt and returns a response from an LLM.</p>
+<ul>
+<li><strong>URL</strong>: <code>/prompt/fetchChat</code></li>
+<li><strong>Method</strong>: <code>POST</code></li>
+<li><strong>Auth Required</strong>: Yes</li>
+</ul>
+<p><strong>Request Body:</strong></p>
+<pre><code class="language-json">{
+  &quot;tenantId&quot;: &quot;string&quot;,
+  &quot;promptName&quot;: &quot;string&quot;,
+  &quot;requestParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;value&quot;: &quot;any&quot;
+    }
+  ],
+  &quot;messages&quot;: [
+    {
+      &quot;role&quot;: &quot;string&quot;,
+      &quot;content&quot;: &quot;string&quot;,
+      &quot;contentType&quot;: &quot;TEXT&quot;,
+      &quot;function_call&quot;: {
+        &quot;name&quot;: &quot;string&quot;,
+        &quot;arguments&quot;: &quot;string&quot;
+      }
+    }
+  ],
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;isDebug&quot;: false,
+  &quot;botId&quot;: 0,
+  &quot;functionDefinitions&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;parameters&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {
+          &quot;property1&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;string&quot;
+          }
+        },
+        &quot;required&quot;: [
+          &quot;string&quot;
+        ]
+      }
+    }
+  ],
+  &quot;useCache&quot;: false,
+  &quot;detectPromptInjection&quot;: false
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 200,
+  &quot;errorMessage&quot;: &quot;string&quot;,
+  &quot;errorCode&quot;: &quot;string&quot;,
+  &quot;message&quot;: &quot;string&quot;,
+  &quot;responseParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;value&quot;: &quot;any&quot;
+    }
+  ],
+  &quot;llmDebugInfos&quot;: [
+    {
+      &quot;tenantId&quot;: &quot;string&quot;,
+      &quot;promptGroupName&quot;: &quot;string&quot;,
+      &quot;promptName&quot;: &quot;string&quot;,
+      &quot;appliedTemplate&quot;: &quot;string&quot;,
+      &quot;requestParams&quot;: [
+        {
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;any&quot;
+        }
+      ],
+      &quot;responseParams&quot;: [
+        {
+          &quot;name&quot;: &quot;string&quot;,
+          &quot;value&quot;: &quot;any&quot;
+        }
+      ],
+      &quot;responseMessage&quot;: &quot;string&quot;,
+      &quot;timeCostInMillis&quot;: 0,
+      &quot;config&quot;: {
+        &quot;property1&quot;: &quot;any&quot;,
+        &quot;property2&quot;: &quot;any&quot;
+      },
+      &quot;messages&quot;: [
+        {
+          &quot;role&quot;: &quot;string&quot;,
+          &quot;content&quot;: &quot;string&quot;,
+          &quot;contentType&quot;: &quot;TEXT&quot;,
+          &quot;functionCall&quot;: {
+            &quot;name&quot;: &quot;string&quot;,
+            &quot;arguments&quot;: &quot;string&quot;
+          }
+        }
+      ]
+    }
+  ]
+}
+</code></pre>
+<p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>200 OK</code>: Request successful</li>
+<li><code>400 Bad Request</code>: Invalid input parameters</li>
+<li><code>404 Not Found</code>: Prompt not found</li>
+<li><code>500 Internal Server Error</code>: Server-side error</li>
+</ul>
+<h4 id="stream-chat-response">Stream Chat Response</h4>
+<p>Streams a response from an LLM using Server-Sent Events (SSE).</p>
+<ul>
+<li><strong>URL</strong>: <code>/prompt/stream</code></li>
+<li><strong>Method</strong>: <code>POST</code></li>
+<li><strong>Auth Required</strong>: Yes</li>
+</ul>
+<p><strong>Request Body:</strong></p>
+<pre><code class="language-json">{
+  &quot;tenantId&quot;: &quot;string&quot;,
+  &quot;promptName&quot;: &quot;string&quot;,
+  &quot;requestParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;value&quot;: &quot;any&quot;
+    }
+  ],
+  &quot;messages&quot;: [
+    {
+      &quot;role&quot;: &quot;string&quot;,
+      &quot;content&quot;: &quot;string&quot;,
+      &quot;contentType&quot;: &quot;TEXT&quot;,
+      &quot;function_call&quot;: {
+        &quot;name&quot;: &quot;string&quot;,
+        &quot;arguments&quot;: &quot;string&quot;
+      }
+    }
+  ],
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;botId&quot;: 0
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<p>Server-Sent Events stream with response chunks.</p>
+<p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>200 OK</code>: Stream started successfully</li>
+<li><code>400 Bad Request</code>: Invalid input parameters</li>
+<li><code>404 Not Found</code>: Prompt not found</li>
+<li><code>500 Internal Server Error</code>: Server-side error</li>
+</ul>
+<h3 id="prompt-management">Prompt Management</h3>
+<h4 id="get-prompt">Get Prompt</h4>
+<p>Retrieves a prompt by name.</p>
+<ul>
+<li><strong>URL</strong>: <code>/prompt/{promptName}</code></li>
+<li><strong>Method</strong>: <code>GET</code></li>
+<li><strong>Auth Required</strong>: Yes</li>
+</ul>
+<p><strong>Query Parameters:</strong></p>
+<ul>
+<li><code>tenantId</code> (string, required): ID of the tenant</li>
+<li><code>botId</code> (number, optional): ID of the bot</li>
+</ul>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 0,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;displayName&quot;: &quot;string&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;template&quot;: &quot;string&quot;,
+  &quot;userTemplate&quot;: &quot;string&quot;,
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;llmRegistryId&quot;: 0,
+  &quot;botId&quot;: 0,
+  &quot;status&quot;: &quot;Active&quot;,
+  &quot;type&quot;: &quot;string&quot;,
+  &quot;createdAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;updatedAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;isRegistered&quot;: false,
+  &quot;isImported&quot;: false,
+  &quot;isDefault&quot;: false,
+  &quot;isSystem&quot;: false,
+  &quot;category&quot;: &quot;string&quot;,
+  &quot;useCase&quot;: &quot;string&quot;,
+  &quot;script&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;reviewStatus&quot;: &quot;string&quot;,
+  &quot;entityGuid&quot;: &quot;string&quot;,
+  &quot;changeLogId&quot;: 0,
+  &quot;createdBy&quot;: 0,
+  &quot;updatedBy&quot;: 0,
+  &quot;source&quot;: &quot;string&quot;
+}
+</code></pre>
+<p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>200 OK</code>: Request successful</li>
+<li><code>404 Not Found</code>: Prompt not found</li>
+</ul>
+<h4 id="create-prompt">Create Prompt</h4>
+<p>Creates a new prompt.</p>
+<ul>
+<li><strong>URL</strong>: <code>/prompt</code></li>
+<li><strong>Method</strong>: <code>POST</code></li>
+<li><strong>Auth Required</strong>: Yes</li>
+</ul>
+<p><strong>Request Body:</strong></p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;displayName&quot;: &quot;string&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;template&quot;: &quot;string&quot;,
+  &quot;userTemplate&quot;: &quot;string&quot;,
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;llmRegistryId&quot;: 0,
+  &quot;botId&quot;: 0,
+  &quot;type&quot;: &quot;string&quot;,
+  &quot;category&quot;: &quot;string&quot;,
+  &quot;useCase&quot;: &quot;string&quot;,
+  &quot;script&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  }
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 0,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;displayName&quot;: &quot;string&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;template&quot;: &quot;string&quot;,
+  &quot;userTemplate&quot;: &quot;string&quot;,
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;llmRegistryId&quot;: 0,
+  &quot;botId&quot;: 0,
+  &quot;status&quot;: &quot;Active&quot;,
+  &quot;type&quot;: &quot;string&quot;,
+  &quot;createdAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;updatedAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;isRegistered&quot;: false,
+  &quot;isImported&quot;: false,
+  &quot;isDefault&quot;: false,
+  &quot;isSystem&quot;: false,
+  &quot;category&quot;: &quot;string&quot;,
+  &quot;useCase&quot;: &quot;string&quot;,
+  &quot;script&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;reviewStatus&quot;: &quot;string&quot;,
+  &quot;entityGuid&quot;: &quot;string&quot;,
+  &quot;changeLogId&quot;: 0,
+  &quot;createdBy&quot;: 0,
+  &quot;updatedBy&quot;: 0,
+  &quot;source&quot;: &quot;string&quot;
+}
+</code></pre>
+<p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>201 Created</code>: Prompt created successfully</li>
+<li><code>400 Bad Request</code>: Invalid input parameters</li>
+<li><code>409 Conflict</code>: Prompt with the same name already exists</li>
+</ul>
+<h4 id="update-prompt">Update Prompt</h4>
+<p>Updates an existing prompt.</p>
+<ul>
+<li><strong>URL</strong>: <code>/prompt/{promptName}</code></li>
+<li><strong>Method</strong>: <code>PUT</code></li>
+<li><strong>Auth Required</strong>: Yes</li>
+</ul>
+<p><strong>Query Parameters:</strong></p>
+<ul>
+<li><code>tenantId</code> (string, required): ID of the tenant</li>
+<li><code>botId</code> (number, optional): ID of the bot</li>
+</ul>
+<p><strong>Request Body:</strong></p>
+<pre><code class="language-json">{
+  &quot;displayName&quot;: &quot;string&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;template&quot;: &quot;string&quot;,
+  &quot;userTemplate&quot;: &quot;string&quot;,
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;llmRegistryId&quot;: 0,
+  &quot;type&quot;: &quot;string&quot;,
+  &quot;category&quot;: &quot;string&quot;,
+  &quot;useCase&quot;: &quot;string&quot;,
+  &quot;script&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  }
+}
+</code></pre>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 0,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;displayName&quot;: &quot;string&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;template&quot;: &quot;string&quot;,
+  &quot;userTemplate&quot;: &quot;string&quot;,
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;string&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;defaultValue&quot;: &quot;string&quot;,
+      &quot;options&quot;: [
+        &quot;string&quot;
+      ]
+    }
+  ],
+  &quot;llmRegistryId&quot;: 0,
+  &quot;botId&quot;: 0,
+  &quot;status&quot;: &quot;Active&quot;,
+  &quot;type&quot;: &quot;string&quot;,
+  &quot;createdAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;updatedAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;isRegistered&quot;: false,
+  &quot;isImported&quot;: false,
+  &quot;isDefault&quot;: false,
+  &quot;isSystem&quot;: false,
+  &quot;category&quot;: &quot;string&quot;,
+  &quot;useCase&quot;: &quot;string&quot;,
+  &quot;script&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;reviewStatus&quot;: &quot;string&quot;,
+  &quot;entityGuid&quot;: &quot;string&quot;,
+  &quot;changeLogId&quot;: 0,
+  &quot;createdBy&quot;: 0,
+  &quot;updatedBy&quot;: 0,
+  &quot;source&quot;: &quot;string&quot;
+}
+</code></pre>
+<p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>200 OK</code>: Prompt updated successfully</li>
+<li><code>400 Bad Request</code>: Invalid input parameters</li>
+<li><code>404 Not Found</code>: Prompt not found</li>
+</ul>
+<h3 id="llm-registry-management">LLM Registry Management</h3>
+<h4 id="get-llm-registry-entry">Get LLM Registry Entry</h4>
+<p>Retrieves an LLM registry entry by name.</p>
+<ul>
+<li><strong>URL</strong>: <code>/llm/{llmName}</code></li>
+<li><strong>Method</strong>: <code>GET</code></li>
+<li><strong>Auth Required</strong>: Yes</li>
+</ul>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: 0,
+  &quot;name&quot;: &quot;string&quot;,
+  &quot;displayName&quot;: &quot;string&quot;,
+  &quot;description&quot;: &quot;string&quot;,
+  &quot;category&quot;: &quot;string&quot;,
+  &quot;isActive&quot;: true,
+  &quot;endpoint&quot;: &quot;string&quot;,
+  &quot;config&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;authConfig&quot;: {
+    &quot;property1&quot;: &quot;any&quot;,
+    &quot;property2&quot;: &quot;any&quot;
+  },
+  &quot;createdAt&quot;: &quot;2023-01-01T00:00:00Z&quot;,
+  &quot;updatedAt&quot;: &quot;2023-01-01T00:00:00Z&quot;
+}
+</code></pre>
+<p><strong>Status Codes:</strong></p>
+<ul>
+<li><code>200 OK</code>: Request successful</li>
+<li><code>404 Not Found</code>: LLM registry entry not found</li>
+</ul>
+<h2 id="grpc-api">gRPC API</h2>
+<p>The LLM Gateway also exposes a gRPC API for efficient binary communication.</p>
+<h3 id="service-definition">Service Definition</h3>
+<pre><code class="language-protobuf">syntax = &quot;proto3&quot;;
+
+package aisera.service.llm;
+
+import &quot;google/protobuf/any.proto&quot;;
+
+service LLMService {
+  rpc FetchAnswer(LLMFetchAnswerRequest) returns (LLMFetchAnswerResponse);
+  rpc FetchChatAnswer(LLMFetchChatAnswerRequest) returns (LLMFetchChatAnswerResponse);
+  rpc StreamingAnswer(LLMStreamingAnswerRequest) returns (stream LLMStreamingAnswerResponse);
+}
+</code></pre>
+<h3 id="message-types">Message Types</h3>
+<pre><code class="language-protobuf">message PromptParam {
+  string name = 1;
+  google.protobuf.Any value = 2;
+}
+
+message ChatMessage {
+  string role = 1;
+  string content = 2;
+  ContentType content_type = 3;
+  FunctionCall function_call = 4;
+
+  enum ContentType {
+    TEXT = 0;
+    IMAGE = 1;
+    FUNCTION_CALL = 2;
+  }
+}
+
+message FunctionDefinition {
+  string name = 1;
+  string description = 2;
+  FunctionParameters parameters = 3;
+}
+
+message FunctionParameters {
+  string type = 1;
+  map&lt;string, ParameterDefinition&gt; properties = 2;
+  repeated string required = 3;
+}
+
+message ParameterDefinition {
+  string type = 1;
+  string description = 2;
+}
+
+message FunctionCall {
+  string name = 1;
+  string arguments = 2;
+}
+
+message LLMFetchAnswerRequest {
+  string tenant_id = 1;
+  string prompt_name = 2;
+  repeated PromptParam request_params = 3;
+  map&lt;string, google.protobuf.Any&gt; config = 4;
+  bool is_debug = 5;
+  int64 bot_id = 6;
+  string prompt_group_name = 7;
+  bool use_cache = 8;
+  bool detect_prompt_injection = 9;
+}
+
+message LLMFetchAnswerResponse {
+  int32 status_code = 1;
+  string error_message = 2;
+  repeated PromptParam response_params = 3;
+  repeated LLMDebugInfo llm_debug_infos = 4;
+}
+
+message LLMFetchChatAnswerRequest {
+  string tenant_id = 1;
+  string prompt_name = 2;
+  repeated PromptParam request_params = 3;
+  repeated ChatMessage messages = 4;
+  map&lt;string, google.protobuf.Any&gt; config = 5;
+  bool is_debug = 6;
+  int64 bot_id = 7;
+  repeated FunctionDefinition function_definitions = 8;
+  string prompt_group_name = 9;
+  bool use_cache = 10;
+  bool detect_prompt_injection = 11;
+}
+
+message LLMFetchChatAnswerResponse {
+  int32 status_code = 1;
+  string error_message = 2;
+  string error_code = 3;
+  string message = 4;
+  repeated PromptParam response_params = 5;
+  repeated LLMDebugInfo llm_debug_infos = 6;
+}
+
+message LLMStreamingAnswerRequest {
+  string tenant_id = 1;
+  string prompt_name = 2;
+  repeated PromptParam request_params = 3;
+  repeated ChatMessage messages = 4;
+  map&lt;string, google.protobuf.Any&gt; config = 5;
+  int64 bot_id = 6;
+  string prompt_group_name = 7;
+}
+
+message LLMStreamingAnswerResponse {
+  string content = 1;
+  bool is_done = 2;
+}
+
+message LLMDebugInfo {
+  string tenant_id = 1;
+  string prompt_group_name = 2;
+  string prompt_name = 3;
+  string applied_template = 4;
+  repeated PromptParam request_params = 5;
+  repeated PromptParam response_params = 6;
+  string response_message = 7;
+  int64 time_cost_in_millis = 8;
+  map&lt;string, google.protobuf.Any&gt; config = 9;
+  repeated ChatMessage messages = 10;
+}
+</code></pre>
+<h2 id="common-data-structures">Common Data Structures</h2>
+<h3 id="promptparamdefinition">PromptParamDefinition</h3>
+<p>Defines a parameter for a prompt's inputs or outputs.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Name of the parameter</td>
+</tr>
+<tr>
+<td>type</td>
+<td>string</td>
+<td>Data type of the parameter (string, number, boolean, etc.)</td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td>Description of the parameter</td>
+</tr>
+<tr>
+<td>required</td>
+<td>boolean</td>
+<td>Whether the parameter is required</td>
+</tr>
+<tr>
+<td>defaultValue</td>
+<td>string</td>
+<td>Default value for the parameter</td>
+</tr>
+<tr>
+<td>options</td>
+<td>array of string</td>
+<td>Possible values for the parameter (for enum types)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="chatmessage">ChatMessage</h3>
+<p>Represents a message in a chat conversation.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>role</td>
+<td>string</td>
+<td>Role of the message sender (system, user, assistant)</td>
+</tr>
+<tr>
+<td>content</td>
+<td>string</td>
+<td>Content of the message</td>
+</tr>
+<tr>
+<td>contentType</td>
+<td>string</td>
+<td>Type of content (TEXT, IMAGE, FUNCTION_CALL)</td>
+</tr>
+<tr>
+<td>function_call</td>
+<td>object</td>
+<td>Function call information (if contentType is FUNCTION_CALL)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="functiondefinition">FunctionDefinition</h3>
+<p>Defines a function that an LLM can call.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Name of the function</td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td>Description of the function</td>
+</tr>
+<tr>
+<td>parameters</td>
+<td>object</td>
+<td>Parameter schema for the function (JSON Schema object type)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="error-handling">Error Handling</h2>
+<p>The LLM Gateway returns standard HTTP status codes for REST API errors, along with error messages in the response body. For gRPC APIs, error information is included in the response message.</p>
+<p>Common error codes:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Bad Request - Invalid input parameters</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized - Authentication required</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden - Insufficient permissions</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found - Prompt or LLM provider not found</td>
+</tr>
+<tr>
+<td>429</td>
+<td>Too Many Requests - Rate limit exceeded</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Internal Server Error - Server-side error</td>
+</tr>
+<tr>
+<td>503</td>
+<td>Service Unavailable - LLM provider temporarily unavailable</td>
+</tr>
+</tbody>
+</table>
+<p>Example error response (REST):</p>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 400,
+  &quot;errorMessage&quot;: &quot;Prompt name cannot be empty&quot;,
+  &quot;errorCode&quot;: &quot;VALIDATION_ERROR&quot;
+}
+</code></pre>
+</body>
+</html>

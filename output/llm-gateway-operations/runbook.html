@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>runbook</title>
+<style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
+<body>
+<h1 id="runbook-operations-playbook">Runbook / Operations Playbook</h1>
+<p>This runbook provides step-by-step procedures for common operational tasks and troubleshooting scenarios for the LLM Gateway service.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#common-operations">Common Operations</a></li>
+<li><a href="#deployment-operations">Deployment Operations</a></li>
+<li><a href="#scaling-operations">Scaling Operations</a></li>
+<li><a href="#maintenance-operations">Maintenance Operations</a></li>
+<li><a href="#health-checks">Health Checks</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#service-degradation">Service Degradation</a></li>
+<li><a href="#external-dependency-issues">External Dependency Issues</a></li>
+<li><a href="#infrastructure-issues">Infrastructure Issues</a></li>
+<li><a href="#common-error-scenarios">Common Error Scenarios</a></li>
+<li><a href="#llm-provider-management">LLM Provider Management</a></li>
+<li><a href="#operational-security">Operational Security</a></li>
+<li><a href="#change-management">Change Management</a></li>
+</ul>
+<h2 id="common-operations">Common Operations</h2>
+<h3 id="deployment-operations">Deployment Operations</h3>
+<h4 id="deploying-a-new-version">Deploying a New Version</h4>
+<p><strong>When to use</strong>: Scheduled release of a new LLM Gateway version</p>
+<p><strong>Prerequisites</strong>:
+- Release has been approved by Change Advisory Board
+- All tests pass in staging environment
+- Deployment window is active (Tuesday/Thursday 10am-2pm ET)</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Verify Release Readiness</strong>
+   ```bash
+   # Check if release branch is ready
+   git checkout release/v1.2.3
+   git pull</li>
+</ol>
+<p># Verify release has passed CI
+   gh run list --branch release/v1.2.3 --status success
+   ```</p>
+<ol>
+<li><strong>Create Deployment PR</strong>
+   ```bash
+   gh pr create --title "Deploy v1.2.3 to Production" --body "
+   # Deployment PR for v1.2.3</li>
+</ol>
+<p>## Changes
+   - Feature A
+   - Bugfix B
+   - Performance improvement C</p>
+<p>## Rollback Plan
+   Standard rollback procedure applies.</p>
+<p>## Testing
+   All tests pass in staging.
+   " --base main --head release/v1.2.3
+   ```</p>
+<ol>
+<li>
+<p><strong>Trigger Deployment</strong>
+<code>bash
+   # After PR is approved and merged
+   gh workflow run deploy-production.yml --ref main</code></p>
+</li>
+<li>
+<p><strong>Monitor Deployment</strong></p>
+</li>
+<li>Watch deployment in CI/CD dashboard</li>
+<li>Monitor metrics during and after deployment</li>
+<li>
+<p>Check logs for any errors or warnings</p>
+</li>
+<li>
+<p><strong>Verify Deployment</strong>
+   ```bash
+   # Verify deployment status
+   kubectl get deployments -n llm-gateway</p>
+</li>
+</ol>
+<p># Verify service health
+   curl -X GET https://api.example.com/health/deep
+   ```</p>
+<h4 id="rolling-back-a-deployment">Rolling Back a Deployment</h4>
+<p><strong>When to use</strong>: When a deployment causes service degradation or outage</p>
+<p><strong>Prerequisites</strong>:
+- Confirmed that issues are caused by the recent deployment
+- Decision made to roll back rather than fix forward</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Initiate Rollback</strong>
+   ```bash
+   # Option 1: Via GitHub Actions
+   gh workflow run rollback-production.yml -f version=v1.2.2</li>
+</ol>
+<p># Option 2: Manual Kubernetes rollback
+   kubectl rollout undo deployment/api-service -n llm-gateway
+   kubectl rollout undo deployment/execution-service -n llm-gateway
+   kubectl rollout undo deployment/prompt-service -n llm-gateway
+   ```</p>
+<ol>
+<li><strong>Verify Database Compatibility</strong></li>
+<li>Check if DB migrations need to be reversed</li>
+<li>
+<p>If needed, execute downgrade migrations:
+   <code>bash
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=db-migration -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- ./migrate down -version=v1.2.2</code></p>
+</li>
+<li>
+<p><strong>Monitor Rollback</strong></p>
+</li>
+<li>Watch rollback process in dashboard</li>
+<li>Monitor metrics for recovery</li>
+<li>
+<p>Check logs for any errors</p>
+</li>
+<li>
+<p><strong>Communicate Status</strong></p>
+</li>
+<li>Update status page </li>
+<li>Notify stakeholders of rollback</li>
+<li>
+<p>Create incident ticket if needed</p>
+</li>
+<li>
+<p><strong>Post-Rollback Analysis</strong></p>
+</li>
+<li>Investigate what caused the issues</li>
+<li>Update deployment procedures if needed</li>
+<li>Schedule post-mortem meeting</li>
+</ol>
+<h3 id="scaling-operations">Scaling Operations</h3>
+<h4 id="scaling-services-horizontally">Scaling Services Horizontally</h4>
+<p><strong>When to use</strong>: When experiencing high load or in preparation for traffic increase</p>
+<p><strong>Prerequisites</strong>:
+- Monitoring shows increased resource utilization
+- Sufficient cluster capacity is available</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Analyze Current Utilization</strong>
+   ```bash
+   # Check current resource usage
+   kubectl top pods -n llm-gateway</li>
+</ol>
+<p># Check HPA status
+   kubectl get hpa -n llm-gateway
+   ```</p>
+<ol>
+<li><strong>Adjust Horizontal Pod Autoscaler</strong>
+   ```bash
+   # Increase minimum replicas
+   kubectl patch hpa api-service -n llm-gateway --patch '{"spec":{"minReplicas": 5}}'</li>
+</ol>
+<p># Increase maximum replicas
+   kubectl patch hpa execution-service -n llm-gateway --patch '{"spec":{"maxReplicas": 20}}'
+   ```</p>
+<ol>
+<li><strong>Verify Scaling</strong>
+   ```bash
+   # Watch pods being created
+   kubectl get pods -n llm-gateway -w</li>
+</ol>
+<p># Check distribution across nodes
+   kubectl get pods -n llm-gateway -o wide
+   ```</p>
+<ol>
+<li><strong>Monitor Performance</strong></li>
+<li>Watch latency metrics during scaling</li>
+<li>Check database connection pool utilization</li>
+<li>
+<p>Verify cache performance with new instances</p>
+</li>
+<li>
+<p><strong>Adjust Related Resources</strong></p>
+</li>
+<li>Scale related services if needed</li>
+<li>Check if database connections need to be adjusted</li>
+<li>Update cache configuration if necessary</li>
+</ol>
+<h4 id="scaling-database-resources">Scaling Database Resources</h4>
+<p><strong>When to use</strong>: When database performance is degrading under load</p>
+<p><strong>Prerequisites</strong>:
+- Monitoring shows increased database latency or resource utilization
+- Approval for potential brief connection interruption</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li>
+<p><strong>Analyze Database Metrics</strong>
+<code>bash
+   # Check current metrics
+   aws cloudwatch get-metric-data \
+     --metric-data-queries file://db-metric-queries.json \
+     --start-time 2023-01-01T00:00:00Z \
+     --end-time 2023-01-02T00:00:00Z</code></p>
+</li>
+<li>
+<p><strong>Prepare for Scaling Operation</strong></p>
+</li>
+<li>Notify team of potential brief interruption</li>
+<li>
+<p>Ensure applications have proper retry logic</p>
+</li>
+<li>
+<p><strong>Scale Database Instance</strong>
+<code>bash
+   # Through AWS CLI
+   aws rds modify-db-instance \
+     --db-instance-identifier llm-gateway-db \
+     --db-instance-class db.r5.2xlarge \
+     --apply-immediately</code></p>
+</li>
+<li>
+<p><strong>Monitor Scaling Operation</strong></p>
+</li>
+<li>Watch RDS events for completion</li>
+<li>Monitor application logs for connection errors</li>
+<li>
+<p>Check latency metrics as scaling completes</p>
+</li>
+<li>
+<p><strong>Verify Successful Scaling</strong>
+<code>bash
+   # Check instance status
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db \
+     --query 'DBInstances[0].DBInstanceStatus'</code></p>
+</li>
+</ol>
+<h3 id="maintenance-operations">Maintenance Operations</h3>
+<h4 id="database-maintenance">Database Maintenance</h4>
+<p><strong>When to use</strong>: Regular database maintenance or applying patches</p>
+<p><strong>Prerequisites</strong>:
+- Maintenance window approved
+- Read replicas are up-to-date
+- Backups are current</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Prepare for Maintenance</strong>
+   ```bash
+   # Check replica lag
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db-replica \
+     --query 'DBInstances[0].ReplicaLag'</li>
+</ol>
+<p># Take final snapshot before maintenance
+   aws rds create-db-snapshot \
+     --db-snapshot-identifier llm-gateway-pre-maintenance-$(date +%Y%m%d) \
+     --db-instance-identifier llm-gateway-db
+   ```</p>
+<ol>
+<li><strong>Notify Team and Set Expectations</strong></li>
+<li>Send maintenance notification</li>
+<li>
+<p>Set read-only mode if necessary:
+   <code>bash
+   kubectl apply -f maintenance/read-only-mode.yaml</code></p>
+</li>
+<li>
+<p><strong>Perform Maintenance</strong>
+<code>bash
+   # Apply pending updates
+   aws rds apply-pending-maintenance-action \
+     --resource-identifier arn:aws:rds:us-east-1:123456789012:db:llm-gateway-db \
+     --apply-action system-update \
+     --opt-in-type immediate</code></p>
+</li>
+<li>
+<p><strong>Monitor Maintenance</strong></p>
+</li>
+<li>Watch RDS events</li>
+<li>Check application logs for errors</li>
+<li>
+<p>Monitor metrics for abnormalities</p>
+</li>
+<li>
+<p><strong>Verify and Restore Full Service</strong>
+   ```bash
+   # Verify database is available
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db \
+     --query 'DBInstances[0].DBInstanceStatus'</p>
+</li>
+</ol>
+<p># Remove read-only mode if applied
+   kubectl delete -f maintenance/read-only-mode.yaml
+   ```</p>
+<h2 id="health-checks">Health Checks</h2>
+<h3 id="system-health-verification">System Health Verification</h3>
+<p><strong>When to use</strong>: As part of regular health checks or when investigating issues</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Check Service Health</strong>
+   ```bash
+   # Get overall service health
+   curl -X GET https://api.example.com/health/deep</li>
+</ol>
+<p># Check individual components
+   for component in api-service execution-service prompt-service cache-service; do
+     echo "Checking $component..."
+     kubectl exec -it $(kubectl get pods -n llm-gateway -l app=$component -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/health
+   done
+   ```</p>
+<ol>
+<li><strong>Verify Infrastructure Health</strong>
+   ```bash
+   # Check node status
+   kubectl get nodes</li>
+</ol>
+<p># Check pod status
+   kubectl get pods -n llm-gateway</p>
+<p># Check persistent volumes
+   kubectl get pv,pvc -n llm-gateway
+   ```</p>
+<ol>
+<li><strong>Verify External Dependencies</strong>
+   ```bash
+   # Check database connectivity
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=api-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/health/dependencies?component=database</li>
+</ol>
+<p># Check LLM provider connectivity
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=execution-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/health/dependencies?component=llm-providers
+   ```</p>
+<ol>
+<li>
+<p><strong>Run Synthetic Tests</strong>
+<code>bash
+   # Execute basic prompt test
+   curl -X POST https://api.example.com/v1/tenants/test/llm/execute \
+     -H "Authorization: Bearer $TEST_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "This is a test", "model": "gpt-3.5-turbo"}'</code></p>
+</li>
+<li>
+<p><strong>Check Metrics and Logs</strong></p>
+</li>
+<li>Review current metrics in monitoring dashboard</li>
+<li>Check recent logs for errors or warnings</li>
+<li>Verify alerting system is functioning</li>
+</ol>
+<h3 id="database-health-check">Database Health Check</h3>
+<p><strong>When to use</strong>: When monitoring indicates potential database issues</p>
+<p><strong>Procedure</strong>:</p>
+<div class="mermaid-svg" id="mermaid-diagram-1"><svg aria-roledescription="flowchart-v2" class="flowchart" id="my-svg" role="graphics-document document" style="max-width: 1292.97px; background-color: transparent;" viewbox="0 0 1292.96875 840" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="4.5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="11" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="12" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M684.691,47L684.691,51.167C684.691,55.333,684.691,63.667,684.691,71.333C684.691,79,684.691,86,684.691,89.5L684.691,93" id="L_Start_Connection_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M747.664,151L757.382,155.167C767.1,159.333,786.537,167.667,796.255,175.333C805.973,183,805.973,190,805.973,193.5L805.973,197" id="L_Connection_Replication_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M868.061,255L877.643,259.167C887.224,263.333,906.388,271.667,915.969,279.333C925.551,287,925.551,294,925.551,297.5L925.551,301" id="L_Replication_Performance_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M978.626,359L990.748,365.167C1002.871,371.333,1027.115,383.667,1039.237,395.333C1051.359,407,1051.359,418,1051.359,423.5L1051.359,429" id="L_Performance_Logs_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1105.287,487L1117.604,493.167C1129.92,499.333,1154.554,511.667,1166.871,523.333C1179.188,535,1179.188,546,1179.188,551.5L1179.188,557" id="L_Logs_Backup_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M573.059,134.236L497.146,141.197C421.234,148.157,269.41,162.079,193.498,177.706C117.586,193.333,117.586,210.667,117.586,228C117.586,245.333,117.586,262.667,117.586,280C117.586,297.333,117.586,314.667,117.586,334C117.586,353.333,117.586,374.667,117.586,396C117.586,417.333,117.586,438.667,117.586,460C117.586,481.333,117.586,502.667,117.586,524C117.586,545.333,117.586,566.667,117.586,588C117.586,609.333,117.586,630.667,117.586,646.833C117.586,663,117.586,674,117.586,679.5L117.586,685" id="L_Connection_ConnFix_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M687.559,241.812L632.99,248.176C578.422,254.541,469.285,267.271,414.717,282.302C360.148,297.333,360.148,314.667,360.148,334C360.148,353.333,360.148,374.667,360.148,396C360.148,417.333,360.148,438.667,360.148,460C360.148,481.333,360.148,502.667,360.148,524C360.148,545.333,360.148,566.667,360.148,588C360.148,609.333,360.148,630.667,360.148,646.833C360.148,663,360.148,674,360.148,679.5L360.148,685" id="L_Replication_ReplFix_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M802.559,356.127L768.683,362.773C734.807,369.418,667.056,382.709,633.18,400.021C599.305,417.333,599.305,438.667,599.305,460C599.305,481.333,599.305,502.667,599.305,524C599.305,545.333,599.305,566.667,599.305,588C599.305,609.333,599.305,630.667,599.305,646.833C599.305,663,599.305,674,599.305,679.5L599.305,685" id="L_Performance_PerfFix_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M969.992,485.981L950.147,492.317C930.302,498.654,890.612,511.327,870.767,528.33C850.922,545.333,850.922,566.667,850.922,588C850.922,609.333,850.922,630.667,850.922,646.833C850.922,663,850.922,674,850.922,679.5L850.922,685" id="L_Logs_LogFix_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1148.555,615L1141.559,621.167C1134.563,627.333,1120.571,639.667,1113.574,651.333C1106.578,663,1106.578,674,1106.578,679.5L1106.578,685" id="L_Backup_BackFix_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M117.586,743L117.586,747.167C117.586,751.333,117.586,759.667,206.888,770.374C296.19,781.082,474.794,794.165,564.095,800.706L653.397,807.247" id="L_ConnFix_Report_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M360.148,743L360.148,747.167C360.148,751.333,360.148,759.667,409.026,769.793C457.904,779.919,555.66,791.839,604.538,797.798L653.416,803.758" id="L_ReplFix_Report_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M599.305,743L599.305,747.167C599.305,751.333,599.305,759.667,610.456,767.778C621.607,775.889,643.91,783.777,655.061,787.722L666.213,791.666" id="L_PerfFix_Report_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M850.922,743L850.922,747.167C850.922,751.333,850.922,759.667,839.771,767.778C828.619,775.889,806.317,783.777,795.165,787.722L784.014,791.666" id="L_LogFix_Report_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1106.578,743L1106.578,747.167C1106.578,751.333,1106.578,759.667,1054.951,769.856C1003.323,780.045,900.068,792.091,848.44,798.113L796.813,804.136" id="L_BackFix_Report_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1209.82,615L1216.816,621.167C1223.812,627.333,1237.804,639.667,1244.801,656.5C1251.797,673.333,1251.797,694.667,1251.797,714C1251.797,733.333,1251.797,750.667,1175.968,765.74C1100.14,780.814,948.483,793.627,872.654,800.034L796.826,806.441" id="L_Backup_Report_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(117.5859375, 396)"><g class="label" transform="translate(-20.6796875, -12)"><foreignobject height="24" width="41.359375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Issues</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(360.1484375, 460)"><g class="label" transform="translate(-20.6796875, -12)"><foreignobject height="24" width="41.359375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Issues</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(599.3046875, 524)"><g class="label" transform="translate(-20.6796875, -12)"><foreignobject height="24" width="41.359375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Issues</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(850.921875, 588)"><g class="label" transform="translate(-20.6796875, -12)"><foreignobject height="24" width="41.359375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Issues</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(1106.578125, 652)"><g class="label" transform="translate(-20.6796875, -12)"><foreignobject height="24" width="41.359375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Issues</p></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g></g><g class="nodes"><g class="node default" id="flowchart-Start-0" transform="translate(684.69140625, 27.5)"><rect class="basic label-container" height="39" rx="19.5" ry="19.5" style="" width="183.53125" x="-91.765625" y="-19.5"></rect><g class="label" style="" transform="translate(-79.390625, -12)"><rect></rect><foreignobject height="24" width="158.78125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Start DB Health Check</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Connection-1" transform="translate(684.69140625, 124)"><rect class="basic label-container" height="54" style="" width="223.265625" x="-111.6328125" y="-27"></rect><g class="label" style="" transform="translate(-81.6328125, -12)"><rect></rect><foreignobject height="24" width="163.265625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check Connection Pool</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Replication-3" transform="translate(805.97265625, 228)"><rect class="basic label-container" height="54" style="" width="236.828125" x="-118.4140625" y="-27"></rect><g class="label" style="" transform="translate(-88.4140625, -12)"><rect></rect><foreignobject height="24" width="176.828125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check Replication Status</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Performance-5" transform="translate(925.55078125, 332)"><rect class="basic label-container" height="54" style="" width="245.984375" x="-122.9921875" y="-27"></rect><g class="label" style="" transform="translate(-92.9921875, -12)"><rect></rect><foreignobject height="24" width="185.984375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check Query Performance</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Logs-7" transform="translate(1051.359375, 460)"><rect class="basic label-container" height="54" style="" width="162.734375" x="-81.3671875" y="-27"></rect><g class="label" style="" transform="translate(-51.3671875, -12)"><rect></rect><foreignobject height="24" width="102.734375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check DB Logs</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Backup-9" transform="translate(1179.1875, 588)"><rect class="basic label-container" height="54" style="" width="211.5625" x="-105.78125" y="-27"></rect><g class="label" style="" transform="translate(-75.78125, -12)"><rect></rect><foreignobject height="24" width="151.5625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Verify Recent Backup</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-ConnFix-11" transform="translate(117.5859375, 716)"><rect class="basic label-container" height="54" style="" width="219.171875" x="-109.5859375" y="-27"></rect><g class="label" style="" transform="translate(-79.5859375, -12)"><rect></rect><foreignobject height="24" width="159.171875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Reset Connection Pool</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-ReplFix-13" transform="translate(360.1484375, 716)"><rect class="basic label-container" height="54" style="" width="165.953125" x="-82.9765625" y="-27"></rect><g class="label" style="" transform="translate(-52.9765625, -12)"><rect></rect><foreignobject height="24" width="105.953125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Fix Replication</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-PerfFix-15" transform="translate(599.3046875, 716)"><rect class="basic label-container" height="54" style="" width="212.359375" x="-106.1796875" y="-27"></rect><g class="label" style="" transform="translate(-76.1796875, -12)"><rect></rect><foreignobject height="24" width="152.359375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Identify Slow Queries</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-LogFix-17" transform="translate(850.921875, 716)"><rect class="basic label-container" height="54" style="" width="190.875" x="-95.4375" y="-27"></rect><g class="label" style="" transform="translate(-65.4375, -12)"><rect></rect><foreignobject height="24" width="130.875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Address Log Issues</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-BackFix-19" transform="translate(1106.578125, 716)"><rect class="basic label-container" height="54" style="" width="220.4375" x="-110.21875" y="-27"></rect><g class="label" style="" transform="translate(-80.21875, -12)"><rect></rect><foreignobject height="24" width="160.4375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Trigger Manual Backup</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Report-25" transform="translate(725.11328125, 812.5)"><rect class="basic label-container" height="39" rx="19.5" ry="19.5" style="" width="135.453125" x="-67.7265625" y="-19.5"></rect><g class="label" style="" transform="translate(-55.3515625, -12)"><rect></rect><foreignobject height="24" width="110.703125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Report Findings</p></span></div></foreignobject></g></g></g></g></g></svg></div>
+<ol>
+<li><strong>Check Database Connectivity</strong>
+   ```bash
+   # Check connection pool status
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=api-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/actuator/metrics/hikaricp.connections</li>
+</ol>
+<p># Test direct connection
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT 1"
+   ```</p>
+<ol>
+<li>
+<p><strong>Check Replication Status (if applicable)</strong>
+<code>bash
+   # For PostgreSQL
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT * FROM pg_stat_replication"</code></p>
+</li>
+<li>
+<p><strong>Check Query Performance</strong>
+<code>bash
+   # Check for slow queries
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT query, calls, total_time, mean_time FROM pg_stat_statements ORDER BY mean_time DESC LIMIT 10"</code></p>
+</li>
+<li>
+<p><strong>Check Database Logs</strong>
+<code>bash
+   # Get recent database logs
+   aws rds download-db-log-file-portion \
+     --db-instance-identifier llm-gateway-db \
+     --log-file-name postgresql.log \
+     --output text</code></p>
+</li>
+<li>
+<p><strong>Verify Recent Backup</strong>
+<code>bash
+   # Check recent automated backups
+   aws rds describe-db-snapshots \
+     --db-instance-identifier llm-gateway-db \
+     --query 'sort_by(DBSnapshots, &amp;SnapshotCreateTime)[-5:]'</code></p>
+</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="service-degradation">Service Degradation</h3>
+<h4 id="high-latency-investigation">High Latency Investigation</h4>
+<p><strong>When to use</strong>: When monitoring shows increased API response times</p>
+<p><strong>Procedure</strong>:</p>
+<div class="mermaid-svg" id="mermaid-diagram-2"><svg aria-roledescription="flowchart-v2" class="flowchart" id="my-svg" role="graphics-document document" style="max-width: 1068.66px; background-color: transparent;" viewbox="0 0 1068.65625 1040" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="4.5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="11" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="12" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M829.418,47L829.418,51.167C829.418,55.333,829.418,63.667,829.418,71.333C829.418,79,829.418,86,829.418,89.5L829.418,93" id="L_Start_Traffic_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M772.183,151L759.111,157.167C746.039,163.333,719.894,175.667,706.822,187.333C693.75,199,693.75,210,693.75,215.5L693.75,221" id="L_Traffic_Resources_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M636.092,279L622.923,285.167C609.754,291.333,583.416,303.667,570.247,315.333C557.078,327,557.078,338,557.078,343.5L557.078,349" id="L_Resources_Database_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M478.385,431L465.942,437.167C453.499,443.333,428.613,455.667,416.17,467.333C403.727,479,403.727,490,403.727,495.5L403.727,501" id="L_Database_Providers_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M326.991,583L314.858,589.167C302.725,595.333,278.458,607.667,266.325,619.333C254.191,631,254.191,642,254.191,647.5L254.191,653" id="L_Providers_Dependencies_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M197.134,711L184.103,717.167C171.071,723.333,145.008,735.667,131.977,747.333C118.945,759,118.945,770,118.945,775.5L118.945,781" id="L_Dependencies_Traces_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M886.653,151L899.725,157.167C912.797,163.333,938.942,175.667,952.014,187.333C965.086,199,965.086,210,965.086,215.5L965.086,221" id="L_Traffic_ScaleOut_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M751.408,279L764.577,285.167C777.746,291.333,804.084,303.667,817.253,317.333C830.422,331,830.422,346,830.422,353.5L830.422,361" id="L_Resources_Optimize_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M635.772,431L648.215,437.167C660.658,443.333,685.544,455.667,697.987,469.333C710.43,483,710.43,498,710.43,505.5L710.43,513" id="L_Database_DBFix_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M480.462,583L492.595,589.167C504.728,595.333,528.995,607.667,541.128,619.333C553.262,631,553.262,642,553.262,647.5L553.262,653" id="L_Providers_ProviderAction_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M311.248,711L324.28,717.167C337.311,723.333,363.374,735.667,376.406,747.333C389.438,759,389.438,770,389.438,775.5L389.438,781" id="L_Dependencies_DepFix_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M118.945,839L118.945,843.167C118.945,847.333,118.945,855.667,118.945,863.333C118.945,871,118.945,878,118.945,881.5L118.945,885" id="L_Traces_RootCause_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M118.945,943L118.945,947.167C118.945,951.333,118.945,959.667,118.945,967.333C118.945,975,118.945,982,118.945,985.5L118.945,989" id="L_RootCause_Resolution_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(965.0859375, 188)"><g class="label" transform="translate(-15.90625, -12)"><foreignobject height="24" width="31.8125"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>High</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(830.421875, 316)"><g class="label" transform="translate(-15.90625, -12)"><foreignobject height="24" width="31.8125"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>High</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(710.4296875, 468)"><g class="label" transform="translate(-16.453125, -12)"><foreignobject height="24" width="32.90625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Slow</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(553.26171875, 620)"><g class="label" transform="translate(-16.453125, -12)"><foreignobject height="24" width="32.90625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Slow</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(389.4375, 748)"><g class="label" transform="translate(-20.6796875, -12)"><foreignobject height="24" width="41.359375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Issues</p></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g></g><g class="nodes"><g class="node default" id="flowchart-Start-0" transform="translate(829.41796875, 27.5)"><rect class="basic label-container" height="39" rx="19.5" ry="19.5" style="" width="170.203125" x="-85.1015625" y="-19.5"></rect><g class="label" style="" transform="translate(-72.7265625, -12)"><rect></rect><foreignobject height="24" width="145.453125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Detect High Latency</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Traffic-1" transform="translate(829.41796875, 124)"><rect class="basic label-container" height="54" style="" width="203.4375" x="-101.71875" y="-27"></rect><g class="label" style="" transform="translate(-71.71875, -12)"><rect></rect><foreignobject height="24" width="143.4375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check Traffic Levels</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Resources-3" transform="translate(693.75, 252)"><rect class="basic label-container" height="54" style="" width="251.53125" x="-125.765625" y="-27"></rect><g class="label" style="" transform="translate(-95.765625, -12)"><rect></rect><foreignobject height="24" width="191.53125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check Resource Utilization</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Database-5" transform="translate(557.078125, 392)"><rect class="basic label-container" height="78" style="" width="260" x="-130" y="-39"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignobject height="48" width="200"><div style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check Database Performance</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Providers-7" transform="translate(403.7265625, 544)"><rect class="basic label-container" height="78" style="" width="260" x="-130" y="-39"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignobject height="48" width="200"><div style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check LLM Provider Latency</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Dependencies-9" transform="translate(254.19140625, 684)"><rect class="basic label-container" height="54" style="" width="252.484375" x="-126.2421875" y="-27"></rect><g class="label" style="" transform="translate(-96.2421875, -12)"><rect></rect><foreignobject height="24" width="192.484375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Check Other Dependencies</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Traces-11" transform="translate(118.9453125, 812)"><rect class="basic label-container" height="54" style="" width="221.890625" x="-110.9453125" y="-27"></rect><g class="label" style="" transform="translate(-80.9453125, -12)"><rect></rect><foreignobject height="24" width="161.890625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Analyze Trace Samples</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-ScaleOut-13" transform="translate(965.0859375, 252)"><rect class="basic label-container" height="54" style="" width="191.140625" x="-95.5703125" y="-27"></rect><g class="label" style="" transform="translate(-65.5703125, -12)"><rect></rect><foreignobject height="24" width="131.140625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Scale Out Services</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Optimize-15" transform="translate(830.421875, 392)"><rect class="basic label-container" height="54" style="" width="186.6875" x="-93.34375" y="-27"></rect><g class="label" style="" transform="translate(-63.34375, -12)"><rect></rect><foreignobject height="24" width="126.6875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Optimize or Scale</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-DBFix-17" transform="translate(710.4296875, 544)"><rect class="basic label-container" height="54" style="" width="253.40625" x="-126.703125" y="-27"></rect><g class="label" style="" transform="translate(-96.703125, -12)"><rect></rect><foreignobject height="24" width="193.40625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Optimize Queries/Scale DB</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-ProviderAction-19" transform="translate(553.26171875, 684)"><rect class="basic label-container" height="54" style="" width="245.65625" x="-122.828125" y="-27"></rect><g class="label" style="" transform="translate(-92.828125, -12)"><rect></rect><foreignobject height="24" width="185.65625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Switch Providers or Notify</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-DepFix-21" transform="translate(389.4375, 812)"><rect class="basic label-container" height="54" style="" width="219.09375" x="-109.546875" y="-27"></rect><g class="label" style="" transform="translate(-79.546875, -12)"><rect></rect><foreignobject height="24" width="159.09375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Fix Dependency Issues</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-RootCause-23" transform="translate(118.9453125, 916)"><rect class="basic label-container" height="54" style="" width="199.296875" x="-99.6484375" y="-27"></rect><g class="label" style="" transform="translate(-69.6484375, -12)"><rect></rect><foreignobject height="24" width="139.296875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Identify Root Cause</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Resolution-25" transform="translate(118.9453125, 1012.5)"><rect class="basic label-container" height="39" rx="19.5" ry="19.5" style="" width="180.90625" x="-90.453125" y="-19.5"></rect><g class="label" style="" transform="translate(-78.078125, -12)"><rect></rect><foreignobject height="24" width="156.15625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Implement Resolution</p></span></div></foreignobject></g></g></g></g></g></svg></div>
+<ol>
+<li>
+<p><strong>Check Traffic and Load</strong>
+<code>bash
+   # Check current traffic levels
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway"}[5m]))%20by%20(service)'</code></p>
+</li>
+<li>
+<p><strong>Check Resource Utilization</strong>
+   ```bash
+   # Check pod resource usage
+   kubectl top pods -n llm-gateway</p>
+</li>
+</ol>
+<p># Check node resource usage
+   kubectl top nodes
+   ```</p>
+<ol>
+<li>
+<p><strong>Analyze Latency Breakdown</strong>
+<code>bash
+   # Get latency percentiles
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(http_request_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(service,%20le))'</code></p>
+</li>
+<li>
+<p><strong>Check Database Performance</strong>
+<code>bash
+   # Get database latency metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(db_query_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(query_type,%20le))'</code></p>
+</li>
+<li>
+<p><strong>Check LLM Provider Performance</strong>
+<code>bash
+   # Get LLM provider latency
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(llm_request_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(provider,%20le))'</code></p>
+</li>
+<li>
+<p><strong>Analyze Distributed Traces</strong></p>
+</li>
+<li>Access Jaeger UI to view trace samples</li>
+<li>Identify slow spans in the request flow</li>
+<li>
+<p>Look for patterns in slow requests</p>
+</li>
+<li>
+<p><strong>Implement Resolution</strong></p>
+</li>
+<li>Scale out services if under load</li>
+<li>Optimize slow code paths</li>
+<li>Address database issues</li>
+<li>Consider switching LLM providers if needed</li>
+<li>Adjust caching strategies</li>
+</ol>
+<h4 id="high-error-rate-troubleshooting">High Error Rate Troubleshooting</h4>
+<p><strong>When to use</strong>: When monitoring shows increased error rates</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li>
+<p><strong>Identify Error Types and Sources</strong>
+<code>bash
+   # Get error rate by endpoint and status code
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway",status_code=~"5.."}[5m]))%20by%20(service,%20endpoint,%20status_code)'</code></p>
+</li>
+<li>
+<p><strong>Check Recent Deployments or Changes</strong>
+   ```bash
+   # Get recent deployments
+   kubectl rollout history deployment -n llm-gateway</p>
+</li>
+</ol>
+<p># Get recent configuration changes
+   kubectl get configmaps -n llm-gateway -o yaml &gt; current-configmaps.yaml
+   diff saved-configmaps.yaml current-configmaps.yaml
+   ```</p>
+<ol>
+<li><strong>Examine Application Logs</strong>
+   ```bash
+   # Get logs from affected services
+   kubectl logs -n llm-gateway -l app=api-service --tail=100</li>
+</ol>
+<p># Search for specific error patterns
+   kubectl logs -n llm-gateway -l app=execution-service | grep -i error
+   ```</p>
+<ol>
+<li><strong>Check External Dependencies</strong>
+   ```bash
+   # Check LLM provider status
+   curl -X GET https://api.example.com/health/dependencies?component=llm-providers</li>
+</ol>
+<p># Check database status
+   curl -X GET https://api.example.com/health/dependencies?component=database
+   ```</p>
+<ol>
+<li><strong>Take Mitigation Actions</strong></li>
+<li>Rollback recent changes if needed</li>
+<li>Scale resources if under pressure</li>
+<li>Implement circuit breakers for failing dependencies</li>
+<li>Switch to backup providers if primary is failing</li>
+</ol>
+<h3 id="external-dependency-issues">External Dependency Issues</h3>
+<h4 id="llm-provider-outage">LLM Provider Outage</h4>
+<p><strong>When to use</strong>: When a specific LLM provider is experiencing issues</p>
+<p><strong>Procedure</strong>:</p>
+<div class="mermaid-svg" id="mermaid-diagram-3"><svg aria-roledescription="flowchart-v2" class="flowchart" id="my-svg" role="graphics-document document" style="max-width: 573.359px; background-color: transparent;" viewbox="0 0 573.359375 1105.6875" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="4.5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="11" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="12" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M288.434,47L288.434,51.167C288.434,55.333,288.434,63.667,288.434,71.333C288.434,79,288.434,86,288.434,89.5L288.434,93" id="L_Start_Confirm_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M288.434,151L288.434,155.167C288.434,159.333,288.434,167.667,288.434,175.333C288.434,183,288.434,190,288.434,193.5L288.434,197" id="L_Confirm_Analyze_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M288.434,255L288.434,259.167C288.434,263.333,288.434,271.667,288.504,279.417C288.574,287.167,288.715,294.334,288.785,297.917L288.855,301.501" id="L_Analyze_Decision_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M244.518,417.24L226.53,430.726C208.543,444.212,172.568,471.184,154.581,490.17C136.594,509.156,136.594,520.156,136.594,525.656L136.594,531.156" id="L_Decision_Failover_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M333.349,417.24L351.17,430.726C368.991,444.212,404.632,471.184,422.453,490.17C440.273,509.156,440.273,520.156,440.273,525.656L440.273,531.156" id="L_Decision_CircuitBreaker_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M136.594,589.156L136.594,593.323C136.594,597.49,136.594,605.823,136.594,613.49C136.594,621.156,136.594,628.156,136.594,631.656L136.594,635.156" id="L_Failover_RouteConfig_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M440.273,589.156L440.273,593.323C440.273,597.49,440.273,605.823,440.273,613.49C440.273,621.156,440.273,628.156,440.273,631.656L440.273,635.156" id="L_CircuitBreaker_RateLimit_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M136.594,693.156L136.594,697.323C136.594,701.49,136.594,709.823,148.13,717.94C159.666,726.058,182.738,733.959,194.273,737.91L205.809,741.86" id="L_RouteConfig_Monitor_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M440.273,693.156L440.273,697.323C440.273,701.49,440.273,709.823,428.737,717.94C417.202,726.058,394.13,733.959,382.594,737.91L371.058,741.86" id="L_RateLimit_Monitor_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M288.434,797.156L288.434,801.323C288.434,805.49,288.434,813.823,288.504,821.573C288.574,829.323,288.715,836.49,288.785,840.074L288.855,843.657" id="L_Monitor_Decision2_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M253.043,934.297L235.778,946.362C218.512,958.427,183.981,982.557,166.715,1000.122C149.449,1017.688,149.449,1028.688,149.449,1034.188L149.449,1039.688" id="L_Decision2_Restore_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M324.824,934.297L341.923,946.362C359.022,958.427,393.22,982.557,410.319,1000.122C427.418,1017.688,427.418,1028.688,427.418,1034.188L427.418,1039.688" id="L_Decision2_Escalate_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(136.59375, 498.15625)"><g class="label" transform="translate(-11.328125, -12)"><foreignobject height="24" width="22.65625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Yes</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(440.2734375, 498.15625)"><g class="label" transform="translate(-9.3984375, -12)"><foreignobject height="24" width="18.796875"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>No</p></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(149.44921875, 1006.6875)"><g class="label" transform="translate(-11.328125, -12)"><foreignobject height="24" width="22.65625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Yes</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(427.41796875, 1006.6875)"><g class="label" transform="translate(-9.3984375, -12)"><foreignobject height="24" width="18.796875"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>No</p></span></div></foreignobject></g></g></g><g class="nodes"><g class="node default" id="flowchart-Start-0" transform="translate(288.43359375, 27.5)"><rect class="basic label-container" height="39" rx="19.5" ry="19.5" style="" width="182.859375" x="-91.4296875" y="-19.5"></rect><g class="label" style="" transform="translate(-79.0546875, -12)"><rect></rect><foreignobject height="24" width="158.109375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Detect Provider Issues</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Confirm-1" transform="translate(288.43359375, 124)"><rect class="basic label-container" height="54" style="" width="229.765625" x="-114.8828125" y="-27"></rect><g class="label" style="" transform="translate(-84.8828125, -12)"><rect></rect><foreignobject height="24" width="169.765625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Confirm Provider Status</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Analyze-3" transform="translate(288.43359375, 228)"><rect class="basic label-container" height="54" style="" width="220.40625" x="-110.203125" y="-27"></rect><g class="label" style="" transform="translate(-80.203125, -12)"><rect></rect><foreignobject height="24" width="160.40625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Analyze Error Patterns</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Decision-5" transform="translate(288.43359375, 383.078125)"><polygon class="label-container" points="78.078125,0 156.15625,-78.078125 78.078125,-156.15625 0,-78.078125" transform="translate(-78.078125,78.078125)"></polygon><g class="label" style="" transform="translate(-51.078125, -12)"><rect></rect><foreignobject height="24" width="102.15625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Major Outage?</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Failover-7" transform="translate(136.59375, 562.15625)"><rect class="basic label-container" height="54" style="" width="257.1875" x="-128.59375" y="-27"></rect><g class="label" style="" transform="translate(-98.59375, -12)"><rect></rect><foreignobject height="24" width="197.1875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Failover to Backup Provider</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-CircuitBreaker-9" transform="translate(440.2734375, 562.15625)"><rect class="basic label-container" height="54" style="" width="250.171875" x="-125.0859375" y="-27"></rect><g class="label" style="" transform="translate(-95.0859375, -12)"><rect></rect><foreignobject height="24" width="190.171875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Implement Circuit Breaker</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-RouteConfig-11" transform="translate(136.59375, 666.15625)"><rect class="basic label-container" height="54" style="" width="220.40625" x="-110.203125" y="-27"></rect><g class="label" style="" transform="translate(-80.203125, -12)"><rect></rect><foreignobject height="24" width="160.40625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Update Routing Config</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-RateLimit-13" transform="translate(440.2734375, 666.15625)"><rect class="basic label-container" height="54" style="" width="200.5" x="-100.25" y="-27"></rect><g class="label" style="" transform="translate(-70.25, -12)"><rect></rect><foreignobject height="24" width="140.5"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Apply Rate Limiting</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Monitor-16" transform="translate(288.43359375, 770.15625)"><rect class="basic label-container" height="54" style="" width="183.78125" x="-91.890625" y="-27"></rect><g class="label" style="" transform="translate(-61.890625, -12)"><rect></rect><foreignobject height="24" width="123.78125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Monitor Recovery</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Decision2-18" transform="translate(288.43359375, 908.421875)"><polygon class="label-container" points="61.265625,0 122.53125,-61.265625 61.265625,-122.53125 0,-61.265625" transform="translate(-61.265625,61.265625)"></polygon><g class="label" style="" transform="translate(-34.265625, -12)"><rect></rect><foreignobject height="24" width="68.53125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Resolved?</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Restore-20" transform="translate(149.44921875, 1070.6875)"><rect class="basic label-container" height="54" style="" width="252.5625" x="-126.28125" y="-27"></rect><g class="label" style="" transform="translate(-96.28125, -12)"><rect></rect><foreignobject height="24" width="192.5625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Restore Normal Operations</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Escalate-22" transform="translate(427.41796875, 1070.6875)"><rect class="basic label-container" height="54" style="" width="203.375" x="-101.6875" y="-27"></rect><g class="label" style="" transform="translate(-71.6875, -12)"><rect></rect><foreignobject height="24" width="143.375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Escalate to Provider</p></span></div></foreignobject></g></g></g></g></g></svg></div>
+<ol>
+<li><strong>Confirm Provider Status</strong>
+   ```bash
+   # Check provider error rates
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(llm_request_errors_total{namespace="llm-gateway"}[5m]))%20by%20(provider)'</li>
+</ol>
+<p># Check provider status page (if available)
+   curl -s https://status.openai.com/api/v2/status.json
+   ```</p>
+<ol>
+<li>
+<p><strong>Analyze Error Patterns</strong>
+<code>bash
+   # Get error details from logs
+   kubectl logs -n llm-gateway -l app=execution-service | grep -i "provider=openai.*error"</code></p>
+</li>
+<li>
+<p><strong>Implement Circuit Breaker</strong>
+<code>bash
+   # Apply circuit breaker configuration
+   kubectl apply -f operations/circuit-breaker-openai.yaml</code></p>
+</li>
+<li>
+<p><strong>Failover to Backup Provider</strong>
+<code>bash
+   # Update routing configuration
+   kubectl apply -f operations/provider-failover.yaml</code></p>
+</li>
+<li>
+<p><strong>Adjust Rate Limiting</strong>
+<code>bash
+   # Reduce traffic to affected provider
+   kubectl apply -f operations/provider-rate-limit.yaml</code></p>
+</li>
+<li>
+<p><strong>Monitor Recovery</strong></p>
+</li>
+<li>Watch error rates and latency</li>
+<li>Monitor backup provider performance</li>
+<li>
+<p>Track provider status announcements</p>
+</li>
+<li>
+<p><strong>Restore Normal Operations</strong>
+<code>bash
+   # When provider recovers, remove temporary configurations
+   kubectl delete -f operations/provider-failover.yaml
+   kubectl delete -f operations/circuit-breaker-openai.yaml
+   kubectl delete -f operations/provider-rate-limit.yaml</code></p>
+</li>
+</ol>
+<h4 id="database-connectivity-issues">Database Connectivity Issues</h4>
+<p><strong>When to use</strong>: When experiencing database connection problems</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Verify Database Status</strong>
+   ```bash
+   # Check RDS status
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db \
+     --query 'DBInstances[0].DBInstanceStatus'</li>
+</ol>
+<p># Check connection from utility pod
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT 1"
+   ```</p>
+<ol>
+<li>
+<p><strong>Check Connection Pooling</strong>
+<code>bash
+   # Check connection pool metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=api-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/actuator/metrics/hikaricp.connections</code></p>
+</li>
+<li>
+<p><strong>Verify Network Connectivity</strong>
+   ```bash
+   # Check network policies
+   kubectl get networkpolicies -n llm-gateway</p>
+</li>
+</ol>
+<p># Check security groups
+   aws ec2 describe-security-groups \
+     --group-ids $DB_SECURITY_GROUP \
+     --query 'SecurityGroups[0].IpPermissions'
+   ```</p>
+<ol>
+<li>
+<p><strong>Reset Connection Pools if Needed</strong>
+<code>bash
+   # Apply connection pool reset
+   kubectl apply -f operations/reset-db-connections.yaml</code></p>
+</li>
+<li>
+<p><strong>Check for Database Resource Constraints</strong>
+<code>bash
+   # Check CPU and memory metrics
+   aws cloudwatch get-metric-data \
+     --metric-data-queries file://db-resource-metrics.json \
+     --start-time 2023-01-01T00:00:00Z \
+     --end-time 2023-01-02T00:00:00Z</code></p>
+</li>
+<li>
+<p><strong>Implement Remediation</strong></p>
+</li>
+<li>Restart services with connection issues</li>
+<li>Scale database if resource-constrained</li>
+<li>Adjust connection pool settings</li>
+<li>Implement circuit breaker for persistent issues</li>
+</ol>
+<h3 id="infrastructure-issues">Infrastructure Issues</h3>
+<h4 id="kubernetes-node-failures">Kubernetes Node Failures</h4>
+<p><strong>When to use</strong>: When Kubernetes nodes are experiencing issues</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Identify Problem Nodes</strong>
+   ```bash
+   # Check node status
+   kubectl get nodes</li>
+</ol>
+<p># Get node conditions
+   kubectl describe nodes | grep -A5 Conditions</p>
+<p># Check node events
+   kubectl get events --field-selector involvedObject.kind=Node
+   ```</p>
+<ol>
+<li>
+<p><strong>Check Pods on Affected Nodes</strong>
+<code>bash
+   # List pods on specific node
+   kubectl get pods -A -o wide --field-selector spec.nodeName=node-name</code></p>
+</li>
+<li>
+<p><strong>Cordon Problematic Nodes</strong>
+<code>bash
+   # Prevent new pods from being scheduled
+   kubectl cordon node-name</code></p>
+</li>
+<li>
+<p><strong>Drain Pods if Necessary</strong>
+<code>bash
+   # Safely evict pods
+   kubectl drain node-name --ignore-daemonsets --delete-local-data</code></p>
+</li>
+<li>
+<p><strong>Investigate Node Issues</strong>
+   ```bash
+   # Check node logs
+   aws ec2 get-console-output --instance-id i-1234567890abcdef0</p>
+</li>
+</ol>
+<p># Check CloudWatch metrics
+   aws cloudwatch get-metric-data \
+     --metric-data-queries file://node-metrics.json \
+     --start-time 2023-01-01T00:00:00Z \
+     --end-time 2023-01-02T00:00:00Z
+   ```</p>
+<ol>
+<li><strong>Replace or Repair Node</strong>
+   ```bash
+   # For managed node groups
+   aws eks update-nodegroup-version \
+     --cluster-name llm-gateway-cluster \
+     --nodegroup-name workers</li>
+</ol>
+<p># For self-managed nodes
+   aws ec2 terminate-instances --instance-ids i-1234567890abcdef0
+   ```</p>
+<ol>
+<li><strong>Verify Recovery</strong>
+   ```bash
+   # Check new node joins the cluster
+   kubectl get nodes -w</li>
+</ol>
+<p># Check pod distribution
+   kubectl get pods -n llm-gateway -o wide
+   ```</p>
+<h4 id="network-connectivity-issues">Network Connectivity Issues</h4>
+<p><strong>When to use</strong>: When experiencing network communication problems</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Verify Service Connectivity</strong>
+   ```bash
+   # Check service endpoints
+   kubectl get endpoints -n llm-gateway</li>
+</ol>
+<p># Test service DNS resolution
+   kubectl exec -it network-util -n llm-gateway -- nslookup api-service.llm-gateway.svc.cluster.local
+   ```</p>
+<ol>
+<li><strong>Check Network Policies</strong>
+   ```bash
+   # List network policies
+   kubectl get networkpolicies -n llm-gateway -o yaml</li>
+</ol>
+<p># Temporarily disable restrictive policies for testing
+   kubectl annotate networkpolicy restrictive-policy -n llm-gateway network.kubernetes.io/policy-disabled=true
+   ```</p>
+<ol>
+<li>
+<p><strong>Test Pod-to-Pod Communication</strong>
+<code>bash
+   # Run connectivity test
+   kubectl exec -it network-util -n llm-gateway -- curl api-service.llm-gateway.svc.cluster.local:8080/health</code></p>
+</li>
+<li>
+<p><strong>Check AWS Network Components</strong>
+<code>bash
+   # Verify VPC components
+   aws ec2 describe-nat-gateways --filter Name=vpc-id,Values=$VPC_ID
+   aws ec2 describe-route-tables --filter Name=vpc-id,Values=$VPC_ID</code></p>
+</li>
+<li>
+<p><strong>Implement Resolution</strong></p>
+</li>
+<li>Update network policies if too restrictive</li>
+<li>Fix DNS configuration issues</li>
+<li>Repair AWS networking components</li>
+<li>Update service definitions if needed</li>
+</ol>
+<h3 id="common-error-scenarios">Common Error Scenarios</h3>
+<h4 id="high-token-usage-costs">High Token Usage Costs</h4>
+<p><strong>When to use</strong>: When monitoring shows unexpected token usage increases</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Analyze Token Usage Patterns</strong>
+   ```bash
+   # Get token usage by tenant and endpoint
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(llm_token_usage_total{namespace="llm-gateway"}[24h]))%20by%20(tenant_id,%20endpoint)'</li>
+</ol>
+<p># Check changes over time
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query_range?query=sum(rate(llm_token_usage_total{namespace="llm-gateway"}[1h]))&amp;start=2023-01-01T00:00:00Z&amp;end=2023-01-02T00:00:00Z&amp;step=1h'
+   ```</p>
+<ol>
+<li>
+<p><strong>Identify High-Usage Tenants or Services</strong>
+<code>bash
+   # Find top consumers
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=topk(5,sum(llm_token_usage_total{namespace="llm-gateway"})%20by%20(tenant_id))'</code></p>
+</li>
+<li>
+<p><strong>Check for Token Usage Anomalies</strong>
+<code>bash
+   # Look for unusual patterns
+   kubectl logs -n llm-gateway -l app=analytics-service | grep "token_usage_anomaly"</code></p>
+</li>
+<li>
+<p><strong>Implement Mitigation</strong>
+   ```bash
+   # Apply or update tenant quotas
+   kubectl apply -f operations/update-tenant-quotas.yaml</p>
+</li>
+</ol>
+<p># Enable more aggressive caching
+   kubectl apply -f operations/enhance-caching.yaml
+   ```</p>
+<ol>
+<li><strong>Optimize Prompt Templates</strong></li>
+<li>Review and optimize verbose prompts</li>
+<li>Implement prompt compression techniques</li>
+<li>Use more efficient parameters</li>
+</ol>
+<h4 id="cache-performance-issues">Cache Performance Issues</h4>
+<p><strong>When to use</strong>: When cache hit rate drops significantly</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Analyze Cache Metrics</strong>
+   ```bash
+   # Get cache hit rate
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(cache_hits_total{namespace="llm-gateway"}[5m]))%20/%20sum(rate(cache_requests_total{namespace="llm-gateway"}[5m]))'</li>
+</ol>
+<p># Check cache memory usage
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(redis_memory_used_bytes{namespace="llm-gateway"})%20/%20sum(redis_memory_max_bytes{namespace="llm-gateway"})'
+   ```</p>
+<ol>
+<li>
+<p><strong>Check for Cache Evictions</strong>
+<code>bash
+   # Get eviction metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=rate(redis_evicted_keys_total{namespace="llm-gateway"}[5m])'</code></p>
+</li>
+<li>
+<p><strong>Inspect Cache Configuration</strong>
+<code>bash
+   # Get current config
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=redis -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- redis-cli CONFIG GET maxmemory-policy</code></p>
+</li>
+<li>
+<p><strong>Implement Improvements</strong>
+   ```bash
+   # Update cache configuration
+   kubectl apply -f operations/update-cache-config.yaml</p>
+</li>
+</ol>
+<p># Scale cache resources
+   kubectl apply -f operations/scale-cache.yaml
+   ```</p>
+<ol>
+<li><strong>Monitor Recovery</strong></li>
+<li>Watch hit rate trends</li>
+<li>Check cache latency</li>
+<li>Monitor memory usage</li>
+</ol>
+<h2 id="llm-provider-management">LLM Provider Management</h2>
+<h3 id="adding-a-new-llm-provider">Adding a New LLM Provider</h3>
+<p><strong>When to use</strong>: When integrating a new LLM service provider</p>
+<p><strong>Procedure</strong>:</p>
+<div class="mermaid-svg" id="mermaid-diagram-4"><svg aria-roledescription="flowchart-v2" class="flowchart" id="my-svg" role="graphics-document document" style="max-width: 1844.66px; background-color: transparent;" viewbox="0 0 1844.65625 94" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="4.5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="11" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="12" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M67.766,47L71.932,47C76.099,47,84.432,47,92.099,47C99.766,47,106.766,47,110.266,47L113.766,47" id="L_Start_SecretSetup_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M331.172,47L335.339,47C339.505,47,347.839,47,355.505,47C363.172,47,370.172,47,373.672,47L377.172,47" id="L_SecretSetup_Config_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M641.172,47L645.339,47C649.505,47,657.839,47,665.505,47C673.172,47,680.172,47,683.672,47L687.172,47" id="L_Config_Integration_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M947.859,47L952.026,47C956.193,47,964.526,47,972.193,47C979.859,47,986.859,47,990.359,47L993.859,47" id="L_Integration_Testing_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1255.375,47L1259.542,47C1263.708,47,1272.042,47,1279.708,47C1287.375,47,1294.375,47,1297.875,47L1301.375,47" id="L_Testing_Validation_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1565.375,47L1569.542,47C1573.708,47,1582.042,47,1589.708,47C1597.375,47,1604.375,47,1607.875,47L1611.375,47" id="L_Validation_Production_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g></g><g class="nodes"><g class="node default" id="flowchart-Start-0" transform="translate(37.8828125, 47)"><rect class="basic label-container" height="39" rx="19.5" ry="19.5" style="" width="59.765625" x="-29.8828125" y="-19.5"></rect><g class="label" style="" transform="translate(-17.5078125, -12)"><rect></rect><foreignobject height="24" width="35.015625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Start</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-SecretSetup-1" transform="translate(224.46875, 47)"><rect class="basic label-container" height="54" style="" width="213.40625" x="-106.703125" y="-27"></rect><g class="label" style="" transform="translate(-76.703125, -12)"><rect></rect><foreignobject height="24" width="153.40625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Setup API Credentials</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Config-3" transform="translate(511.171875, 47)"><rect class="basic label-container" height="78" style="" width="260" x="-130" y="-39"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignobject height="48" width="200"><div style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Create Provider Configuration</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Integration-5" transform="translate(819.515625, 47)"><rect class="basic label-container" height="54" style="" width="256.6875" x="-128.34375" y="-27"></rect><g class="label" style="" transform="translate(-98.34375, -12)"><rect></rect><foreignobject height="24" width="196.6875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Deploy Provider Integration</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Testing-7" transform="translate(1126.6171875, 47)"><rect class="basic label-container" height="54" style="" width="257.515625" x="-128.7578125" y="-27"></rect><g class="label" style="" transform="translate(-98.7578125, -12)"><rect></rect><foreignobject height="24" width="197.515625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Conduct Integration Testing</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Validation-9" transform="translate(1435.375, 47)"><rect class="basic label-container" height="78" style="" width="260" x="-130" y="-39"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignobject height="48" width="200"><div style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Validate Performance &amp; Quality</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Production-11" transform="translate(1726.015625, 47)"><rect class="basic label-container" height="54" style="" width="221.28125" x="-110.640625" y="-27"></rect><g class="label" style="" transform="translate(-80.640625, -12)"><rect></rect><foreignobject height="24" width="161.28125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Promote to Production</p></span></div></foreignobject></g></g></g></g></g></svg></div>
+<ol>
+<li>
+<p><strong>Store Provider Credentials</strong>
+<code>bash
+   # Create secret in Secrets Manager
+   aws secretsmanager create-secret \
+     --name llm-gateway/providers/new-provider-api-key \
+     --secret-string '{"api_key":"sk-...","organization_id":"org-..."}'</code></p>
+</li>
+<li>
+<p><strong>Create Provider Configuration</strong>
+<code>bash
+   # Apply configuration
+   kubectl apply -f providers/new-provider-config.yaml</code></p>
+</li>
+<li>
+<p><strong>Deploy Provider Integration</strong>
+<code>bash
+   # Apply updated service configuration
+   kubectl apply -f providers/deploy-provider-integration.yaml</code></p>
+</li>
+<li>
+<p><strong>Test Provider Integration</strong>
+<code>bash
+   # Run integration tests
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=test-runner -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- pytest tests/providers/test_new_provider.py</code></p>
+</li>
+<li>
+<p><strong>Validate Performance</strong></p>
+</li>
+<li>Run benchmark tests</li>
+<li>Compare latency and token efficiency</li>
+<li>
+<p>Evaluate response quality</p>
+</li>
+<li>
+<p><strong>Enable in Production</strong>
+<code>bash
+   # Update routing configuration to include new provider
+   kubectl apply -f providers/update-routing-config.yaml</code></p>
+</li>
+</ol>
+<h3 id="managing-provider-quotas-and-rate-limits">Managing Provider Quotas and Rate Limits</h3>
+<p><strong>When to use</strong>: When configuring or adjusting provider usage limits</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li>
+<p><strong>Review Current Usage and Limits</strong>
+<code>bash
+   # Get current usage metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(llm_request_total{namespace="llm-gateway"}[24h]))%20by%20(provider)'</code></p>
+</li>
+<li>
+<p><strong>Configure Provider Rate Limits</strong>
+<code>bash
+   # Apply or update rate limits
+   kubectl apply -f providers/update-provider-rate-limits.yaml</code></p>
+</li>
+<li>
+<p><strong>Set Up Usage Alerts</strong>
+<code>bash
+   # Configure alerts for approaching limits
+   kubectl apply -f providers/quota-alerts.yaml</code></p>
+</li>
+<li>
+<p><strong>Implement Token Budgeting</strong>
+<code>bash
+   # Apply token budget configurations
+   kubectl apply -f providers/token-budgets.yaml</code></p>
+</li>
+<li>
+<p><strong>Monitor Usage</strong></p>
+</li>
+<li>Track usage against quota</li>
+<li>Watch for throttling events</li>
+<li>Monitor cost metrics</li>
+</ol>
+<h2 id="operational-security">Operational Security</h2>
+<h3 id="security-incident-response">Security Incident Response</h3>
+<p><strong>When to use</strong>: When responding to potential security incidents</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Initial Assessment</strong>
+   ```bash
+   # Check for unauthorized access attempts
+   kubectl logs -n llm-gateway -l app=api-gateway | grep -i "unauthorized"</li>
+</ol>
+<p># Check for unusual API usage patterns
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway",status_code="401"}[1h]))%20by%20(client_ip)'
+   ```</p>
+<ol>
+<li><strong>Contain the Incident</strong>
+   ```bash
+   # Block suspicious IPs if necessary
+   kubectl apply -f security/block-suspicious-ips.yaml</li>
+</ol>
+<p># Revoke compromised credentials
+   aws secretsmanager update-secret-version-stage \
+     --secret-id llm-gateway/auth/service-credentials \
+     --version-stage AWSCURRENT \
+     --move-to-version-id previous-version-id
+   ```</p>
+<ol>
+<li>
+<p><strong>Investigate the Scope</strong>
+<code>bash
+   # Review audit logs
+   aws cloudwatch filter-log-events \
+     --log-group-name /aws/eks/llm-gateway/auth-logs \
+     --filter-pattern '{ $.level = "ERROR" || $.level = "WARN" }'</code></p>
+</li>
+<li>
+<p><strong>Document and Report</strong></p>
+</li>
+<li>Create incident ticket</li>
+<li>Document timeline and actions taken</li>
+<li>
+<p>Notify security team</p>
+</li>
+<li>
+<p><strong>Remediate and Recover</strong>
+   ```bash
+   # Apply security patches if needed
+   kubectl apply -f security/patches/</p>
+</li>
+</ol>
+<p># Rotate affected credentials
+   ./scripts/rotate-credentials.sh
+   ```</p>
+<h2 id="change-management">Change Management</h2>
+<h3 id="configuration-changes">Configuration Changes</h3>
+<p><strong>When to use</strong>: When making configuration changes to production environment</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Create Configuration Change Plan</strong></li>
+<li>Document current and proposed configuration</li>
+<li>Assess impact and risk</li>
+<li>
+<p>Create rollback plan</p>
+</li>
+<li>
+<p><strong>Test in Lower Environment</strong>
+   ```bash
+   # Apply change to staging
+   kubectl apply -f config/new-cache-config.yaml -n llm-gateway-staging</p>
+</li>
+</ol>
+<p># Verify functionality
+   ./scripts/test-configuration.sh -e staging
+   ```</p>
+<ol>
+<li><strong>Get Approval</strong></li>
+<li>Submit change request</li>
+<li>Get approval from Change Advisory Board</li>
+<li>
+<p>Schedule change window</p>
+</li>
+<li>
+<p><strong>Apply Change</strong>
+<code>bash
+   # Apply to production
+   kubectl apply -f config/new-cache-config.yaml -n llm-gateway</code></p>
+</li>
+<li>
+<p><strong>Monitor Impact</strong>
+<code>bash
+   # Watch related metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query_range?query=cache_hit_ratio&amp;start=2023-01-01T00:00:00Z&amp;end=2023-01-02T00:00:00Z&amp;step=5m'</code></p>
+</li>
+<li>
+<p><strong>Document Results</strong></p>
+</li>
+<li>Update configuration documentation</li>
+<li>Update runbook if procedures changed</li>
+<li>Close change request with results</li>
+</ol>
+<hr/>
+<p><strong>Previous</strong>: <a href="monitoring-alerting.html">Monitoring &amp; Alerting</a> | <strong>Next</strong>: <a href="disaster-recovery.html">Disaster Recovery &amp; Backup Strategy</a></p>
+</body>
+</html>

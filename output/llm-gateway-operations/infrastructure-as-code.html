@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>infrastructure-as-code</title>
+<style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
+<body>
+<h1 id="infrastructure-as-code">Infrastructure as Code</h1>
+<p>This document describes the Infrastructure as Code (IaC) approach used for provisioning and managing the LLM Gateway infrastructure.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#iac-approach">IaC Approach</a></li>
+<li><a href="#repository-structure">Repository Structure</a></li>
+<li><a href="#environments">Environments</a></li>
+<li><a href="#provisioning-workflow">Provisioning Workflow</a></li>
+<li><a href="#environment-promotion">Environment Promotion</a></li>
+<li><a href="#key-infrastructure-components">Key Infrastructure Components</a></li>
+<li><a href="#secrets-management">Secrets Management</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+</ul>
+<h2 id="iac-approach">IaC Approach</h2>
+<p>The LLM Gateway uses Terraform for infrastructure provisioning across all environments. This ensures consistent, repeatable deployments and infrastructure versioning. All Terraform configurations are stored in a dedicated Git repository.</p>
+<h3 id="tools-and-technologies">Tools and Technologies</h3>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Terraform</td>
+<td>&gt;= 1.0.0</td>
+<td>Primary IaC tool</td>
+</tr>
+<tr>
+<td>AWS Provider</td>
+<td>&gt;= 4.0.0</td>
+<td>AWS resource provisioning</td>
+</tr>
+<tr>
+<td>Kubernetes Provider</td>
+<td>&gt;= 2.10.0</td>
+<td>Kubernetes resource management</td>
+</tr>
+<tr>
+<td>Helm Provider</td>
+<td>&gt;= 2.5.0</td>
+<td>Application deployment via Helm</td>
+</tr>
+<tr>
+<td>Terragrunt</td>
+<td>&gt;= 0.36.0</td>
+<td>Terraform wrapper for DRY configurations</td>
+</tr>
+<tr>
+<td>Atlantis</td>
+<td>&gt;= 0.19.0</td>
+<td>Terraform Pull Request Automation</td>
+</tr>
+<tr>
+<td>Checkov</td>
+<td>&gt;= 2.0.0</td>
+<td>IaC security scanning</td>
+</tr>
+<tr>
+<td>Infracost</td>
+<td>&gt;= 0.10.0</td>
+<td>Cost estimation for changes</td>
+</tr>
+</tbody>
+</table>
+<h2 id="repository-structure">Repository Structure</h2>
+<p>The Terraform code follows a modular structure organized by environment and component:</p>
+<pre><code>terraform/
+├── modules/                    # Reusable modules
+│   ├── networking/             # VPC, subnets, security groups
+│   ├── kubernetes/             # EKS cluster and node groups
+│   ├── databases/              # RDS and ElastiCache
+│   ├── monitoring/             # Monitoring stack
+│   └── llm-gateway/            # Gateway-specific resources
+├── environments/               # Environment-specific configurations
+│   ├── development/            # Development environment
+│   ├── staging/                # Staging environment
+│   ├── production/             # Production environment
+│   └── dr/                     # Disaster recovery environment
+└── live/                       # Terragrunt configurations
+    ├── dev/                    # Development
+    ├── stage/                  # Staging
+    ├── prod/                   # Production
+    └── global/                 # Global resources
+</code></pre>
+<h2 id="environments">Environments</h2>
+<p>The LLM Gateway is deployed across multiple environments, each with specific purposes and configurations:</p>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Purpose</th>
+<th>AWS Account</th>
+<th>Region(s)</th>
+<th>Scale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Development</td>
+<td>Feature development and testing</td>
+<td>123456789012</td>
+<td>us-east-1</td>
+<td>Small (2-3 nodes)</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td>Pre-production testing and integration</td>
+<td>210987654321</td>
+<td>us-east-1</td>
+<td>Medium (3-6 nodes)</td>
+</tr>
+<tr>
+<td>Production</td>
+<td>Live customer traffic</td>
+<td>987654321098</td>
+<td>us-east-1, eu-west-1, ap-northeast-1</td>
+<td>Large (9+ nodes)</td>
+</tr>
+<tr>
+<td>DR</td>
+<td>Disaster recovery</td>
+<td>987654321098</td>
+<td>us-west-2</td>
+<td>Medium (standby)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="provisioning-workflow">Provisioning Workflow</h2>
+<p>The infrastructure provisioning follows a defined workflow utilizing GitOps principles:</p>
+<div class="mermaid-svg" id="mermaid-diagram-1"><svg aria-roledescription="flowchart-v2" class="flowchart" id="my-svg" role="graphics-document document" style="max-width: 892.371px; background-color: transparent;" viewbox="0 0 892.37109375 838" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="4.5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="11" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="12" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M625.43,62L625.43,68.167C625.43,74.333,625.43,86.667,625.43,98.333C625.43,110,625.43,121,625.43,126.5L625.43,132" id="L_Dev_Git_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M544.672,183.221L515.531,190.517C486.391,197.814,428.109,212.407,398.969,225.203C369.828,238,369.828,249,369.828,254.5L369.828,260" id="L_Git_Atlantis_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M369.828,318L369.828,324.167C369.828,330.333,369.828,342.667,369.828,354.333C369.828,366,369.828,377,369.828,382.5L369.828,388" id="L_Atlantis_TFPlan_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M286.586,440.154L258.486,447.295C230.385,454.436,174.185,468.718,146.085,481.359C117.984,494,117.984,505,117.984,510.5L117.984,516" id="L_TFPlan_Checkov_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M369.828,446L369.828,452.167C369.828,458.333,369.828,470.667,369.828,482.333C369.828,494,369.828,505,369.828,510.5L369.828,516" id="L_TFPlan_Infracost_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M117.984,574L117.984,580.167C117.984,586.333,117.984,598.667,146.188,612.131C174.391,625.595,230.799,640.19,259.002,647.487L287.206,654.784" id="L_Checkov_PR_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M369.828,574L369.828,580.167C369.828,586.333,369.828,598.667,369.442,610.335C369.056,622.003,368.283,633.007,367.897,638.508L367.511,644.01" id="L_Infracost_PR_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M441.379,446L457.721,452.167C474.062,458.333,506.746,470.667,523.088,487.5C539.43,504.333,539.43,525.667,539.43,547C539.43,568.333,539.43,589.667,523.281,606.27C507.132,622.873,474.834,634.747,458.685,640.683L442.536,646.62" id="L_TFPlan_PR_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M365.336,702L365.336,708.167C365.336,714.333,365.336,726.667,378.594,738.729C391.853,750.792,418.369,762.583,431.628,768.479L444.886,774.375" id="L_PR_Approval_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M558.268,776L569.461,769.833C580.655,763.667,603.042,751.333,614.236,734.5C625.43,717.667,625.43,696.333,625.43,675C625.43,653.667,625.43,632.333,625.43,611C625.43,589.667,625.43,568.333,625.43,547C625.43,525.667,625.43,504.333,625.43,483C625.43,461.667,625.43,440.333,625.43,419C625.43,397.667,625.43,376.333,625.43,355C625.43,333.667,625.43,312.333,625.43,291C625.43,269.667,625.43,248.333,625.43,232.167C625.43,216,625.43,205,625.43,199.5L625.43,194" id="L_Approval_Git_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M692.625,190L707.972,196.167C723.319,202.333,754.013,214.667,769.36,226.333C784.707,238,784.707,249,784.707,254.5L784.707,260" id="L_Git_CICD_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M784.707,318L784.707,324.167C784.707,330.333,784.707,342.667,784.707,354.333C784.707,366,784.707,377,784.707,382.5L784.707,388" id="L_CICD_TFApply_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M784.707,446L784.707,452.167C784.707,458.333,784.707,470.667,784.707,482.333C784.707,494,784.707,505,784.707,510.5L784.707,516" id="L_TFApply_Infra_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M784.707,574L784.707,580.167C784.707,586.333,784.707,598.667,784.707,610.333C784.707,622,784.707,633,784.707,638.5L784.707,644" id="L_Infra_Tests_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M784.707,702L784.707,708.167C784.707,714.333,784.707,726.667,784.707,738.333C784.707,750,784.707,761,784.707,766.5L784.707,772" id="L_Tests_Notification_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(625.4296875, 99)"><g class="label" transform="translate(-50.953125, -12)"><foreignobject height="24" width="101.90625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Create Branch</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(369.828125, 227)"><g class="label" transform="translate(-36.046875, -12)"><foreignobject height="24" width="72.09375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>PR Trigger</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(369.828125, 355)"><g class="label" transform="translate(-15.390625, -12)"><foreignobject height="24" width="30.78125"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>plan</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(117.984375, 483)"><g class="label" transform="translate(-67.015625, -12)"><foreignobject height="24" width="134.03125"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Automated Review</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(369.828125, 483)"><g class="label" transform="translate(-55.8359375, -12)"><foreignobject height="24" width="111.671875"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Cost Estimation</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(117.984375, 611)"><g class="label" transform="translate(-25.078125, -12)"><foreignobject height="24" width="50.15625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Results</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(369.828125, 611)"><g class="label" transform="translate(-25.078125, -12)"><foreignobject height="24" width="50.15625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Results</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(539.4296875, 547)"><g class="label" transform="translate(-42.7421875, -12)"><foreignobject height="24" width="85.484375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Plan Output</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(365.3359375, 739)"><g class="label" transform="translate(-52.8046875, -12)"><foreignobject height="24" width="105.609375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Manual Review</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(625.4296875, 483)"><g class="label" transform="translate(-21.53125, -12)"><foreignobject height="24" width="43.0625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Merge</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(784.70703125, 227)"><g class="label" transform="translate(-24.6640625, -12)"><foreignobject height="24" width="49.328125"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Trigger</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(784.70703125, 355)"><g class="label" transform="translate(-13.171875, -12)"><foreignobject height="24" width="26.34375"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Run</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(784.70703125, 483)"><g class="label" transform="translate(-54.03125, -12)"><foreignobject height="24" width="108.0625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Create/Update</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(784.70703125, 611)"><g class="label" transform="translate(-29.109375, -12)"><foreignobject height="24" width="58.21875"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Validate</p></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(784.70703125, 739)"><g class="label" transform="translate(-17.7265625, -12)"><foreignobject height="24" width="35.453125"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Alert</p></span></div></foreignobject></g></g></g><g class="nodes"><g class="node default" id="flowchart-Dev-0" transform="translate(625.4296875, 35)"><rect class="basic label-container" height="54" style="" width="132.265625" x="-66.1328125" y="-27"></rect><g class="label" style="" transform="translate(-36.1328125, -12)"><rect></rect><foreignobject height="24" width="72.265625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Developer</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Git-1" transform="translate(625.4296875, 163)"><rect class="basic label-container" height="54" style="" width="161.515625" x="-80.7578125" y="-27"></rect><g class="label" style="" transform="translate(-50.7578125, -12)"><rect></rect><foreignobject height="24" width="101.515625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Git Repository</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Atlantis-3" transform="translate(369.828125, 291)"><rect class="basic label-container" height="54" style="" width="115.03125" x="-57.515625" y="-27"></rect><g class="label" style="" transform="translate(-27.515625, -12)"><rect></rect><foreignobject height="24" width="55.03125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Atlantis</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-TFPlan-5" transform="translate(369.828125, 419)"><rect class="basic label-container" height="54" style="" width="166.484375" x="-83.2421875" y="-27"></rect><g class="label" style="" transform="translate(-53.2421875, -12)"><rect></rect><foreignobject height="24" width="106.484375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Terraform Plan</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Checkov-7" transform="translate(117.984375, 547)"><rect class="basic label-container" height="54" style="" width="219.96875" x="-109.984375" y="-27"></rect><g class="label" style="" transform="translate(-79.984375, -12)"><rect></rect><foreignobject height="24" width="159.96875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Checkov Security Scan</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Infracost-9" transform="translate(369.828125, 547)"><rect class="basic label-container" height="54" style="" width="183.71875" x="-91.859375" y="-27"></rect><g class="label" style="" transform="translate(-61.859375, -12)"><rect></rect><foreignobject height="24" width="123.71875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Infracost Analysis</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-PR-11" transform="translate(365.3359375, 675)"><rect class="basic label-container" height="54" style="" width="148.515625" x="-74.2578125" y="-27"></rect><g class="label" style="" transform="translate(-44.2578125, -12)"><rect></rect><foreignobject height="24" width="88.515625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Pull Request</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Approval-17" transform="translate(509.2578125, 803)"><rect class="basic label-container" height="54" style="" width="123.03125" x="-61.515625" y="-27"></rect><g class="label" style="" transform="translate(-31.515625, -12)"><rect></rect><foreignobject height="24" width="63.03125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Approval</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-CICD-21" transform="translate(784.70703125, 291)"><rect class="basic label-container" height="54" style="" width="163.75" x="-81.875" y="-27"></rect><g class="label" style="" transform="translate(-51.875, -12)"><rect></rect><foreignobject height="24" width="103.75"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>CI/CD Pipeline</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-TFApply-23" transform="translate(784.70703125, 419)"><rect class="basic label-container" height="54" style="" width="174.6875" x="-87.34375" y="-27"></rect><g class="label" style="" transform="translate(-57.34375, -12)"><rect></rect><foreignobject height="24" width="114.6875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Terraform Apply</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Infra-25" transform="translate(784.70703125, 547)"><rect class="basic label-container" height="54" style="" width="159.46875" x="-79.734375" y="-27"></rect><g class="label" style="" transform="translate(-49.734375, -12)"><rect></rect><foreignobject height="24" width="99.46875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Infrastructure</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Tests-27" transform="translate(784.70703125, 675)"><rect class="basic label-container" height="54" style="" width="199.328125" x="-99.6640625" y="-27"></rect><g class="label" style="" transform="translate(-69.6640625, -12)"><rect></rect><foreignobject height="24" width="139.328125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Infrastructure Tests</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-Notification-29" transform="translate(784.70703125, 803)"><rect class="basic label-container" height="54" style="" width="144.75" x="-72.375" y="-27"></rect><g class="label" style="" transform="translate(-42.375, -12)"><rect></rect><foreignobject height="24" width="84.75"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Notification</p></span></div></foreignobject></g></g></g></g></g></svg></div>
+<h3 id="process-steps">Process Steps</h3>
+<ol>
+<li><strong>Development</strong>:</li>
+<li>Infrastructure changes are proposed in a feature branch</li>
+<li>Terraform configurations are validated locally using <code>terraform validate</code></li>
+<li>
+<p>Changes are pushed to the repository</p>
+</li>
+<li>
+<p><strong>Pull Request</strong>:</p>
+</li>
+<li>Pull request triggers Atlantis to run <code>terraform plan</code></li>
+<li>Automated checks run (Checkov for security, Infracost for cost analysis)</li>
+<li>
+<p>Results are posted on the PR for review</p>
+</li>
+<li>
+<p><strong>Review and Approval</strong>:</p>
+</li>
+<li>Proposed changes are reviewed by infrastructure team</li>
+<li>Approvals required from at least two team members</li>
+<li>
+<p>Comments and adjustments made as needed</p>
+</li>
+<li>
+<p><strong>Deployment</strong>:</p>
+</li>
+<li>After approval, changes are merged to the main branch</li>
+<li>CI/CD pipeline triggers <code>terraform apply</code></li>
+<li>Applied changes are validated with automated tests</li>
+<li>
+<p>Success or failure notifications are sent to the team</p>
+</li>
+<li>
+<p><strong>Documentation</strong>:</p>
+</li>
+<li>Infrastructure changes are documented in architectural decision records</li>
+<li>Infrastructure diagrams are updated if necessary</li>
+<li>Changes are communicated to relevant stakeholders</li>
+</ol>
+<h2 id="environment-promotion">Environment Promotion</h2>
+<p>Changes flow through environments in a controlled manner:</p>
+<div class="mermaid-svg" id="mermaid-diagram-2"><svg aria-roledescription="flowchart-v2" class="flowchart" id="my-svg" role="graphics-document document" style="max-width: 1719.47px; background-color: transparent;" viewbox="0 0 1719.46875 140" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><style>#my-svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#552222;}#my-svg .error-text{fill:#552222;stroke:#552222;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#333333;stroke:#333333;}#my-svg .marker.cross{stroke:#333333;}#my-svg svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#my-svg p{margin:0;}#my-svg .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#333;}#my-svg .cluster-label text{fill:#333;}#my-svg .cluster-label span{color:#333;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#333;color:#333;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ECECFF;stroke:#9370DB;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#333333!important;stroke-width:0;stroke:#333333;}#my-svg .arrowheadPath{fill:#333333;}#my-svg .edgePath .path{stroke:#333333;stroke-width:2.0px;}#my-svg .flowchart-link{stroke:#333333;fill:none;}#my-svg .edgeLabel{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .edgeLabel p{background-color:rgba(232,232,232, 0.8);}#my-svg .edgeLabel rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg .labelBkg{background-color:rgba(232, 232, 232, 0.5);}#my-svg .cluster rect{fill:#ffffde;stroke:#aaaa33;stroke-width:1px;}#my-svg .cluster text{fill:#333;}#my-svg .cluster span{color:#333;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(80, 100%, 96.2745098039%);border:1px solid #aaaa33;border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#333;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:rgba(232,232,232, 0.8);text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:rgba(232,232,232, 0.8);padding:2px;}#my-svg .icon-shape rect,#my-svg .image-shape rect{opacity:0.5;background-color:rgba(232,232,232, 0.8);fill:rgba(232,232,232, 0.8);}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}</style><g><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointEnd" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 0 L 10 5 L 0 10 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-pointStart" markerheight="8" markerunits="userSpaceOnUse" markerwidth="8" orient="auto" refx="4.5" refy="5" viewbox="0 0 10 10"><path class="arrowMarkerPath" d="M 0 5 L 10 10 L 10 0 z" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="11" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker flowchart-v2" id="my-svg_flowchart-v2-circleStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5" viewbox="0 0 10 10"><circle class="arrowMarkerPath" cx="5" cy="5" r="5" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossEnd" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="12" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker class="marker cross flowchart-v2" id="my-svg_flowchart-v2-crossStart" markerheight="11" markerunits="userSpaceOnUse" markerwidth="11" orient="auto" refx="-1" refy="5.2" viewbox="0 0 11 11"><path class="arrowMarkerPath" d="M 1,1 l 9,9 M 10,1 l -9,9" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"><g class="cluster" data-look="classic" id="subGraph2"><rect height="124" style="" width="448.203125" x="1263.265625" y="8"></rect><g class="cluster-label" transform="translate(1401.3828125, 8)"><foreignobject height="24" width="171.96875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Production Environment</p></span></div></foreignobject></g></g><g class="cluster" data-look="classic" id="subGraph1"><rect height="124" style="" width="444.625" x="606.5625" y="8"></rect><g class="cluster-label" transform="translate(755.3828125, 8)"><foreignobject height="24" width="146.984375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Staging Environment</p></span></div></foreignobject></g></g><g class="cluster" data-look="classic" id="subGraph0"><rect height="124" style="" width="420.296875" x="8" y="8"></rect><g class="cluster-label" transform="translate(123.3515625, 8)"><foreignobject height="24" width="189.59375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Development Environment</p></span></div></foreignobject></g></g></g><g class="edgePaths"><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M202.469,70L206.635,70C210.802,70,219.135,70,226.802,70C234.469,70,241.469,70,244.969,70L248.469,70" id="L_DevBranch_DevApply_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M403.297,70L407.464,70C411.63,70,419.964,70,438.986,70C458.008,70,487.719,70,517.43,70C547.141,70,576.852,70,595.207,70C613.563,70,620.563,70,624.063,70L627.563,70" id="L_DevApply_StageBranch_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M799.922,70L804.089,70C808.255,70,816.589,70,824.255,70C831.922,70,838.922,70,842.422,70L845.922,70" id="L_StageBranch_StageApply_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1026.188,70L1030.354,70C1034.521,70,1042.854,70,1064.694,70C1086.534,70,1121.88,70,1157.227,70C1192.573,70,1227.919,70,1249.092,70C1270.266,70,1277.266,70,1280.766,70L1284.266,70" id="L_StageApply_ProdBranch_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path><path class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" d="M1435.234,70L1439.401,70C1443.568,70,1451.901,70,1459.568,70C1467.234,70,1474.234,70,1477.734,70L1481.234,70" id="L_ProdBranch_ProdApply_0" marker-end="url(#my-svg_flowchart-v2-pointEnd)" style=""></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(517.4296875, 70)"><g class="label" transform="translate(-64.1328125, -12)"><foreignobject height="24" width="128.265625"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Manual Promotion</p></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g><g class="edgeLabel" transform="translate(1157.2265625, 70)"><g class="label" transform="translate(-81.0390625, -12)"><foreignobject height="24" width="162.078125"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"><p>Change Advisory Board</p></span></div></foreignobject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignobject height="0" width="0"><div class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="edgeLabel"></span></div></foreignobject></g></g></g><g class="nodes"><g class="node default" id="flowchart-DevBranch-0" transform="translate(117.734375, 70)"><rect class="basic label-container" height="54" style="fill:#f9f !important;stroke:#333 !important" width="169.46875" x="-84.734375" y="-27"></rect><g class="label" style="" transform="translate(-54.734375, -12)"><rect></rect><foreignobject height="24" width="109.46875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Feature Branch</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-DevApply-1" transform="translate(327.8828125, 70)"><rect class="basic label-container" height="54" style="" width="150.828125" x="-75.4140625" y="-27"></rect><g class="label" style="" transform="translate(-45.4140625, -12)"><rect></rect><foreignobject height="24" width="90.828125"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Apply to Dev</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-StageBranch-2" transform="translate(715.7421875, 70)"><rect class="basic label-container" height="54" style="fill:#ff9 !important;stroke:#333 !important" width="168.359375" x="-84.1796875" y="-27"></rect><g class="label" style="" transform="translate(-54.1796875, -12)"><rect></rect><foreignobject height="24" width="108.359375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Release Branch</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-StageApply-3" transform="translate(938.0546875, 70)"><rect class="basic label-container" height="54" style="" width="176.265625" x="-88.1328125" y="-27"></rect><g class="label" style="" transform="translate(-58.1328125, -12)"><rect></rect><foreignobject height="24" width="116.265625"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Apply to Staging</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-ProdBranch-4" transform="translate(1361.75, 70)"><rect class="basic label-container" height="54" style="fill:#9f9 !important;stroke:#333 !important" width="146.96875" x="-73.484375" y="-27"></rect><g class="label" style="" transform="translate(-43.484375, -12)"><rect></rect><foreignobject height="24" width="86.96875"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Main Branch</p></span></div></foreignobject></g></g><g class="node default" id="flowchart-ProdApply-5" transform="translate(1585.8515625, 70)"><rect class="basic label-container" height="54" style="" width="201.234375" x="-100.6171875" y="-27"></rect><g class="label" style="" transform="translate(-70.6171875, -12)"><rect></rect><foreignobject height="24" width="141.234375"><div style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel"><p>Apply to Production</p></span></div></foreignobject></g></g></g></g></g></svg></div>
+<h3 id="promotion-process">Promotion Process</h3>
+<ul>
+<li><strong>Dev to Staging</strong>: After successful testing in development</li>
+<li>Requires approval from technical lead</li>
+<li>Integration tests must pass</li>
+<li>
+<p>No high-severity security issues</p>
+</li>
+<li>
+<p><strong>Staging to Production</strong>: After validation in staging</p>
+</li>
+<li>Requires Change Advisory Board approval</li>
+<li>Full suite of tests must pass</li>
+<li>Security review must be completed</li>
+<li>Scheduled during maintenance window if disruptive</li>
+</ul>
+<h2 id="key-infrastructure-components">Key Infrastructure Components</h2>
+<p>The following key infrastructure components are managed via Terraform:</p>
+<h3 id="networking">Networking</h3>
+<ul>
+<li><strong>VPC</strong>: Isolated network environment</li>
+<li><strong>Subnets</strong>: Public and private subnets across AZs</li>
+<li><strong>Security Groups</strong>: Controlled network access</li>
+<li><strong>NACLs</strong>: Additional network security layer</li>
+<li><strong>Load Balancers</strong>: Application Load Balancers for traffic distribution</li>
+</ul>
+<h3 id="compute">Compute</h3>
+<ul>
+<li><strong>EKS Cluster</strong>: Managed Kubernetes service</li>
+<li><strong>Node Groups</strong>: Auto-scaling worker nodes</li>
+<li><strong>Launch Templates</strong>: Standardized node configurations</li>
+</ul>
+<h3 id="data-stores">Data Stores</h3>
+<ul>
+<li><strong>RDS</strong>: Relational database for persistence</li>
+<li><strong>ElastiCache</strong>: Redis for caching and temporary data</li>
+<li><strong>S3</strong>: Object storage for backups and artifacts</li>
+</ul>
+<h3 id="supporting-services">Supporting Services</h3>
+<ul>
+<li><strong>CloudWatch</strong>: Monitoring and logging</li>
+<li><strong>Route53</strong>: DNS management</li>
+<li><strong>Secret Manager</strong>: Secure secrets storage</li>
+<li><strong>IAM</strong>: Identity and access management</li>
+</ul>
+<h2 id="secrets-management">Secrets Management</h2>
+<p>Infrastructure secrets are managed securely using the following approach:</p>
+<ol>
+<li><strong>Terraform State</strong>: </li>
+<li>Encrypted and stored in an S3 bucket</li>
+<li>State locking using DynamoDB</li>
+<li>
+<p>Access limited to authorized roles</p>
+</li>
+<li>
+<p><strong>Sensitive Variables</strong>:</p>
+</li>
+<li>Stored in AWS Secrets Manager or Parameter Store</li>
+<li>Referenced using Terraform data sources</li>
+<li>
+<p>Never committed to version control</p>
+</li>
+<li>
+<p><strong>Provider Authentication</strong>:</p>
+</li>
+<li>Uses IAM roles with least privilege</li>
+<li>Different roles for different environments</li>
+<li>Temporary credentials via AWS STS</li>
+</ol>
+<h2 id="best-practices">Best Practices</h2>
+<p>The following best practices are enforced for infrastructure management:</p>
+<h3 id="immutable-infrastructure">Immutable Infrastructure</h3>
+<ul>
+<li>Infrastructure changes are made via code, not manual adjustments</li>
+<li>Servers are never modified after deployment; instead, new versions are deployed</li>
+<li>Automated testing verifies infrastructure correctness</li>
+</ul>
+<h3 id="security">Security</h3>
+<ul>
+<li>All resources follow least privilege principle</li>
+<li>Security groups deny all traffic by default</li>
+<li>Regular security scanning of IaC code</li>
+<li>Compliance with corporate security policies</li>
+</ul>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li>Architecture Decision Records for significant changes</li>
+<li>Detailed comments in Terraform code</li>
+<li>Auto-generated documentation using terraform-docs</li>
+<li>up-to-date diagrams of the infrastructure</li>
+</ul>
+<h3 id="cost-management">Cost Management</h3>
+<ul>
+<li>Resource tagging for cost allocation</li>
+<li>Regular cost reviews</li>
+<li>Automated cost estimation for changes</li>
+<li>Dev/Test environments scheduled to scale down during off-hours</li>
+</ul>
+<hr/>
+<p><strong>Previous</strong>: <a href="system-architecture.html">System Architecture Overview</a> | <strong>Next</strong>: <a href="cicd-pipeline.html">CI/CD Pipeline</a></p>
+</body>
+</html>
