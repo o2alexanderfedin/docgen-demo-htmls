@@ -8,48 +8,38 @@
 {% seo %}
     <link rel="stylesheet" href="{{ "/assets/css/style.css?v=" | append: site.github.build_revision | relative_url }}">
     <!-- Load Mermaid -->
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@9.3.0/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@9.4.3/dist/mermaid.min.js"></script>
+  </head>
+  <body>
+    <div class="container-lg px-3 my-5 markdown-body">
+      <header class="page-header" role="banner">
+        <h1 class="project-name">{{ site.title | default: site.github.repository_name }}</h1>
+        <h2 class="project-tagline">{{ site.description | default: site.github.project_tagline }}</h2>
+        <a href="{{ site.github.repository_url }}" class="btn">View on GitHub</a>
+        <a href="{{ "/" | absolute_url }}" class="btn">Home</a>
+      </header>
+
+      <main id="content" class="main-content" role="main">
+        {{ content }}
+
+        <footer class="site-footer">
+          <span class="site-footer-owner">
+            <a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by 
+            <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.
+          </span>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Initialize Mermaid -->
     <script>
       document.addEventListener("DOMContentLoaded", function() {
         mermaid.initialize({
           startOnLoad: true,
-          theme: "default",
-          securityLevel: "loose",
-          flowchart: { 
-            curve: 'basis',
-            useMaxWidth: false
-          }
+          securityLevel: 'loose',
+          theme: 'default'
         });
-        
-        // Find all pre.language-mermaid elements and process them
-        document.querySelectorAll('pre.language-mermaid').forEach(function(element) {
-          // Create a div with class mermaid
-          var mermaidDiv = document.createElement('div');
-          mermaidDiv.classList.add('mermaid');
-          // Set the inner text to be the same as the pre element
-          mermaidDiv.innerText = element.innerText;
-          // Replace the pre element with the mermaid div
-          element.parentNode.replaceChild(mermaidDiv, element);
-        });
-        
-        // Initialize mermaid after modifying the DOM
-        mermaid.init(undefined, document.querySelectorAll('.mermaid'));
       });
     </script>
-  </head>
-  <body>
-    <div class="container-lg px-3 my-5 markdown-body">
-      {% if site.title and site.title != page.title %}
-      <h1><a href="{{ "/" | absolute_url }}">{{ site.title }}</a></h1>
-      {% endif %}
-
-      {{ content }}
-
-      {% if site.github.private != true and site.github.license %}
-      <div class="footer border-top border-gray-light mt-5 pt-3 text-right text-gray">
-        This site is open source. {% github_edit_link "Improve this page" %}.
-      </div>
-      {% endif %}
-    </div>
   </body>
 </html>

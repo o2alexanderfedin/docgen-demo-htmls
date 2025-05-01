@@ -1,0 +1,43 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+.mermaid {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+pre.highlight {
+  padding: 16px;
+  overflow: auto;
+  font-size: 0.9em;
+  line-height: 1.45;
+  background-color: #f6f8fa;
+  border-radius: 3px;
+}
+
+.main-content {
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: normal;
+    color: #159957;
+  }
+}
+
+.page-header {
+  padding: 2rem 1rem;
+}
+
+@media screen and (min-width: 64em) {
+  .page-header {
+    padding: 3rem 4rem;
+  }
+}
+
+.site-footer {
+  padding-top: 2rem;
+  margin-top: 2rem;
+  border-top: solid 1px #eff0f1;
+}
