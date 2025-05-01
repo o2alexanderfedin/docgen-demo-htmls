@@ -174,13 +174,31 @@ def copy_non_md_files(input_dir, output_dir):
 def install_mermaid_cli():
     """Install Mermaid CLI if not already installed."""
     try:
-        # Check if Mermaid CLI is installed
-        subprocess.run(['npx', '@mermaid-js/mermaid-cli/index.bundle.js', '--version'], 
-                      check=True, capture_output=True)
-        print("Mermaid CLI already installed")
-    except:
+        # First, create package.json if it doesn't exist to avoid npm errors
+        if not os.path.exists('package.json'):
+            print("Creating package.json...")
+            with open('package.json', 'w') as f:
+                f.write('{"name": "mermaid-converter", "version": "1.0.0", "private": true}')
+        
+        # Check if the node_modules directory exists
+        if os.path.exists('node_modules/@mermaid-js'):
+            print("Mermaid CLI already installed")
+            return True
+            
+        # Install Mermaid CLI
         print("Installing Mermaid CLI...")
         subprocess.run(['npm', 'install', '@mermaid-js/mermaid-cli'], check=True)
+        
+        # Verify installation
+        if os.path.exists('node_modules/.bin/mmdc'):
+            print("Mermaid CLI installation verified")
+            return True
+        else:
+            print("Mermaid CLI installation could not be verified")
+            return False
+    except Exception as e:
+        print(f"Error installing Mermaid CLI: {str(e)}")
+        return False
 
 def convert_mermaid_to_svg(html_content):
     """Convert mermaid code blocks to SVG."""
@@ -206,6 +224,37 @@ def convert_mermaid_to_svg(html_content):
     """
     soup.head.append(css_style)
     
+    # Make sure Mermaid CLI is installed before proceeding
+    try:
+        # First, create package.json if it doesn't exist to avoid npm errors
+        if not os.path.exists('package.json'):
+            with open('package.json', 'w') as f:
+                f.write('{"name": "mermaid-converter", "version": "1.0.0", "private": true}')
+                
+        # Install mermaid-cli locally
+        subprocess.run(['npm', 'install', '@mermaid-js/mermaid-cli'], check=True)
+        print("Mermaid CLI installed successfully")
+    except Exception as e:
+        print(f"Error installing Mermaid CLI: {str(e)}")
+        # Continue with client-side rendering fallback
+        
+        # Add the Mermaid script
+        mermaid_script = soup.new_tag('script')
+        mermaid_script['src'] = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js'
+        soup.head.append(mermaid_script)
+        
+        # Add initialization script
+        init_script = soup.new_tag('script')
+        init_script.string = "document.addEventListener('DOMContentLoaded', function() { mermaid.initialize({startOnLoad:true}); });"
+        soup.head.append(init_script)
+        
+        # Add class to mermaid blocks for client-side rendering
+        for code_block in mermaid_blocks:
+            pre_block = code_block.parent
+            pre_block['class'] = 'mermaid'
+            
+        return str(soup)
+    
     # Process each mermaid diagram
     for i, code_block in enumerate(mermaid_blocks):
         pre_block = code_block.parent
@@ -219,14 +268,31 @@ def convert_mermaid_to_svg(html_content):
             
             svg_output_path = tmp_path + '.svg'
             
-            # Run mmdc (Mermaid CLI) to generate SVG
-            subprocess.run([
-                'npx', '@mermaid-js/mermaid-cli/index.bundle.js',
+            # Get path to locally installed mmdc
+            mmdc_path = './node_modules/.bin/mmdc'
+            if not os.path.exists(mmdc_path):
+                mmdc_path = 'npx mmdc'  # Fallback
+                
+            # Run mmdc (Mermaid CLI) to generate SVG (with more verbose output)
+            print(f"Running Mermaid CLI for diagram #{i+1} with code: {mermaid_code[:50]}...")
+            
+            # Use subprocess with more complete approach
+            process = subprocess.run([
+                'node_modules/.bin/mmdc',
                 '-i', tmp_path,
                 '-o', svg_output_path,
                 '-b', 'transparent'
-            ], check=True)
+            ], capture_output=True, text=True, check=False)
             
+            # Check for errors
+            if process.returncode != 0:
+                print(f"  - CLI Error: {process.stderr}")
+                raise Exception(f"Mermaid CLI failed with status {process.returncode}: {process.stderr}")
+            
+            # Verify the output file exists
+            if not os.path.exists(svg_output_path) or os.path.getsize(svg_output_path) == 0:
+                raise Exception(f"Output SVG file {svg_output_path} was not created or is empty")
+                
             # Read the generated SVG
             with open(svg_output_path, 'r', encoding='utf-8') as svg_file:
                 svg_content = svg_file.read()
@@ -244,17 +310,39 @@ def convert_mermaid_to_svg(html_content):
                 
                 # Replace the pre block with the SVG div
                 pre_block.replace_with(mermaid_div)
-                print(f"  - Converted mermaid diagram #{i+1}")
+                print(f"  - Successfully converted mermaid diagram #{i+1}")
+            else:
+                raise Exception("Could not extract SVG content from the output file")
             
             # Clean up temporary files
             try:
                 os.remove(tmp_path)
                 if os.path.exists(svg_output_path):
                     os.remove(svg_output_path)
-            except:
-                pass
+            except Exception as cleanup_error:
+                print(f"  - Warning: Cleanup error: {str(cleanup_error)}")
         except Exception as e:
             print(f"  - Error converting mermaid diagram #{i+1}: {str(e)}")
+            
+            # Fallback to client-side rendering for this diagram
+            # Mark the pre element with mermaid class for client-side rendering
+            pre_block['class'] = 'mermaid'
+            code_block.decompose()  # Remove the code element
+            pre_block.string = mermaid_code  # Set the content directly in pre
+    
+    # Ensure we have client-side fallback for any diagrams that failed to convert
+    if soup.select('.mermaid'):
+        mermaid_script = soup.new_tag('script')
+        mermaid_script['src'] = 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js'
+        
+        # Check if script already exists
+        if not soup.select('script[src*="mermaid.min.js"]'):
+            soup.head.append(mermaid_script)
+            
+            # Add initialization script
+            init_script = soup.new_tag('script')
+            init_script.string = "document.addEventListener('DOMContentLoaded', function() { mermaid.initialize({startOnLoad:true}); });"
+            soup.head.append(init_script)
     
     return str(soup)
 
@@ -270,7 +358,11 @@ def main():
     ensure_dir(output_dir)
     
     # Install Mermaid CLI for diagram conversion
-    install_mermaid_cli()
+    mermaid_cli_available = install_mermaid_cli()
+    if not mermaid_cli_available:
+        print("WARNING: Mermaid CLI installation failed. Will use client-side rendering as fallback.")
+    else:
+        print("Mermaid CLI installation succeeded. Will attempt server-side SVG rendering.")
     
     # Get all markdown files
     md_files = []
@@ -282,15 +374,26 @@ def main():
     # Copy non-markdown files
     copy_non_md_files(input_dir, output_dir)
     
-    # Convert markdown files in parallel
+    # Limit concurrency for diagram conversion to avoid npm conflicts
+    max_workers = 4  # Limit to prevent npm conflicts
+    
+    # Convert markdown files with limited concurrency
     success_count = 0
     total_count = len(md_files)
     
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = [executor.submit(convert_file, file, input_dir, output_dir) for file in md_files]
-        for future in concurrent.futures.as_completed(futures):
-            if future.result():
-                success_count += 1
+    print(f"Converting {total_count} markdown files...")
+    
+    # Process files sequentially to avoid npm conflicts
+    for file in md_files:
+        if convert_file(file, input_dir, output_dir):
+            success_count += 1
+            
+    # With limited concurrency
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+    #     futures = [executor.submit(convert_file, file, input_dir, output_dir) for file in md_files]
+    #     for future in concurrent.futures.as_completed(futures):
+    #         if future.result():
+    #             success_count += 1
     
     print(f"Conversion completed: {success_count}/{total_count} files converted successfully.")
 
