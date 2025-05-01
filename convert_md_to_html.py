@@ -251,8 +251,9 @@ def convert_mermaid_to_svg(html_content):
         mermaid_code = code_block.get_text()
         
         # Skip very complex diagrams (over 30 lines) to avoid timeouts
-        if mermaid_code.count('\n') > 30:
-            print(f"  - Skipping large diagram #{i+1} ({mermaid_code.count('\n')} lines) - using client-side rendering")
+        line_count = mermaid_code.count('\n')
+        if line_count > 30:
+            print(f"  - Skipping large diagram #{i+1} ({line_count} lines) - using client-side rendering")
             pre_block['class'] = 'mermaid'
             code_block.decompose()  # Remove the code element
             pre_block.string = mermaid_code  # Set the content directly in pre
