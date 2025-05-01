@@ -1,8 +1,10 @@
 theme: jekyll-theme-slate
+title: LLM Gateway Documentation
 markdown: kramdown
 kramdown:
   input: GFM
   hard_wrap: false
+  syntax_highlighter: rouge
 plugins:
   - jekyll-relative-links
 relative_links:
@@ -10,3 +12,7 @@ relative_links:
   collections: true
 include:
   - README.md
+  - "**/*.md"
+
+# Make sure all markdown files are processed
+permalink: pretty
