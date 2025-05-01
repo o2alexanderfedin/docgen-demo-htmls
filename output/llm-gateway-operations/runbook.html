@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>runbook</title>
-    <style>
+<meta charset="utf-8"/>
+<title>runbook</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="runbook-operations-playbook">Runbook / Operations Playbook</h1>
+<h1 id="runbook-operations-playbook">Runbook / Operations Playbook</h1>
 <p>This runbook provides step-by-step procedures for common operational tasks and troubleshooting scenarios for the LLM Gateway service.</p>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
@@ -103,7 +113,7 @@
 <ol>
 <li>
 <p><strong>Trigger Deployment</strong>
-   <code>bash
+<code>bash
    # After PR is approved and merged
    gh workflow run deploy-production.yml --ref main</code></p>
 </li>
@@ -230,7 +240,7 @@
 <ol>
 <li>
 <p><strong>Analyze Database Metrics</strong>
-   <code>bash
+<code>bash
    # Check current metrics
    aws cloudwatch get-metric-data \
      --metric-data-queries file://db-metric-queries.json \
@@ -246,7 +256,7 @@
 </li>
 <li>
 <p><strong>Scale Database Instance</strong>
-   <code>bash
+<code>bash
    # Through AWS CLI
    aws rds modify-db-instance \
      --db-instance-identifier llm-gateway-db \
@@ -263,7 +273,7 @@
 </li>
 <li>
 <p><strong>Verify Successful Scaling</strong>
-   <code>bash
+<code>bash
    # Check instance status
    aws rds describe-db-instances \
      --db-instance-identifier llm-gateway-db \
@@ -301,7 +311,7 @@
 </li>
 <li>
 <p><strong>Perform Maintenance</strong>
-   <code>bash
+<code>bash
    # Apply pending updates
    aws rds apply-pending-maintenance-action \
      --resource-identifier arn:aws:rds:us-east-1:123456789012:db:llm-gateway-db \
@@ -367,7 +377,7 @@
 <ol>
 <li>
 <p><strong>Run Synthetic Tests</strong>
-   <code>bash
+<code>bash
    # Execute basic prompt test
    curl -X POST https://api.example.com/v1/tenants/test/llm/execute \
      -H "Authorization: Bearer $TEST_TOKEN" \
@@ -412,19 +422,19 @@
 <ol>
 <li>
 <p><strong>Check Replication Status (if applicable)</strong>
-   <code>bash
+<code>bash
    # For PostgreSQL
    kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT * FROM pg_stat_replication"</code></p>
 </li>
 <li>
 <p><strong>Check Query Performance</strong>
-   <code>bash
+<code>bash
    # Check for slow queries
    kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT query, calls, total_time, mean_time FROM pg_stat_statements ORDER BY mean_time DESC LIMIT 10"</code></p>
 </li>
 <li>
 <p><strong>Check Database Logs</strong>
-   <code>bash
+<code>bash
    # Get recent database logs
    aws rds download-db-log-file-portion \
      --db-instance-identifier llm-gateway-db \
@@ -433,7 +443,7 @@
 </li>
 <li>
 <p><strong>Verify Recent Backup</strong>
-   <code>bash
+<code>bash
    # Check recent automated backups
    aws rds describe-db-snapshots \
      --db-instance-identifier llm-gateway-db \
@@ -465,7 +475,7 @@
 <ol>
 <li>
 <p><strong>Check Traffic and Load</strong>
-   <code>bash
+<code>bash
    # Check current traffic levels
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway"}[5m]))%20by%20(service)'</code></p>
 </li>
@@ -482,19 +492,19 @@
 <ol>
 <li>
 <p><strong>Analyze Latency Breakdown</strong>
-   <code>bash
+<code>bash
    # Get latency percentiles
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(http_request_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(service,%20le))'</code></p>
 </li>
 <li>
 <p><strong>Check Database Performance</strong>
-   <code>bash
+<code>bash
    # Get database latency metrics
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(db_query_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(query_type,%20le))'</code></p>
 </li>
 <li>
 <p><strong>Check LLM Provider Performance</strong>
-   <code>bash
+<code>bash
    # Get LLM provider latency
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(llm_request_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(provider,%20le))'</code></p>
 </li>
@@ -521,7 +531,7 @@
 <ol>
 <li>
 <p><strong>Identify Error Types and Sources</strong>
-   <code>bash
+<code>bash
    # Get error rate by endpoint and status code
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway",status_code=~"5.."}[5m]))%20by%20(service,%20endpoint,%20status_code)'</code></p>
 </li>
@@ -594,25 +604,25 @@
 <ol>
 <li>
 <p><strong>Analyze Error Patterns</strong>
-   <code>bash
+<code>bash
    # Get error details from logs
    kubectl logs -n llm-gateway -l app=execution-service | grep -i "provider=openai.*error"</code></p>
 </li>
 <li>
 <p><strong>Implement Circuit Breaker</strong>
-   <code>bash
+<code>bash
    # Apply circuit breaker configuration
    kubectl apply -f operations/circuit-breaker-openai.yaml</code></p>
 </li>
 <li>
 <p><strong>Failover to Backup Provider</strong>
-   <code>bash
+<code>bash
    # Update routing configuration
    kubectl apply -f operations/provider-failover.yaml</code></p>
 </li>
 <li>
 <p><strong>Adjust Rate Limiting</strong>
-   <code>bash
+<code>bash
    # Reduce traffic to affected provider
    kubectl apply -f operations/provider-rate-limit.yaml</code></p>
 </li>
@@ -626,7 +636,7 @@
 </li>
 <li>
 <p><strong>Restore Normal Operations</strong>
-   <code>bash
+<code>bash
    # When provider recovers, remove temporary configurations
    kubectl delete -f operations/provider-failover.yaml
    kubectl delete -f operations/circuit-breaker-openai.yaml
@@ -650,7 +660,7 @@
 <ol>
 <li>
 <p><strong>Check Connection Pooling</strong>
-   <code>bash
+<code>bash
    # Check connection pool metrics
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=api-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/actuator/metrics/hikaricp.connections</code></p>
 </li>
@@ -669,13 +679,13 @@
 <ol>
 <li>
 <p><strong>Reset Connection Pools if Needed</strong>
-   <code>bash
+<code>bash
    # Apply connection pool reset
    kubectl apply -f operations/reset-db-connections.yaml</code></p>
 </li>
 <li>
 <p><strong>Check for Database Resource Constraints</strong>
-   <code>bash
+<code>bash
    # Check CPU and memory metrics
    aws cloudwatch get-metric-data \
      --metric-data-queries file://db-resource-metrics.json \
@@ -708,19 +718,19 @@
 <ol>
 <li>
 <p><strong>Check Pods on Affected Nodes</strong>
-   <code>bash
+<code>bash
    # List pods on specific node
    kubectl get pods -A -o wide --field-selector spec.nodeName=node-name</code></p>
 </li>
 <li>
 <p><strong>Cordon Problematic Nodes</strong>
-   <code>bash
+<code>bash
    # Prevent new pods from being scheduled
    kubectl cordon node-name</code></p>
 </li>
 <li>
 <p><strong>Drain Pods if Necessary</strong>
-   <code>bash
+<code>bash
    # Safely evict pods
    kubectl drain node-name --ignore-daemonsets --delete-local-data</code></p>
 </li>
@@ -781,13 +791,13 @@
 <ol>
 <li>
 <p><strong>Test Pod-to-Pod Communication</strong>
-   <code>bash
+<code>bash
    # Run connectivity test
    kubectl exec -it network-util -n llm-gateway -- curl api-service.llm-gateway.svc.cluster.local:8080/health</code></p>
 </li>
 <li>
 <p><strong>Check AWS Network Components</strong>
-   <code>bash
+<code>bash
    # Verify VPC components
    aws ec2 describe-nat-gateways --filter Name=vpc-id,Values=$VPC_ID
    aws ec2 describe-route-tables --filter Name=vpc-id,Values=$VPC_ID</code></p>
@@ -816,13 +826,13 @@
 <ol>
 <li>
 <p><strong>Identify High-Usage Tenants or Services</strong>
-   <code>bash
+<code>bash
    # Find top consumers
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=topk(5,sum(llm_token_usage_total{namespace="llm-gateway"})%20by%20(tenant_id))'</code></p>
 </li>
 <li>
 <p><strong>Check for Token Usage Anomalies</strong>
-   <code>bash
+<code>bash
    # Look for unusual patterns
    kubectl logs -n llm-gateway -l app=analytics-service | grep "token_usage_anomaly"</code></p>
 </li>
@@ -857,13 +867,13 @@
 <ol>
 <li>
 <p><strong>Check for Cache Evictions</strong>
-   <code>bash
+<code>bash
    # Get eviction metrics
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=rate(redis_evicted_keys_total{namespace="llm-gateway"}[5m])'</code></p>
 </li>
 <li>
 <p><strong>Inspect Cache Configuration</strong>
-   <code>bash
+<code>bash
    # Get current config
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=redis -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- redis-cli CONFIG GET maxmemory-policy</code></p>
 </li>
@@ -898,7 +908,7 @@
 <ol>
 <li>
 <p><strong>Store Provider Credentials</strong>
-   <code>bash
+<code>bash
    # Create secret in Secrets Manager
    aws secretsmanager create-secret \
      --name llm-gateway/providers/new-provider-api-key \
@@ -906,19 +916,19 @@
 </li>
 <li>
 <p><strong>Create Provider Configuration</strong>
-   <code>bash
+<code>bash
    # Apply configuration
    kubectl apply -f providers/new-provider-config.yaml</code></p>
 </li>
 <li>
 <p><strong>Deploy Provider Integration</strong>
-   <code>bash
+<code>bash
    # Apply updated service configuration
    kubectl apply -f providers/deploy-provider-integration.yaml</code></p>
 </li>
 <li>
 <p><strong>Test Provider Integration</strong>
-   <code>bash
+<code>bash
    # Run integration tests
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=test-runner -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- pytest tests/providers/test_new_provider.py</code></p>
 </li>
@@ -932,7 +942,7 @@
 </li>
 <li>
 <p><strong>Enable in Production</strong>
-   <code>bash
+<code>bash
    # Update routing configuration to include new provider
    kubectl apply -f providers/update-routing-config.yaml</code></p>
 </li>
@@ -943,25 +953,25 @@
 <ol>
 <li>
 <p><strong>Review Current Usage and Limits</strong>
-   <code>bash
+<code>bash
    # Get current usage metrics
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(llm_request_total{namespace="llm-gateway"}[24h]))%20by%20(provider)'</code></p>
 </li>
 <li>
 <p><strong>Configure Provider Rate Limits</strong>
-   <code>bash
+<code>bash
    # Apply or update rate limits
    kubectl apply -f providers/update-provider-rate-limits.yaml</code></p>
 </li>
 <li>
 <p><strong>Set Up Usage Alerts</strong>
-   <code>bash
+<code>bash
    # Configure alerts for approaching limits
    kubectl apply -f providers/quota-alerts.yaml</code></p>
 </li>
 <li>
 <p><strong>Implement Token Budgeting</strong>
-   <code>bash
+<code>bash
    # Apply token budget configurations
    kubectl apply -f providers/token-budgets.yaml</code></p>
 </li>
@@ -1000,7 +1010,7 @@
 <ol>
 <li>
 <p><strong>Investigate the Scope</strong>
-   <code>bash
+<code>bash
    # Review audit logs
    aws cloudwatch filter-log-events \
      --log-group-name /aws/eks/llm-gateway/auth-logs \
@@ -1054,13 +1064,13 @@
 </li>
 <li>
 <p><strong>Apply Change</strong>
-   <code>bash
+<code>bash
    # Apply to production
    kubectl apply -f config/new-cache-config.yaml -n llm-gateway</code></p>
 </li>
 <li>
 <p><strong>Monitor Impact</strong>
-   <code>bash
+<code>bash
    # Watch related metrics
    kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query_range?query=cache_hit_ratio&amp;start=2023-01-01T00:00:00Z&amp;end=2023-01-02T00:00:00Z&amp;step=5m'</code></p>
 </li>
@@ -1071,7 +1081,7 @@
 <li>Update runbook if procedures changed</li>
 <li>Close change request with results</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="monitoring-alerting.html">Monitoring &amp; Alerting</a> | <strong>Next</strong>: <a href="disaster-recovery.html">Disaster Recovery &amp; Backup Strategy</a></p>
 </body>
 </html>

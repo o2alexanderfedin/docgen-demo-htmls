@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>observability-telemetry</title>
-    <style>
+<meta charset="utf-8"/>
+<title>observability-telemetry</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="observability-and-telemetry">Observability and Telemetry</h1>
+<h1 id="observability-and-telemetry">Observability and Telemetry</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -97,7 +107,7 @@
 <h3 id="system-overview">System Overview</h3>
 <p>The observability architecture is designed to provide a complete view of the system's state and behavior:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;LLM Gateway Components&quot;
+    subgraph "LLM Gateway Components"
         API[API Layer] --&gt; |Emits| Logs[Logs]
         API --&gt; |Registers| Metrics[Metrics]
         API --&gt; |Creates| Traces[Traces]
@@ -185,23 +195,23 @@
 <h3 id="log-structure">Log Structure</h3>
 <p>The LLM Gateway uses a structured logging format to ensure logs are machine-parseable and easily searchable:</p>
 <pre><code class="language-json">{
-  &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
-  &quot;level&quot;: &quot;INFO&quot;,
-  &quot;thread&quot;: &quot;http-nio-8080-exec-3&quot;,
-  &quot;logger&quot;: &quot;com.aisera.service.llm.execution.ExecutionManagerImpl&quot;,
-  &quot;message&quot;: &quot;Request execution completed&quot;,
-  &quot;context&quot;: {
-    &quot;requestId&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;tenantId&quot;: &quot;tenant-123&quot;,
-    &quot;userId&quot;: &quot;user-456&quot;,
-    &quot;providerType&quot;: &quot;OPENAI&quot;,
-    &quot;modelId&quot;: &quot;gpt-4&quot;,
-    &quot;executionTimeMs&quot;: 1243,
-    &quot;tokenCount&quot;: 356,
-    &quot;cacheHit&quot;: false
+  "timestamp": "2023-05-15T14:22:18.543Z",
+  "level": "INFO",
+  "thread": "http-nio-8080-exec-3",
+  "logger": "com.aisera.service.llm.execution.ExecutionManagerImpl",
+  "message": "Request execution completed",
+  "context": {
+    "requestId": "req-1234-5678-90ab-cdef",
+    "tenantId": "tenant-123",
+    "userId": "user-456",
+    "providerType": "OPENAI",
+    "modelId": "gpt-4",
+    "executionTimeMs": 1243,
+    "tokenCount": 356,
+    "cacheHit": false
   },
-  &quot;traceId&quot;: &quot;trace-1234-5678-90ab-cdef&quot;,
-  &quot;spanId&quot;: &quot;span-1234-5678-90ab-cdef&quot;
+  "traceId": "trace-1234-5678-90ab-cdef",
+  "spanId": "span-1234-5678-90ab-cdef"
 }
 </code></pre>
 <h3 id="log-levels">Log Levels</h3>
@@ -246,16 +256,16 @@
 <p>The LLM Gateway implements Mapped Diagnostic Context (MDC) to correlate log entries across threads and systems:</p>
 <pre><code class="language-java">// Example of contextual logging
 try (var context = LogContext.create()
-        .put(&quot;requestId&quot;, request.getId())
-        .put(&quot;tenantId&quot;, request.getTenantId())
-        .put(&quot;provider&quot;, request.getProviderType())) {
+        .put("requestId", request.getId())
+        .put("tenantId", request.getTenantId())
+        .put("provider", request.getProviderType())) {
 
-    logger.info(&quot;Processing request&quot;);
+    logger.info("Processing request");
 
     // Logic that generates more logs with the same context
     executeRequest(request);
 
-    logger.info(&quot;Request processing completed&quot;);
+    logger.info("Request processing completed");
 }
 </code></pre>
 <p>Key context attributes that are automatically included in all logs:</p>
@@ -340,19 +350,19 @@ try (var context = LogContext.create()
 <p>The LLM Gateway exposes metrics in Prometheus format:</p>
 <pre><code># HELP llm_request_duration_seconds Request execution time in seconds
 # TYPE llm_request_duration_seconds histogram
-llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;0.1&quot;} 12
-llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;0.5&quot;} 45
-llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;1.0&quot;} 78
-llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;2.0&quot;} 96
-llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;5.0&quot;} 112
-llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;+Inf&quot;} 120
-llm_request_duration_seconds_count{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;} 120
-llm_request_duration_seconds_sum{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;} 142.5
+llm_request_duration_seconds_bucket{tenant="tenant1",provider="openai",model="gpt-4",le="0.1"} 12
+llm_request_duration_seconds_bucket{tenant="tenant1",provider="openai",model="gpt-4",le="0.5"} 45
+llm_request_duration_seconds_bucket{tenant="tenant1",provider="openai",model="gpt-4",le="1.0"} 78
+llm_request_duration_seconds_bucket{tenant="tenant1",provider="openai",model="gpt-4",le="2.0"} 96
+llm_request_duration_seconds_bucket{tenant="tenant1",provider="openai",model="gpt-4",le="5.0"} 112
+llm_request_duration_seconds_bucket{tenant="tenant1",provider="openai",model="gpt-4",le="+Inf"} 120
+llm_request_duration_seconds_count{tenant="tenant1",provider="openai",model="gpt-4"} 120
+llm_request_duration_seconds_sum{tenant="tenant1",provider="openai",model="gpt-4"} 142.5
 
 # HELP llm_request_total Total number of LLM requests
 # TYPE llm_request_total counter
-llm_request_total{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,success=&quot;true&quot;} 118
-llm_request_total{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,success=&quot;false&quot;} 2
+llm_request_total{tenant="tenant1",provider="openai",model="gpt-4",success="true"} 118
+llm_request_total{tenant="tenant1",provider="openai",model="gpt-4",success="false"} 2
 </code></pre>
 <p><strong>Key Prometheus Metrics:</strong></p>
 <ol>
@@ -397,8 +407,8 @@ public class CustomMetricsCollector {
     private final Timer customProcessingTime;
 
     public CustomMetricsCollector(MetricsRegistry registry) {
-        customIntegrationRequests = registry.counter(&quot;custom_integration_requests_total&quot;);
-        customProcessingTime = registry.timer(&quot;custom_processing_seconds&quot;);
+        customIntegrationRequests = registry.counter("custom_integration_requests_total");
+        customProcessingTime = registry.timer("custom_processing_seconds");
     }
 
     public void recordIntegrationRequest() {
@@ -471,23 +481,23 @@ public class CustomMetricsCollector {
 <p><strong>Span Attributes:</strong></p>
 <p>Each span includes relevant attributes to provide context:</p>
 <pre><code class="language-yaml"># Example HTTP Request Span
-name: &quot;/api/v1/prompt/execute&quot;
+name: "/api/v1/prompt/execute"
 kind: SERVER
 attributes:
-  http.method: &quot;POST&quot;
-  http.url: &quot;https://llm-gateway.example.com/api/v1/prompt/execute&quot;
+  http.method: "POST"
+  http.url: "https://llm-gateway.example.com/api/v1/prompt/execute"
   http.status_code: 200
-  tenant.id: &quot;tenant-123&quot;
-  user.id: &quot;user-456&quot;
-  request.id: &quot;req-1234-5678-90ab-cdef&quot;
+  tenant.id: "tenant-123"
+  user.id: "user-456"
+  request.id: "req-1234-5678-90ab-cdef"
 
 # Example Provider Call Span
-name: &quot;provider.call.openai&quot;
+name: "provider.call.openai"
 kind: CLIENT
 attributes:
-  provider.type: &quot;OPENAI&quot;
-  provider.model: &quot;gpt-4&quot;
-  provider.endpoint: &quot;https://api.openai.com/v1/chat/completions&quot;
+  provider.type: "OPENAI"
+  provider.model: "gpt-4"
+  provider.endpoint: "https://api.openai.com/v1/chat/completions"
   request.prompt_tokens: 156
   request.completion_tokens: 200
   request.total_tokens: 356
@@ -504,7 +514,7 @@ attributes:
     SamplingDecision --&gt;|New Patterns| AlwaysSample
     SamplingDecision --&gt;|Normal Requests| RateSampling[Rate-Based Sampling]
 
-    subgraph &quot;Sampling Configuration&quot;
+    subgraph "Sampling Configuration"
         BaseRate[Base Rate: 10%]
         ErrorRate[Error Rate: 100%]
         SlowThreshold[Slow Threshold: P95]
@@ -527,7 +537,7 @@ attributes:
 <h3 id="health-checks">Health Checks</h3>
 <p>The LLM Gateway implements comprehensive health checks for all components:</p>
 <pre><code class="language-mermaid">graph TD
-    HealthEndpoint[&quot;/actuator/health&quot;] --&gt; HealthAggregator[Health Aggregator]
+    HealthEndpoint["/actuator/health"] --&gt; HealthAggregator[Health Aggregator]
 
     HealthAggregator --&gt; DBHealth[Database Health]
     HealthAggregator --&gt; CacheHealth[Cache Health]
@@ -550,55 +560,55 @@ attributes:
 </code></pre>
 <p><strong>Health Check Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;status&quot;: &quot;UP&quot;,
-  &quot;components&quot;: {
-    &quot;db&quot;: {
-      &quot;status&quot;: &quot;UP&quot;,
-      &quot;details&quot;: {
-        &quot;database&quot;: &quot;PostgreSQL&quot;,
-        &quot;version&quot;: &quot;14.4&quot;,
-        &quot;responseTime&quot;: &quot;12ms&quot;
+  "status": "UP",
+  "components": {
+    "db": {
+      "status": "UP",
+      "details": {
+        "database": "PostgreSQL",
+        "version": "14.4",
+        "responseTime": "12ms"
       }
     },
-    &quot;cache&quot;: {
-      &quot;status&quot;: &quot;UP&quot;,
-      &quot;details&quot;: {
-        &quot;type&quot;: &quot;Redis&quot;,
-        &quot;version&quot;: &quot;6.2.6&quot;,
-        &quot;responseTime&quot;: &quot;2ms&quot;
+    "cache": {
+      "status": "UP",
+      "details": {
+        "type": "Redis",
+        "version": "6.2.6",
+        "responseTime": "2ms"
       }
     },
-    &quot;providers&quot;: {
-      &quot;status&quot;: &quot;UP&quot;,
-      &quot;components&quot;: {
-        &quot;openai&quot;: {
-          &quot;status&quot;: &quot;UP&quot;,
-          &quot;details&quot;: {
-            &quot;latency&quot;: &quot;245ms&quot;,
-            &quot;models&quot;: [&quot;gpt-3.5-turbo&quot;, &quot;gpt-4&quot;]
+    "providers": {
+      "status": "UP",
+      "components": {
+        "openai": {
+          "status": "UP",
+          "details": {
+            "latency": "245ms",
+            "models": ["gpt-3.5-turbo", "gpt-4"]
           }
         },
-        &quot;anthropic&quot;: {
-          &quot;status&quot;: &quot;DEGRADED&quot;,
-          &quot;details&quot;: {
-            &quot;latency&quot;: &quot;580ms&quot;,
-            &quot;models&quot;: [&quot;claude-2&quot;]
+        "anthropic": {
+          "status": "DEGRADED",
+          "details": {
+            "latency": "580ms",
+            "models": ["claude-2"]
           }
         },
-        &quot;bedrock&quot;: {
-          &quot;status&quot;: &quot;UP&quot;,
-          &quot;details&quot;: {
-            &quot;latency&quot;: &quot;320ms&quot;,
-            &quot;models&quot;: [&quot;llama2-70b&quot;, &quot;claude-instant&quot;]
+        "bedrock": {
+          "status": "UP",
+          "details": {
+            "latency": "320ms",
+            "models": ["llama2-70b", "claude-instant"]
           }
         }
       }
     },
-    &quot;disk&quot;: {
-      &quot;status&quot;: &quot;UP&quot;,
-      &quot;details&quot;: {
-        &quot;free&quot;: &quot;15.2GB&quot;,
-        &quot;threshold&quot;: &quot;10GB&quot;
+    "disk": {
+      "status": "UP",
+      "details": {
+        "free": "15.2GB",
+        "threshold": "10GB"
       }
     }
   }
@@ -615,7 +625,7 @@ attributes:
     DependencyStatus --&gt;|All UP| ReadinessUp[Readiness UP]
     DependencyStatus --&gt;|Any DOWN| ReadinessDown[Readiness DOWN]
 
-    subgraph &quot;Readiness Dependencies&quot;
+    subgraph "Readiness Dependencies"
         DBStatus[Database Status]
         CacheStatus[Cache Status]
         CoreProviderStatus[Core Provider Status]
@@ -717,7 +727,7 @@ attributes:
     Router --&gt; |Security| SecTeam[Security Team]
     Router --&gt; |Business| BizTeam[Business Team]
 
-    subgraph &quot;Notification Channels&quot;
+    subgraph "Notification Channels"
         Platform --&gt; PlatformSlack[Slack - Platform]
         Platform --&gt; PlatformPager[PagerDuty - Platform]
 
@@ -765,32 +775,32 @@ attributes:
 <h3 id="alert-remediation">Alert Remediation</h3>
 <p>Alerts include context and recommended remediation steps:</p>
 <pre><code class="language-json">{
-  &quot;alertName&quot;: &quot;high_error_rate&quot;,
-  &quot;severity&quot;: &quot;high&quot;,
-  &quot;status&quot;: &quot;firing&quot;,
-  &quot;startTime&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
-  &quot;description&quot;: &quot;High error rate detected for OpenAI GPT-4 provider&quot;,
-  &quot;value&quot;: &quot;5.2%&quot;,
-  &quot;threshold&quot;: &quot;1.0%&quot;,
-  &quot;context&quot;: {
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-4&quot;,
-    &quot;errorTypes&quot;: {
-      &quot;rate_limit_exceeded&quot;: 65,
-      &quot;timeout&quot;: 12,
-      &quot;bad_request&quot;: 8
+  "alertName": "high_error_rate",
+  "severity": "high",
+  "status": "firing",
+  "startTime": "2023-05-15T14:22:18.543Z",
+  "description": "High error rate detected for OpenAI GPT-4 provider",
+  "value": "5.2%",
+  "threshold": "1.0%",
+  "context": {
+    "provider": "openai",
+    "model": "gpt-4",
+    "errorTypes": {
+      "rate_limit_exceeded": 65,
+      "timeout": 12,
+      "bad_request": 8
     },
-    &quot;affectedTenants&quot;: [&quot;tenant-123&quot;, &quot;tenant-456&quot;],
-    &quot;traceIds&quot;: [&quot;trace-1234&quot;, &quot;trace-5678&quot;]
+    "affectedTenants": ["tenant-123", "tenant-456"],
+    "traceIds": ["trace-1234", "trace-5678"]
   },
-  &quot;remediation&quot;: [
-    &quot;Check OpenAI status page for outages&quot;,
-    &quot;Review recent changes to request patterns&quot;,
-    &quot;Consider enabling rate limit protection temporarily&quot;,
-    &quot;Adjust retry parameters&quot;,
-    &quot;If persistent, failover to alternative provider&quot;
+  "remediation": [
+    "Check OpenAI status page for outages",
+    "Review recent changes to request patterns",
+    "Consider enabling rate limit protection temporarily",
+    "Adjust retry parameters",
+    "If persistent, failover to alternative provider"
   ],
-  &quot;runbook&quot;: &quot;https://docs.example.com/runbooks/high-error-rate&quot;
+  "runbook": "https://docs.example.com/runbooks/high-error-rate"
 }
 </code></pre>
 <h2 id="dashboard-and-visualization">Dashboard and Visualization</h2>
@@ -938,27 +948,27 @@ attributes:
 - Security-relevant operations</p>
 <p><strong>Audit Log Format:</strong></p>
 <pre><code class="language-json">{
-  &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
-  &quot;eventType&quot;: &quot;PROMPT_TEMPLATE_MODIFIED&quot;,
-  &quot;actor&quot;: {
-    &quot;userId&quot;: &quot;user-456&quot;,
-    &quot;username&quot;: &quot;admin@example.com&quot;,
-    &quot;ipAddress&quot;: &quot;192.168.1.100&quot;,
-    &quot;userAgent&quot;: &quot;Mozilla/5.0 ...&quot;
+  "timestamp": "2023-05-15T14:22:18.543Z",
+  "eventType": "PROMPT_TEMPLATE_MODIFIED",
+  "actor": {
+    "userId": "user-456",
+    "username": "admin@example.com",
+    "ipAddress": "192.168.1.100",
+    "userAgent": "Mozilla/5.0 ..."
   },
-  &quot;resource&quot;: {
-    &quot;type&quot;: &quot;PROMPT_TEMPLATE&quot;,
-    &quot;id&quot;: &quot;prompt-789&quot;,
-    &quot;name&quot;: &quot;Customer Support Assistant&quot;
+  "resource": {
+    "type": "PROMPT_TEMPLATE",
+    "id": "prompt-789",
+    "name": "Customer Support Assistant"
   },
-  &quot;action&quot;: &quot;MODIFY&quot;,
-  &quot;status&quot;: &quot;SUCCESS&quot;,
-  &quot;details&quot;: {
-    &quot;changes&quot;: [&quot;template&quot;, &quot;parameters&quot;],
-    &quot;version&quot;: &quot;2.3&quot;,
-    &quot;comment&quot;: &quot;Updated to improve customer response format&quot;
+  "action": "MODIFY",
+  "status": "SUCCESS",
+  "details": {
+    "changes": ["template", "parameters"],
+    "version": "2.3",
+    "comment": "Updated to improve customer response format"
   },
-  &quot;traceId&quot;: &quot;trace-1234-5678-90ab-cdef&quot;
+  "traceId": "trace-1234-5678-90ab-cdef"
 }
 </code></pre>
 <h3 id="compliance-reporting">Compliance Reporting</h3>
@@ -1006,7 +1016,7 @@ attributes:
 - API-based integration
 - Webhook notifications
 - Custom log formats</p>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="deployment-scaling.html">Deployment and Scaling Architecture</a> | <strong>Next</strong>: <a href="security-architecture.html">Security Architecture</a></p>
 </body>
 </html>

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>architecture</title>
-    <style>
+<meta charset="utf-8"/>
+<title>architecture</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="llm-gateway-architecture-design-document">LLM Gateway Architecture &amp; Design Document</h1>
+<h1 id="llm-gateway-architecture-design-document">LLM Gateway Architecture &amp; Design Document</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#1-introduction">1. Introduction</a></li>
@@ -92,7 +102,7 @@
 </ul>
 <h3 id="14-references">1.4 References</h3>
 <ul>
-<li><a href="https://github.com/Aisera/llm-gateway" target="_blank" rel="noopener noreferrer">LLM Gateway Repository</a></li>
+<li><a href="https://github.com/Aisera/llm-gateway" rel="noopener noreferrer" target="_blank">LLM Gateway Repository</a></li>
 </ul>
 <h2 id="2-high-level-system-overview">2. High-Level System Overview</h2>
 <p>The LLM Gateway is designed as a service-oriented application that orchestrates communication between Aisera's internal services and various LLM providers. It follows a modular architecture based on the open-closed principle, allowing for easy integration of new LLM providers.</p>
@@ -251,19 +261,19 @@
 <p>The component diagram below shows the main modules of the LLM Gateway and their interfaces:</p>
 <pre><code class="language-mermaid">flowchart TD
     subgraph LLM Gateway
-        Core[&quot;Core Module&lt;br&gt;(JavaMicroservice, ModuleManager)&quot;]
-        ExecutionMgmt[&quot;Execution Management&lt;br&gt;(ExecutionManager, ExecutionManagerImpl)&quot;]
-        PromptMgmt[&quot;Prompt Management&lt;br&gt;(PromptManager, PromptManagerImpl)&quot;]
-        ClientMgmt[&quot;Client Management&lt;br&gt;(ClientManager, ClientRegistry)&quot;]
-        Cache[&quot;Cache Management&lt;br&gt;(LLMCache)&quot;]
-        RestAPI[&quot;REST APIs&lt;br&gt;(Controllers)&quot;]
-        GrpcSvc[&quot;gRPC Service&quot;]
-        Analytics[&quot;Analytics&lt;br&gt;(MetricUtils, LLMAnalyticsHandler)&quot;]
+        Core["Core Module&lt;br&gt;(JavaMicroservice, ModuleManager)"]
+        ExecutionMgmt["Execution Management&lt;br&gt;(ExecutionManager, ExecutionManagerImpl)"]
+        PromptMgmt["Prompt Management&lt;br&gt;(PromptManager, PromptManagerImpl)"]
+        ClientMgmt["Client Management&lt;br&gt;(ClientManager, ClientRegistry)"]
+        Cache["Cache Management&lt;br&gt;(LLMCache)"]
+        RestAPI["REST APIs&lt;br&gt;(Controllers)"]
+        GrpcSvc["gRPC Service"]
+        Analytics["Analytics&lt;br&gt;(MetricUtils, LLMAnalyticsHandler)"]
 
-        subgraph ClientProviders[&quot;LLM Client Providers&quot;]
-            GPT4[&quot;GPT-4 Client&quot;]
-            Llama2[&quot;Bedrock Llama2 Client&quot;]
-            AiseraLLM[&quot;Aisera LLM Client&quot;]
+        subgraph ClientProviders["LLM Client Providers"]
+            GPT4["GPT-4 Client"]
+            Llama2["Bedrock Llama2 Client"]
+            AiseraLLM["Aisera LLM Client"]
         end
     end
 
@@ -287,8 +297,8 @@
 
     subgraph External
         DB[(Database)]
-        ExtLLMs[&quot;External LLM Services&lt;br&gt;(GPT-4, Bedrock, etc.)&quot;]
-        AiseraServices[&quot;Aisera Services&quot;]
+        ExtLLMs["External LLM Services&lt;br&gt;(GPT-4, Bedrock, etc.)"]
+        AiseraServices["Aisera Services"]
     end
 
     PromptMgmt &lt;--&gt; DB
@@ -301,25 +311,25 @@
 <p>The deployment diagram illustrates how the LLM Gateway components are distributed across the infrastructure:</p>
 <pre><code class="language-mermaid">flowchart TD
     subgraph Kubernetes Cluster
-        subgraph Pod[&quot;LLM Gateway Pod&quot;]
-            Container[&quot;LLM Gateway Container&quot;]
+        subgraph Pod["LLM Gateway Pod"]
+            Container["LLM Gateway Container"]
         end
 
-        MetricsServer[&quot;Prometheus&lt;br&gt;Metrics Server&quot;]
-        RedisCache[&quot;Redis Cache&quot;]
+        MetricsServer["Prometheus&lt;br&gt;Metrics Server"]
+        RedisCache["Redis Cache"]
     end
 
     subgraph AWS/Azure
         RDS[(RDS/SQL&lt;br&gt;Database)]
         subgraph LLM Services
-            OpenAI[&quot;OpenAI&lt;br&gt;(GPT-4)&quot;]
-            Bedrock[&quot;AWS Bedrock&lt;br&gt;(Llama2)&quot;]
-            CustomLLM[&quot;Aisera LLM&lt;br&gt;Services&quot;]
+            OpenAI["OpenAI&lt;br&gt;(GPT-4)"]
+            Bedrock["AWS Bedrock&lt;br&gt;(Llama2)"]
+            CustomLLM["Aisera LLM&lt;br&gt;Services"]
         end
     end
 
     subgraph Client Services
-        AiseraApps[&quot;Aisera Applications&quot;]
+        AiseraApps["Aisera Applications"]
     end
 
     Container &lt;--&gt; RDS
@@ -544,10 +554,10 @@
 <h3 id="41-entity-relationship-diagram">4.1 Entity Relationship Diagram</h3>
 <p>The following diagram illustrates the relationships between the primary entities in the LLM Gateway:</p>
 <pre><code class="language-mermaid">erDiagram
-    LLMRegistryEntity ||--o{ LLMPromptRegistryEntity : &quot;contains&quot;
-    LLMPromptRegistryEntity ||--o{ PromptParamDefinition : &quot;has input/output&quot;
-    LLMPromptRegistryEntity ||--o{ LLMPromptRegistryMappingEntity : &quot;maps to&quot;
-    UserEntity ||--o{ LLMPromptRegistryEntity : &quot;creates/updates&quot;
+    LLMRegistryEntity ||--o{ LLMPromptRegistryEntity : "contains"
+    LLMPromptRegistryEntity ||--o{ PromptParamDefinition : "has input/output"
+    LLMPromptRegistryEntity ||--o{ LLMPromptRegistryMappingEntity : "maps to"
+    UserEntity ||--o{ LLMPromptRegistryEntity : "creates/updates"
 
     LLMRegistryEntity {
         Long id PK
@@ -663,12 +673,12 @@
 </tr>
 <tr>
 <td>config</td>
-<td>Map<String, Object></td>
+<td>Map<string, object=""></string,></td>
 <td>Configuration for the provider</td>
 </tr>
 <tr>
 <td>authConfig</td>
-<td>Map<String, Object></td>
+<td>Map<string, object=""></string,></td>
 <td>Authentication configuration</td>
 </tr>
 </tbody>
@@ -701,7 +711,7 @@
 </tr>
 <tr>
 <td>inputParams</td>
-<td>List<PromptParamDefinition></td>
+<td>List<promptparamdefinition></promptparamdefinition></td>
 <td>Input parameters for the prompt</td>
 </tr>
 <tr>
@@ -716,7 +726,7 @@
 </tr>
 <tr>
 <td>outputParams</td>
-<td>List<PromptParamDefinition></td>
+<td>List<promptparamdefinition></promptparamdefinition></td>
 <td>Output parameters from the prompt</td>
 </tr>
 <tr>
@@ -781,7 +791,7 @@
 </tr>
 <tr>
 <td>config</td>
-<td>Map<String, Object></td>
+<td>Map<string, object=""></string,></td>
 <td>Configuration for the prompt</td>
 </tr>
 </tbody>
@@ -824,7 +834,7 @@
 </tr>
 <tr>
 <td>options</td>
-<td>List<String></td>
+<td>List<string></string></td>
 <td>Possible values for the parameter</td>
 </tr>
 </tbody>
@@ -853,12 +863,12 @@
 </tr>
 <tr>
 <td>requestParams</td>
-<td>List<PromptParamDTO></td>
+<td>List<promptparamdto></promptparamdto></td>
 <td>Parameters for the prompt</td>
 </tr>
 <tr>
 <td>config</td>
-<td>Map<String, Object></td>
+<td>Map<string, object=""></string,></td>
 <td>Configuration overrides</td>
 </tr>
 <tr>
@@ -901,17 +911,17 @@
 </tr>
 <tr>
 <td>requestParams</td>
-<td>List<PromptParamDTO></td>
+<td>List<promptparamdto></promptparamdto></td>
 <td>Parameters for the prompt</td>
 </tr>
 <tr>
 <td>messages</td>
-<td>List<ChatMessageDTO></td>
+<td>List<chatmessagedto></chatmessagedto></td>
 <td>Chat history messages</td>
 </tr>
 <tr>
 <td>config</td>
-<td>Map<String, Object></td>
+<td>Map<string, object=""></string,></td>
 <td>Configuration overrides</td>
 </tr>
 <tr>
@@ -926,7 +936,7 @@
 </tr>
 <tr>
 <td>functionDefinitions</td>
-<td>List<FunctionDefinitionDTO></td>
+<td>List<functiondefinitiondto></functiondefinitiondto></td>
 <td>Function calling definitions</td>
 </tr>
 <tr>
@@ -969,7 +979,7 @@
 </tr>
 <tr>
 <td>tool_calls</td>
-<td>List<ToolCallDTO></td>
+<td>List<toolcalldto></toolcalldto></td>
 <td>Tool call information</td>
 </tr>
 </tbody>
@@ -1064,29 +1074,29 @@
 </table>
 <p>Example fetch request:</p>
 <pre><code class="language-json">{
-  &quot;tenantId&quot;: &quot;1000&quot;,
-  &quot;promptName&quot;: &quot;example-prompt&quot;,
-  &quot;requestParams&quot;: [
+  "tenantId": "1000",
+  "promptName": "example-prompt",
+  "requestParams": [
     {
-      &quot;name&quot;: &quot;query&quot;,
-      &quot;value&quot;: &quot;What is the capital of France?&quot;
+      "name": "query",
+      "value": "What is the capital of France?"
     }
   ],
-  &quot;config&quot;: {
-    &quot;temperature&quot;: 0.7,
-    &quot;maxTokens&quot;: 500
+  "config": {
+    "temperature": 0.7,
+    "maxTokens": 500
   },
-  &quot;botId&quot;: 123,
-  &quot;useCache&quot;: true
+  "botId": 123,
+  "useCache": true
 }
 </code></pre>
 <p>Example response:</p>
 <pre><code class="language-json">{
-  &quot;statusCode&quot;: 200,
-  &quot;responseParams&quot;: [
+  "statusCode": 200,
+  "responseParams": [
     {
-      &quot;name&quot;: &quot;answer&quot;,
-      &quot;value&quot;: &quot;The capital of France is Paris.&quot;
+      "name": "answer",
+      "value": "The capital of France is Paris."
     }
   ]
 }
@@ -1167,11 +1177,11 @@
 </table>
 <h3 id="52-grpc-services">5.2 gRPC Services</h3>
 <p>The LLM Gateway also exposes a gRPC service defined by the following protobuf:</p>
-<pre><code class="language-protobuf">syntax = &quot;proto3&quot;;
+<pre><code class="language-protobuf">syntax = "proto3";
 
 package aisera.service.llm;
 
-import &quot;google/protobuf/any.proto&quot;;
+import "google/protobuf/any.proto";
 
 service LLMService {
   rpc FetchAnswer(LLMFetchAnswerRequest) returns (LLMFetchAnswerResponse);

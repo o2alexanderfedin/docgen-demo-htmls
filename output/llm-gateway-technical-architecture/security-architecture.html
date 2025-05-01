@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>security-architecture</title>
-    <style>
+<meta charset="utf-8"/>
+<title>security-architecture</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="security-architecture">Security Architecture</h1>
+<h1 id="security-architecture">Security Architecture</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -116,19 +126,19 @@
 <h3 id="threat-actors">Threat Actors</h3>
 <p>The LLM Gateway's threat model considers the following potential threat actors:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;External Threats&quot;
+    subgraph "External Threats"
         ExternalAttackers[External Attackers]
         CompetitorsAP[Competitors]
         SophisticatedAPT[Sophisticated APT Groups]
     end
 
-    subgraph &quot;Internal Threats&quot;
+    subgraph "Internal Threats"
         Malicious[Malicious Insiders]
         Careless[Careless Users]
         Compromised[Compromised Accounts]
     end
 
-    subgraph &quot;Supply Chain Threats&quot;
+    subgraph "Supply Chain Threats"
         ThirdParty[Third-Party Providers]
         Dependency[Dependency Vulnerabilities]
     end
@@ -210,7 +220,7 @@
 <h3 id="assets-to-protect">Assets to Protect</h3>
 <p>The LLM Gateway protects the following critical assets:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Data Assets&quot;
+    subgraph "Data Assets"
         PromptTemplates[Prompt Templates]
         PromptHistory[Prompt History]
         ModelResponses[Model Responses]
@@ -219,14 +229,14 @@
         AnalyticsData[Analytics Data]
     end
 
-    subgraph &quot;Authentication Assets&quot;
+    subgraph "Authentication Assets"
         UserCreds[User Credentials]
         APICreds[API Credentials]
         ProviderCreds[Provider Credentials]
         SessionTokens[Session Tokens]
     end
 
-    subgraph &quot;Infrastructure Assets&quot;
+    subgraph "Infrastructure Assets"
         APIEndpoints[API Endpoints]
         Databases[Databases]
         CacheSystems[Cache Systems]
@@ -234,7 +244,7 @@
         NetworkInfra[Network Infrastructure]
     end
 
-    subgraph &quot;Intellectual Property&quot;
+    subgraph "Intellectual Property"
         CodeBase[Codebase]
         BusinessLogic[Business Logic]
         ConfigSettings[Configuration Settings]
@@ -247,7 +257,7 @@
 <pre><code class="language-mermaid">flowchart TD
     Client[Client] --&gt; |Authentication Request| AuthN[Authentication Layer]
 
-    subgraph &quot;Authentication Methods&quot;
+    subgraph "Authentication Methods"
         APIKey[API Key Authentication]
         OAuth[OAuth 2.0]
         OIDC[OpenID Connect]
@@ -429,8 +439,8 @@
         ADMIN
     }
 
-    User &quot;1&quot; -- &quot;many&quot; Role: has
-    Role &quot;1&quot; -- &quot;many&quot; Permission: contains
+    User "1" -- "many" Role: has
+    Role "1" -- "many" Permission: contains
     Permission -- ResourceType: applies to
     Permission -- ActionType: allows
 </code></pre>
@@ -467,7 +477,7 @@
     PermCheck --&gt; |Has Permission| GrantAccess[Grant Access]
     PermCheck --&gt; |No Permission| DenyAccess[Deny Access]
 
-    subgraph &quot;Permission Evaluation&quot;
+    subgraph "Permission Evaluation"
         ExactMatch[Check Exact Permission]
         WildcardMatch[Check Wildcard Permissions]
         RoleHierarchy[Check Role Hierarchy]
@@ -485,24 +495,24 @@
 <h3 id="tenant-isolation">Tenant Isolation</h3>
 <p>The system implements strict multi-tenant isolation:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Authentication Layer&quot;
+    subgraph "Authentication Layer"
         AuthN[Authentication]
         TenantResolver[Tenant Resolver]
     end
 
-    subgraph &quot;Authorization Layer&quot;
+    subgraph "Authorization Layer"
         AuthZ[Authorization]
         TenantContext[Tenant Context]
         TenantPolicies[Tenant Policies]
     end
 
-    subgraph &quot;Data Layer&quot;
+    subgraph "Data Layer"
         TenantFilter[Tenant Filtering]
         DataPartitioning[Data Partitioning]
         RowLevelSecurity[Row-Level Security]
     end
 
-    subgraph &quot;Provider Access&quot;
+    subgraph "Provider Access"
         CredentialIsolation[Credential Isolation]
         UsageAccounting[Usage Accounting]
     end
@@ -668,7 +678,7 @@
 <h3 id="api-keys-and-tokens">API Keys and Tokens</h3>
 <p>The LLM Gateway implements a secure API key and token management system:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;API Key Lifecycle&quot;
+    subgraph "API Key Lifecycle"
         Creation[Key Creation]
         Storage[Secure Storage]
         Distribution[Secure Distribution]
@@ -778,13 +788,13 @@
 <h3 id="encryption-strategy">Encryption Strategy</h3>
 <p>The LLM Gateway implements a comprehensive encryption strategy:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Data States&quot;
+    subgraph "Data States"
         Transit[Data in Transit]
         Rest[Data at Rest]
         Use[Data in Use]
     end
 
-    subgraph &quot;Encryption Types&quot;
+    subgraph "Encryption Types"
         TransitEnc[TLS 1.3]
         VolumeEnc[Volume Encryption]
         ColumnEnc[Column-Level Encryption]
@@ -830,7 +840,7 @@
 <h3 id="key-management">Key Management</h3>
 <p>The system implements a robust key management system:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Key Hierarchy&quot;
+    subgraph "Key Hierarchy"
         RootKey[Root Key]
         KEK[Key Encryption Keys]
         DEK[Data Encryption Keys]
@@ -840,7 +850,7 @@
     KEK --&gt; |Protects| DEK
     DEK --&gt; |Encrypt| Data[Sensitive Data]
 
-    subgraph &quot;Key Storage Options&quot;
+    subgraph "Key Storage Options"
         HSM[Hardware Security Module]
         KMS[Key Management Service]
         SecureVault[Secure Vault]
@@ -850,7 +860,7 @@
     KEK --&gt; KMS
     DEK --&gt; SecureVault
 
-    subgraph &quot;Key Operations&quot;
+    subgraph "Key Operations"
         Generation[Key Generation]
         Rotation[Key Rotation]
         Revocation[Key Revocation]
@@ -907,7 +917,7 @@
     Classification --&gt; |Confidential| ConfidentialStorage[Encrypted Storage]
     Classification --&gt; |Restricted| RestrictedStorage[Fully Encrypted Storage]
 
-    subgraph &quot;Storage Controls&quot;
+    subgraph "Storage Controls"
         AccessControl[Access Control Lists]
         Encryption[Encryption]
         Masking[Data Masking]
@@ -958,18 +968,18 @@
     Internet[Internet] --&gt; |HTTPS| WAF[Web Application Firewall]
     WAF --&gt; |Filtered Traffic| PublicLB[Public Load Balancer]
 
-    subgraph &quot;DMZ / Public Subnet&quot;
+    subgraph "DMZ / Public Subnet"
         PublicLB --&gt; ApiGW[API Gateway]
         ApiGW --&gt; |TLS| InternalLB[Internal Load Balancer]
     end
 
-    subgraph &quot;Application Subnet&quot;
+    subgraph "Application Subnet"
         InternalLB --&gt; AppNode1[App Node 1]
         InternalLB --&gt; AppNode2[App Node 2]
         InternalLB --&gt; AppNode3[App Node 3]
     end
 
-    subgraph &quot;Data Subnet&quot;
+    subgraph "Data Subnet"
         AppNode1 --&gt; |Encrypted| DB[(Database)]
         AppNode2 --&gt; |Encrypted| DB
         AppNode3 --&gt; |Encrypted| DB
@@ -979,7 +989,7 @@
         AppNode3 --&gt; |Encrypted| Cache
     end
 
-    subgraph &quot;Egress Subnet&quot;
+    subgraph "Egress Subnet"
         AppNode1 --&gt; |HTTPS| EgressProxy[Egress Proxy]
         AppNode2 --&gt; |HTTPS| EgressProxy
         AppNode3 --&gt; |HTTPS| EgressProxy
@@ -1052,7 +1062,7 @@
 <h3 id="network-segmentation">Network Segmentation</h3>
 <p>The LLM Gateway implements detailed network segmentation:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Network Zones&quot;
+    subgraph "Network Zones"
         PublicZone[Public Zone]
         AppZone[Application Zone]
         DataZone[Data Zone]
@@ -1060,7 +1070,7 @@
         EgressZone[Egress Zone]
     end
 
-    subgraph &quot;Security Controls&quot;
+    subgraph "Security Controls"
         Firewall[Firewalls]
         NACL[Network ACLs]
         SecurityGroups[Security Groups]
@@ -1115,7 +1125,7 @@
 <pre><code class="language-mermaid">graph TD
     Client[Client] --&gt; |HTTPS| ApiGW[API Gateway]
 
-    subgraph &quot;API Gateway Security Functions&quot;
+    subgraph "API Gateway Security Functions"
         TLS[TLS Termination]
         Auth[Authentication]
         RateLimit[Rate Limiting]
@@ -1207,21 +1217,21 @@
 <h3 id="data-leakage-prevention">Data Leakage Prevention</h3>
 <p>The system implements controls to prevent data leakage:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Input Controls&quot;
+    subgraph "Input Controls"
         PIIDetection[PII Detection]
         SensitiveDataDetection[Sensitive Data Detection]
         DataMinimization[Data Minimization]
         InputFiltering[Input Filtering]
     end
 
-    subgraph &quot;Processing Controls&quot;
+    subgraph "Processing Controls"
         DataPartitioning[Data Partitioning]
         ContextIsolation[Context Isolation]
         ModelSelection[Secure Model Selection]
         ProviderControls[Provider Security Controls]
     end
 
-    subgraph &quot;Output Controls&quot;
+    subgraph "Output Controls"
         OutputFiltering[Output Filtering]
         PIIRedaction[PII Redaction]
         PatternMatching[Pattern Matching]
@@ -1276,21 +1286,21 @@
 <h3 id="model-security">Model Security</h3>
 <p>The LLM Gateway implements model security controls:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Model Selection Security&quot;
+    subgraph "Model Selection Security"
         TenantControls[Tenant-Level Controls]
         UserControls[User-Level Controls]
         RequestControls[Request-Level Controls]
         ContentControls[Content-Based Controls]
     end
 
-    subgraph &quot;Provider Security&quot;
+    subgraph "Provider Security"
         ProviderVetting[Provider Security Vetting]
         ModelEvaluation[Model Evaluation]
         SecuritySettings[Provider Security Settings]
         MonitoringControls[Provider Monitoring]
     end
 
-    subgraph &quot;Model Usage Controls&quot;
+    subgraph "Model Usage Controls"
         UsagePolicies[Usage Policies]
         ContentPolicies[Content Policies]
         AccessRestrictions[Access Restrictions]
@@ -1390,19 +1400,19 @@
 <h3 id="provider-credentials">Provider Credentials</h3>
 <p>The LLM Gateway implements secure management of provider credentials:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Credential Storage Options&quot;
+    subgraph "Credential Storage Options"
         SecretManager[Secret Manager Service]
         HSM[Hardware Security Module]
         EncryptedDB[Encrypted Database]
     end
 
-    subgraph &quot;Access Control&quot;
+    subgraph "Access Control"
         AppIdentity[Application Identity]
         JustInTime[Just-In-Time Access]
         LeastPrivilege[Least Privilege Access]
     end
 
-    subgraph &quot;Credential Types&quot;
+    subgraph "Credential Types"
         APIKeys[API Keys]
         OAuthCreds[OAuth Credentials]
         ServiceAccounts[Service Accounts]
@@ -1454,7 +1464,7 @@
 <pre><code class="language-mermaid">flowchart TD
     Trigger[Rotation Trigger] --&gt; |Initiates| RotationProcess[Rotation Process]
 
-    subgraph &quot;Rotation Triggers&quot;
+    subgraph "Rotation Triggers"
         TimeBased[Time-Based]
         EventBased[Event-Based]
         RiskBased[Risk-Based]
@@ -1508,7 +1518,7 @@
 <h3 id="audit-logging">Audit Logging</h3>
 <p>The LLM Gateway implements comprehensive audit logging:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Audit Events&quot;
+    subgraph "Audit Events"
         Authentication[Authentication Events]
         Authorization[Authorization Events]
         DataAccess[Data Access Events]
@@ -1517,14 +1527,14 @@
         SystemEvents[System Events]
     end
 
-    subgraph &quot;Log Processing&quot;
+    subgraph "Log Processing"
         Collection[Log Collection]
         Normalization[Log Normalization]
         Enrichment[Context Enrichment]
         Storage[Secure Storage]
     end
 
-    subgraph &quot;Security Monitoring&quot;
+    subgraph "Security Monitoring"
         RealTime[Real-time Analysis]
         SIEM[SIEM Integration]
         AlertGeneration[Alert Generation]
@@ -1582,7 +1592,7 @@
 <h3 id="compliance-controls">Compliance Controls</h3>
 <p>The LLM Gateway implements controls for regulatory compliance:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Compliance Domains&quot;
+    subgraph "Compliance Domains"
         DataPrivacy[Data Privacy]
         InfoSecurity[Information Security]
         AccessControl[Access Control]
@@ -1590,7 +1600,7 @@
         Governance[Governance]
     end
 
-    subgraph &quot;Regulatory Frameworks&quot;
+    subgraph "Regulatory Frameworks"
         GDPR[GDPR]
         HIPAA[HIPAA]
         SOC2[SOC 2]
@@ -1598,7 +1608,7 @@
         CCPA[CCPA/CPRA]
     end
 
-    subgraph &quot;Control Implementation&quot;
+    subgraph "Control Implementation"
         Policies[Policies &amp; Procedures]
         TechnicalControls[Technical Controls]
         TrainingAwareness[Training &amp; Awareness]
@@ -1687,7 +1697,7 @@
 <h3 id="detection-mechanisms">Detection Mechanisms</h3>
 <p>The LLM Gateway implements comprehensive security monitoring:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Data Sources&quot;
+    subgraph "Data Sources"
         AuditLogs[Audit Logs]
         SystemLogs[System Logs]
         NetworkLogs[Network Logs]
@@ -1695,7 +1705,7 @@
         APIGatewayLogs[API Gateway Logs]
     end
 
-    subgraph &quot;Detection Mechanisms&quot;
+    subgraph "Detection Mechanisms"
         SignatureDetection[Signature-Based Detection]
         AnomalyDetection[Anomaly Detection]
         BehaviorAnalysis[Behavior Analysis]
@@ -1703,7 +1713,7 @@
         CorrelationEngine[Correlation Engine]
     end
 
-    subgraph &quot;Response Actions&quot;
+    subgraph "Response Actions"
         Alerting[Alerting]
         AutoRemediation[Automated Remediation]
         BlockingActions[Blocking Actions]
@@ -1830,7 +1840,7 @@
 <h3 id="security-testing">Security Testing</h3>
 <p>The LLM Gateway undergoes comprehensive security testing:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Development Pipeline&quot;
+    subgraph "Development Pipeline"
         Design[Design Phase]
         Implementation[Implementation Phase]
         Testing[Testing Phase]
@@ -1838,7 +1848,7 @@
         Operation[Operation Phase]
     end
 
-    subgraph &quot;Security Testing&quot;
+    subgraph "Security Testing"
         SAST[Static Analysis]
         DAST[Dynamic Analysis]
         SCA[Software Composition Analysis]
@@ -1887,21 +1897,21 @@
 <h3 id="dependency-management">Dependency Management</h3>
 <p>The LLM Gateway implements secure dependency management:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Dependency Management&quot;
+    subgraph "Dependency Management"
         Selection[Dependency Selection]
         Scanning[Vulnerability Scanning]
         Patching[Patching Process]
         Monitoring[Continuous Monitoring]
     end
 
-    subgraph &quot;Scanning Tools&quot;
+    subgraph "Scanning Tools"
         SCA[SCA Tool]
         OWASP[OWASP Dependency Check]
         NpmAudit[npm audit]
         Custom[Custom Scanning]
     end
 
-    subgraph &quot;Vulnerability Sources&quot;
+    subgraph "Vulnerability Sources"
         NVD[NVD/CVE Database]
         SecurityAdvisories[Security Advisories]
         BugBounty[Bug Bounty Reports]
@@ -1964,21 +1974,21 @@
 <h3 id="secure-configuration">Secure Configuration</h3>
 <p>The LLM Gateway implements secure deployment configurations:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Configuration Sources&quot;
+    subgraph "Configuration Sources"
         DefaultConfig[Default Configuration]
         EnvironmentOverrides[Environment Overrides]
         SecretStore[Secret Store]
         TenantConfig[Tenant Configuration]
     end
 
-    subgraph &quot;Configuration Validation&quot;
+    subgraph "Configuration Validation"
         SchemaValidation[Schema Validation]
         SecurityCheck[Security Check]
         ComplianceCheck[Compliance Check]
         VersionCheck[Version Check]
     end
 
-    subgraph &quot;Configuration Management&quot;
+    subgraph "Configuration Management"
         ConfigVersioning[Configuration Versioning]
         ChangeControl[Change Control]
         AuditTrail[Audit Trail]
@@ -2032,21 +2042,21 @@
 <h3 id="container-security">Container Security</h3>
 <p>The LLM Gateway implements container security best practices:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Image Security&quot;
+    subgraph "Image Security"
         BaseImage[Minimal Base Image]
         Dependencies[Secure Dependencies]
         CodeScan[Code Scanning]
         ImageScan[Image Scanning]
     end
 
-    subgraph &quot;Runtime Security&quot;
+    subgraph "Runtime Security"
         Immutability[Immutable Containers]
         Isolation[Container Isolation]
         ResourceLimits[Resource Limits]
         SecurityContext[Security Context]
     end
 
-    subgraph &quot;Orchestration Security&quot;
+    subgraph "Orchestration Security"
         RBAC[Kubernetes RBAC]
         NetworkPolicy[Network Policies]
         PodSecurity[Pod Security Standards]
@@ -2105,7 +2115,7 @@
 <h3 id="infrastructure-security">Infrastructure Security</h3>
 <p>The LLM Gateway implements comprehensive infrastructure security:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Infrastructure Components&quot;
+    subgraph "Infrastructure Components"
         Compute[Compute Resources]
         Network[Network Infrastructure]
         Storage[Storage Resources]
@@ -2113,7 +2123,7 @@
         Monitoring[Monitoring Infrastructure]
     end
 
-    subgraph &quot;Security Controls&quot;
+    subgraph "Security Controls"
         ConfigHardening[Configuration Hardening]
         PatchManagement[Patch Management]
         AccessControl[Access Controls]
@@ -2121,7 +2131,7 @@
         Monitoring[Security Monitoring]
     end
 
-    subgraph &quot;Management Plane&quot;
+    subgraph "Management Plane"
         IaC[Infrastructure as Code]
         CMDB[Configuration Management]
         Automation[Security Automation]
@@ -2193,7 +2203,7 @@
 <li>Backup security</li>
 <li>Data integrity verification</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="observability-telemetry.html">Observability and Telemetry</a> | <strong>Next</strong>: <a href="error-handling-resilience.html">Error Handling and Resilience</a></p>
 </body>
 </html>

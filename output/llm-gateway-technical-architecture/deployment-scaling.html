@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>deployment-scaling</title>
-    <style>
+<meta charset="utf-8"/>
+<title>deployment-scaling</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="deployment-and-scaling-architecture">Deployment and Scaling Architecture</h1>
+<h1 id="deployment-and-scaling-architecture">Deployment and Scaling Architecture</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -97,7 +107,7 @@
     WAF --&gt; |HTTPS| LB[Load Balancer]
     LB --&gt; |HTTP| GW[API Gateway]
 
-    subgraph &quot;Multi-Tenant SaaS Environment&quot;
+    subgraph "Multi-Tenant SaaS Environment"
         GW --&gt; |HTTP| AuthSvc[Authentication Service]
         GW --&gt; |HTTP| LLMSvc[LLM Gateway Service]
 
@@ -133,7 +143,7 @@
     WAF --&gt; |HTTPS| LB[Load Balancer]
     LB --&gt; |HTTP| GW[API Gateway]
 
-    subgraph &quot;Customer VPC/VNET&quot;
+    subgraph "Customer VPC/VNET"
         GW --&gt; |HTTP| AuthSvc[Authentication Service]
         GW --&gt; |HTTP| LLMSvc[LLM Gateway Service]
 
@@ -163,7 +173,7 @@
 <h3 id="on-premises-deployment">On-Premises Deployment</h3>
 <p>The on-premises deployment provides a self-hosted solution in the customer's data center:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Customer Data Center&quot;
+    subgraph "Customer Data Center"
         InternalTraffic[Internal Traffic] --&gt; |HTTPS| FW[Firewall]
         FW --&gt; |HTTPS| InternalLB[Internal Load Balancer]
         InternalLB --&gt; |HTTP| LLMSvc[LLM Gateway Service]
@@ -194,7 +204,7 @@
 <h3 id="hybrid-deployment">Hybrid Deployment</h3>
 <p>The hybrid deployment combines cloud and on-premises components:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Customer Data Center&quot;
+    subgraph "Customer Data Center"
         InternalTraffic[Internal Traffic] --&gt; |HTTPS| FW[Firewall]
         FW --&gt; |HTTPS| InternalLB[Internal Load Balancer]
         InternalLB --&gt; |HTTP| OnPremLLMSvc[On-Prem LLM Gateway]
@@ -207,7 +217,7 @@
         OnPremLLMSvc --&gt; |Metrics| MonInfra[Monitoring Infrastructure]
     end
 
-    subgraph &quot;Cloud Environment&quot;
+    subgraph "Cloud Environment"
         OnPremLLMSvc --&gt; |HTTPS| CloudLLMSvc[Cloud LLM Gateway]
 
         CloudLLMSvc --&gt; |JDBC| CloudDB[(Cloud Database)]
@@ -229,7 +239,7 @@
 <h3 id="air-gapped-deployment">Air-Gapped Deployment</h3>
 <p>The air-gapped deployment provides a completely isolated solution:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Air-Gapped Environment&quot;
+    subgraph "Air-Gapped Environment"
         InternalTraffic[Internal Traffic] --&gt; |HTTPS| SecurityGW[Security Gateway]
         SecurityGW --&gt; |HTTPS| InternalLB[Internal Load Balancer]
         InternalLB --&gt; |HTTP| LLMSvc[LLM Gateway Service]
@@ -260,7 +270,7 @@
 <p>The LLM Gateway is containerized using Docker for consistent deployment across environments.</p>
 <h3 id="container-structure">Container Structure</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;LLM Gateway Container Architecture&quot;
+    subgraph "LLM Gateway Container Architecture"
         API[API Layer] --&gt; Core[Core Services]
         Admin[Admin UI] --&gt; Core
 
@@ -367,14 +377,14 @@ spec:
     - containerPort: 8080
     resources:
       requests:
-        memory: &quot;4Gi&quot;
-        cpu: &quot;2&quot;
+        memory: "4Gi"
+        cpu: "2"
       limits:
-        memory: &quot;8Gi&quot;
-        cpu: &quot;4&quot;
+        memory: "8Gi"
+        cpu: "4"
     env:
     - name: SPRING_PROFILES_ACTIVE
-      value: &quot;production&quot;
+      value: "production"
     - name: DB_HOST
       valueFrom:
         configMapKeyRef:
@@ -430,7 +440,7 @@ spec:
 </code></pre>
 <h3 id="stateful-components">Stateful Components</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;StatefulSet: Database&quot;
+    subgraph "StatefulSet: Database"
         DBPod1[Database Pod 1&lt;br&gt;Primary] --&gt; |Replication| DBPod2[Database Pod 2&lt;br&gt;Replica]
         DBPod1 --&gt; |Replication| DBPod3[Database Pod 3&lt;br&gt;Replica]
 
@@ -439,7 +449,7 @@ spec:
         DBPod3 --&gt; DBStorage3[Persistent Volume 3]
     end
 
-    subgraph &quot;StatefulSet: Cache&quot;
+    subgraph "StatefulSet: Cache"
         CachePod1[Cache Pod 1&lt;br&gt;Master] --&gt; |Replication| CachePod2[Cache Pod 2&lt;br&gt;Replica]
         CachePod1 --&gt; |Replication| CachePod3[Cache Pod 3&lt;br&gt;Replica]
 
@@ -452,7 +462,7 @@ spec:
 <pre><code class="language-mermaid">graph TD
     ConfigMap[ConfigMap:&lt;br&gt;llm-gateway-config] --&gt; |Mount| Pods[LLM Gateway Pods]
 
-    subgraph &quot;ConfigMap Contents&quot;
+    subgraph "ConfigMap Contents"
         AppConfig[Application Configuration]
         ProviderConfig[Provider Configuration]
         LoggingConfig[Logging Configuration]
@@ -461,7 +471,7 @@ spec:
 
     Secret[Secret:&lt;br&gt;llm-gateway-secrets] --&gt; |Mount| Pods
 
-    subgraph &quot;Secret Contents&quot;
+    subgraph "Secret Contents"
         DBCreds[Database Credentials]
         APICreds[API Credentials]
         TLSCerts[TLS Certificates]
@@ -480,7 +490,7 @@ spec:
     Deployment --&gt; |Creates| Pod3[Pod 3]
     Deployment --&gt; |Creates| PodN[Pod N]
 
-    subgraph &quot;Scaling Metrics&quot;
+    subgraph "Scaling Metrics"
         CPU[CPU Utilization]
         Memory[Memory Utilization]
         RequestRate[Request Rate]
@@ -545,7 +555,7 @@ spec:
 <pre><code class="language-mermaid">graph TD
     VPA[Vertical Pod Autoscaler] --&gt; |Recommends| Pod[LLM Gateway Pod]
 
-    subgraph &quot;Resource Adjustment&quot;
+    subgraph "Resource Adjustment"
         CPU[CPU Allocation]
         Memory[Memory Allocation]
         JVMHeap[JVM Heap Size]
@@ -597,7 +607,7 @@ spec:
     CacheScaler --&gt; CacheNodes[Cache Nodes]
     DBScaler --&gt; DBNodes[Database Nodes]
 
-    subgraph &quot;Scaling Policies&quot;
+    subgraph "Scaling Policies"
         TimeOfDay[Time-of-Day Patterns]
         UsagePatterns[Historical Patterns]
         SLOTargets[SLO Targets]
@@ -621,7 +631,7 @@ spec:
 <h2 id="high-availability-setup">High Availability Setup</h2>
 <h3 id="redundancy-patterns">Redundancy Patterns</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Region A - Primary&quot;
+    subgraph "Region A - Primary"
         IngressA[Ingress A] --&gt; ServiceA[Service A]
 
         ServiceA --&gt; PodA1[Pod A1]
@@ -635,7 +645,7 @@ spec:
         DBPrimaryA --&gt; |Replication| DBReplicaA[DB Replica A]
     end
 
-    subgraph &quot;Region B - Secondary&quot;
+    subgraph "Region B - Secondary"
         IngressB[Ingress B] --&gt; ServiceB[Service B]
 
         ServiceB --&gt; PodB1[Pod B1]
@@ -722,13 +732,13 @@ spec:
 <h2 id="network-architecture">Network Architecture</h2>
 <h3 id="service-mesh">Service Mesh</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Service Mesh&quot;
+    subgraph "Service Mesh"
         Gateway[API Gateway] --&gt; |HTTP| LLMService[LLM Gateway Service]
         LLMService --&gt; |gRPC| AuthService[Auth Service]
         LLMService --&gt; |HTTP| CacheService[Cache Service]
         LLMService --&gt; |HTTP| MetricsService[Metrics Service]
 
-        subgraph &quot;Sidecar Proxies&quot;
+        subgraph "Sidecar Proxies"
             LLMProxy[LLM Gateway Proxy] --- LLMService
             AuthProxy[Auth Proxy] --- AuthService
             CacheProxy[Cache Proxy] --- CacheService
@@ -820,14 +830,14 @@ spec:
     DBAbstraction --&gt; MySQL[MySQL&lt;br&gt;Alternative]
     DBAbstraction --&gt; SQLServer[SQL Server&lt;br&gt;Enterprise Option]
 
-    subgraph &quot;PostgreSQL Setup&quot;
+    subgraph "PostgreSQL Setup"
         PostgreSQL --&gt; PGPrimary[Primary Node]
         PGPrimary --&gt; |Streaming Replication| PGReplica1[Replica Node 1]
         PGPrimary --&gt; |Streaming Replication| PGReplica2[Replica Node 2]
         PGPrimary --&gt; |Archiving| WALArchive[WAL Archive]
     end
 
-    subgraph &quot;Backup Strategy&quot;
+    subgraph "Backup Strategy"
         WALArchive --&gt; DailyBackup[Daily Full Backup]
         WALArchive --&gt; ContinuousArchiving[Continuous WAL Archiving]
         DailyBackup --&gt; BackupStorage[Backup Storage]
@@ -849,7 +859,7 @@ spec:
     CacheAbstraction --&gt; Redis[Redis&lt;br&gt;Primary Cache]
     CacheAbstraction --&gt; Memcached[Memcached&lt;br&gt;Alternative]
 
-    subgraph &quot;Redis Setup&quot;
+    subgraph "Redis Setup"
         Redis --&gt; RedisMaster[Master Node]
         RedisMaster --&gt; |Replication| RedisSlave1[Replica Node 1]
         RedisMaster --&gt; |Replication| RedisSlave2[Replica Node 2]
@@ -858,7 +868,7 @@ spec:
         RedisMaster --&gt; |Persistence| AOF[AOF Log]
     end
 
-    subgraph &quot;Cache Policies&quot;
+    subgraph "Cache Policies"
         TTLPolicy[TTL-Based Expiration]
         LRUPolicy[LRU Eviction]
         SizeLimit[Memory Limit]
@@ -884,7 +894,7 @@ spec:
 
     SC --&gt; |Dynamic Provisioning| StorageBackend[Storage Backend]
 
-    subgraph &quot;Storage Options&quot;
+    subgraph "Storage Options"
         BlockStorage[Block Storage&lt;br&gt;EBS, Persistent Disk]
         FileStorage[File Storage&lt;br&gt;EFS, Azure Files]
         ObjectStorage[Object Storage&lt;br&gt;S3, Blob Storage]
@@ -1006,7 +1016,7 @@ spec:
 <li><strong>Validation</strong>: Post-deployment testing and verification</li>
 <li><strong>Rollback</strong>: Automated rollback on deployment failures</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="domain-model.html">Domain Model and Business Logic</a> | <strong>Next</strong>: <a href="observability-telemetry.html">Observability and Telemetry</a></p>
 </body>
 </html>

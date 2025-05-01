@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>extension-points</title>
-    <style>
+<meta charset="utf-8"/>
+<title>extension-points</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="extension-points-and-plug-in-strategy">Extension Points and Plug-In Strategy</h1>
+<h1 id="extension-points-and-plug-in-strategy">Extension Points and Plug-In Strategy</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -438,17 +448,17 @@ public class CustomFunctionHandler implements FunctionHandler, ApplicationListen
 </ol>
 <p><strong>Distribution Metadata:</strong></p>
 <pre><code class="language-json">{
-  &quot;name&quot;: &quot;custom-provider-extension&quot;,
-  &quot;version&quot;: &quot;1.0.0&quot;,
-  &quot;description&quot;: &quot;Integration with Custom LLM Provider&quot;,
-  &quot;author&quot;: &quot;Example Inc.&quot;,
-  &quot;extensionPoints&quot;: [&quot;com.aisera.service.llm.client.ClientManager&quot;],
-  &quot;dependencies&quot;: {
-    &quot;llm-gateway-core&quot;: &quot;&gt;=1.0.0 &lt;2.0.0&quot;
+  "name": "custom-provider-extension",
+  "version": "1.0.0",
+  "description": "Integration with Custom LLM Provider",
+  "author": "Example Inc.",
+  "extensionPoints": ["com.aisera.service.llm.client.ClientManager"],
+  "dependencies": {
+    "llm-gateway-core": "&gt;=1.0.0 &lt;2.0.0"
   },
-  &quot;configuration&quot;: {
-    &quot;schema&quot;: &quot;custom-provider-schema.json&quot;,
-    &quot;defaults&quot;: &quot;custom-provider-defaults.json&quot;
+  "configuration": {
+    "schema": "custom-provider-schema.json",
+    "defaults": "custom-provider-defaults.json"
   }
 }
 </code></pre>
@@ -536,7 +546,7 @@ public class CustomFunctionHandler implements FunctionHandler, ApplicationListen
 <li>Maintain a detailed audit log of extension activities</li>
 <li>Perform security assessments before deploying extensions</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="runtime-behavior-concurrency.html">Runtime Behavior &amp; Concurrency</a> | <strong>Next</strong>: <a href="domain-model.html">Domain Model and Business Logic</a></p>
 </body>
 </html>

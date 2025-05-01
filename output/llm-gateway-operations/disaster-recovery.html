@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>disaster-recovery</title>
-    <style>
+<meta charset="utf-8"/>
+<title>disaster-recovery</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="disaster-recovery-backup-strategy">Disaster Recovery &amp; Backup Strategy</h1>
+<h1 id="disaster-recovery-backup-strategy">Disaster Recovery &amp; Backup Strategy</h1>
 <p>This document outlines the disaster recovery (DR) and backup strategies for the LLM Gateway service, ensuring business continuity in the event of major disruptions or data loss.</p>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
@@ -126,14 +136,14 @@
 </table>
 <h3 id="backup-architecture">Backup Architecture</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Production Environment&quot;
+    subgraph "Production Environment"
         Database[(PostgreSQL Database)]
         Cache[(Redis Cache)]
         Config[Kubernetes ConfigMaps]
         Prompts[Prompt Templates]
     end
 
-    subgraph &quot;Backup Systems&quot;
+    subgraph "Backup Systems"
         AutoSnapshot[Automated Snapshots]
         WAL[Write-Ahead Logs]
         RedisSnapshot[Redis RDB Snapshots]
@@ -235,10 +245,10 @@
 <p>The LLM Gateway has a comprehensive DR plan to handle various failure scenarios.</p>
 <h3 id="dr-architecture">DR Architecture</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Primary Region (us-east-1)&quot;
+    subgraph "Primary Region (us-east-1)"
         PrimaryVPC[Primary VPC]
 
-        subgraph &quot;Primary Infrastructure&quot;
+        subgraph "Primary Infrastructure"
             PrimaryEKS[EKS Cluster]
             PrimaryRDS[(RDS Database)]
             PrimaryRedis[(ElastiCache)]
@@ -246,10 +256,10 @@
         end
     end
 
-    subgraph &quot;DR Region (us-west-2)&quot;
+    subgraph "DR Region (us-west-2)"
         DRVPC[DR VPC]
 
-        subgraph &quot;DR Infrastructure&quot;
+        subgraph "DR Infrastructure"
             DREKS[EKS Cluster - Standby]
             DRRDS[(RDS Database - Replica)]
             DRRedis[(ElastiCache - Standby)]
@@ -389,7 +399,7 @@
 </li>
 <li>
 <p><strong>Activate DR Environment</strong>
-   <code>bash
+<code>bash
    # Scale up DR environment
    aws autoscaling update-auto-scaling-group \
      --auto-scaling-group-name llm-gateway-dr-workers \
@@ -399,20 +409,20 @@
 </li>
 <li>
 <p><strong>Promote Database Replica</strong>
-   <code>bash
+<code>bash
    # Promote RDS read replica to primary
    aws rds promote-read-replica \
      --db-instance-identifier llm-gateway-dr-db</code></p>
 </li>
 <li>
 <p><strong>Deploy Current Configurations</strong>
-   <code>bash
+<code>bash
    # Apply latest configuration
    kubectl apply -f kubernetes/dr-deployment/ --context dr-cluster</code></p>
 </li>
 <li>
 <p><strong>Verify DR Environment Health</strong>
-   <code>bash
+<code>bash
    # Perform health checks
    for service in api-service execution-service prompt-service cache-service; do
      kubectl exec -it $(kubectl get pods -l app=$service -o jsonpath='{.items[0].metadata.name}' --context dr-cluster) --context dr-cluster -- curl localhost:8080/health/deep
@@ -420,7 +430,7 @@
 </li>
 <li>
 <p><strong>Update DNS</strong>
-   <code>bash
+<code>bash
    # Switch DNS to DR environment
    aws route53 change-resource-record-sets \
      --hosted-zone-id $HOSTED_ZONE_ID \
@@ -428,7 +438,7 @@
 </li>
 <li>
 <p><strong>Verify Application Functionality</strong>
-   <code>bash
+<code>bash
    # Run synthetic transactions
    ./scripts/run-dr-validation-tests.sh</code></p>
 </li>
@@ -481,7 +491,7 @@
 <ol>
 <li>
 <p><strong>Initiate Point-in-Time Recovery</strong>
-   <code>bash
+<code>bash
    # Restore to point in time before corruption
    aws rds restore-db-instance-to-point-in-time \
      --source-db-instance-identifier llm-gateway-db \
@@ -490,13 +500,13 @@
 </li>
 <li>
 <p><strong>Validate Recovered Data</strong>
-   <code>bash
+<code>bash
    # Connect to new instance and verify data
    PGPASSWORD=$DB_PASSWORD psql -h llm-gateway-db-recovered.example.us-east-1.rds.amazonaws.com -U admin -c "SELECT count(*) FROM prompts WHERE updated_at &gt; '2023-05-14';"</code></p>
 </li>
 <li>
 <p><strong>Prepare for Switchover</strong>
-   <code>bash
+<code>bash
    # Scale down application to minimize disruption
    kubectl scale deployment api-service execution-service prompt-service --replicas=1 -n llm-gateway</code></p>
 </li>
@@ -558,13 +568,13 @@
 <p>The LLM Gateway DR capabilities are regularly tested to ensure recovery readiness.</p>
 <h3 id="testing-strategy">Testing Strategy</h3>
 <pre><code class="language-mermaid">graph LR
-    subgraph &quot;DR Test Types&quot;
+    subgraph "DR Test Types"
         TabletopEx[Tabletop Exercises]
         ComponentTest[Component Recovery Tests]
         FullDRTest[Full DR Simulation]
     end
 
-    subgraph &quot;Test Components&quot;
+    subgraph "Test Components"
         DBRecovery[Database Recovery]
         ConfigDeploy[Configuration Deployment]
         DNSFailover[DNS Failover]
@@ -822,7 +832,7 @@
 <li>Communication effectiveness</li>
 <li>Decision-making efficiency</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="runbook.html">Runbook / Operations Playbook</a> | <strong>Next</strong>: <a href="security-compliance.html">Security and Compliance</a></p>
 </body>
 </html>

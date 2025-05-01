@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>security-compliance</title>
-    <style>
+<meta charset="utf-8"/>
+<title>security-compliance</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="security-and-compliance">Security and Compliance</h1>
+<h1 id="security-and-compliance">Security and Compliance</h1>
 <p>This document outlines the security architecture, controls, and compliance frameworks for the LLM Gateway service.</p>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
@@ -65,36 +75,36 @@
 <p>The LLM Gateway follows a defense-in-depth approach with security controls at multiple layers.</p>
 <h3 id="security-architecture-overview">Security Architecture Overview</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;External Layer&quot;
+    subgraph "External Layer"
         WAF[WAF &amp; DDoS Protection]
         DNS[DNS Security]
     end
 
-    subgraph &quot;Network Layer&quot;
+    subgraph "Network Layer"
         VPC[VPC &amp; Subnets]
         NACL[Network ACLs]
         SG[Security Groups]
     end
 
-    subgraph &quot;Identity Layer&quot;
+    subgraph "Identity Layer"
         IAM[IAM Roles &amp; Policies]
         SSO[Single Sign-On]
         RBAC[K8s RBAC]
     end
 
-    subgraph &quot;Application Layer&quot;
+    subgraph "Application Layer"
         Auth[Authentication &amp; Authorization]
         Validation[Input Validation]
         Secrets[Secrets Management]
     end
 
-    subgraph &quot;Data Layer&quot;
+    subgraph "Data Layer"
         Encryption[Data Encryption]
         Masking[Data Masking]
         PII[PII Protection]
     end
 
-    subgraph &quot;Operational Layer&quot;
+    subgraph "Operational Layer"
         Logging[Security Logging]
         Monitoring[Security Monitoring]
         Scanning[Vulnerability Scanning]
@@ -127,26 +137,26 @@
 <p>The LLM Gateway implements comprehensive identity and access management controls.</p>
 <h3 id="iam-architecture">IAM Architecture</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Identity Sources&quot;
+    subgraph "Identity Sources"
         AD[Active Directory]
         OIDC[OIDC Provider]
         SAML[SAML Provider]
     end
 
-    subgraph &quot;Authentication&quot;
+    subgraph "Authentication"
         SSO[AWS SSO]
         Cognito[AWS Cognito]
         IAMDB[IAM Identity Center]
     end
 
-    subgraph &quot;Authorization&quot;
+    subgraph "Authorization"
         Roles[IAM Roles]
         Groups[IAM Groups]
         Policies[IAM Policies]
         KRBAC[Kubernetes RBAC]
     end
 
-    subgraph &quot;Service Access&quot;
+    subgraph "Service Access"
         Service[Service Accounts]
         IRSA[IAM Roles for Service Accounts]
         ResourcePolicies[Resource Policies]
@@ -297,20 +307,20 @@
 </table>
 <h3 id="encryption-architecture">Encryption Architecture</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Key Management&quot;
+    subgraph "Key Management"
         KMS[AWS KMS]
         CMK[Customer Managed Keys]
         KeyPolicies[Key Policies]
     end
 
-    subgraph &quot;Data at Rest&quot;
+    subgraph "Data at Rest"
         S3[S3 Encryption]
         RDS[RDS Encryption]
         EBS[EBS Encryption]
         Secrets[Secrets Manager]
     end
 
-    subgraph &quot;Data in Transit&quot;
+    subgraph "Data in Transit"
         TLS[TLS 1.3]
         HTTPS[HTTPS Endpoints]
         VPCEndpoints[VPC Endpoints]
@@ -368,18 +378,18 @@
     Route53 --&gt; WAF[AWS WAF]
     WAF --&gt; ALB[Application Load Balancer]
 
-    subgraph &quot;VPC&quot;
-        subgraph &quot;Public Subnets&quot;
+    subgraph "VPC"
+        subgraph "Public Subnets"
             ALB
             NAT[NAT Gateway]
         end
 
-        subgraph &quot;Application Subnets&quot;
+        subgraph "Application Subnets"
             EKS[EKS Cluster]
             ALB --&gt; EKS
         end
 
-        subgraph &quot;Database Subnets&quot;
+        subgraph "Database Subnets"
             RDS[(RDS Database)]
             ElastiCache[(ElastiCache)]
             EKS --&gt; RDS
@@ -393,7 +403,7 @@
         EKS --&gt; VPCEndpoint
     end
 
-    subgraph &quot;AWS Services&quot;
+    subgraph "AWS Services"
         S3[(S3)]
         SM[(Secrets Manager)]
         ECR[(ECR)]
@@ -470,7 +480,7 @@
 </ol>
 <h3 id="vulnerability-management">Vulnerability Management</h3>
 <pre><code class="language-mermaid">flowchart TD
-    subgraph &quot;Vulnerability Sources&quot;
+    subgraph "Vulnerability Sources"
         SAST[Static Analysis]
         DAST[Dynamic Analysis]
         SCA[Dependency Scanning]
@@ -478,7 +488,7 @@
         Infra[Infrastructure Scanning]
     end
 
-    subgraph &quot;Vulnerability Management&quot;
+    subgraph "Vulnerability Management"
         Triage[Vulnerability Triage]
         Prioritize[Risk Prioritization]
         Remediate[Remediation]
@@ -680,7 +690,7 @@
 </table>
 <h3 id="compliance-controls-mapping">Compliance Controls Mapping</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Control Frameworks&quot;
+    subgraph "Control Frameworks"
         SOC2[SOC 2]
         ISO[ISO 27001]
         GDPR[GDPR]
@@ -688,7 +698,7 @@
         FedRAMP[FedRAMP]
     end
 
-    subgraph &quot;Control Categories&quot;
+    subgraph "Control Categories"
         IAM[Identity &amp; Access]
         Config[Secure Configuration]
         DataProt[Data Protection]
@@ -745,7 +755,7 @@
 <p>The LLM Gateway implements comprehensive audit logging for security and compliance purposes.</p>
 <h3 id="logging-architecture">Logging Architecture</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Log Sources&quot;
+    subgraph "Log Sources"
         App[Application Logs]
         Infra[Infrastructure Logs]
         Network[Network Logs]
@@ -753,21 +763,21 @@
         Security[Security Logs]
     end
 
-    subgraph &quot;Collection &amp; Processing&quot;
+    subgraph "Collection &amp; Processing"
         Fluent[FluentBit]
         Stream[Kinesis Data Streams]
         Firehose[Kinesis Firehose]
         Lambda[Lambda Enrichment]
     end
 
-    subgraph &quot;Storage &amp; Analysis&quot;
+    subgraph "Storage &amp; Analysis"
         S3[S3 Bucket]
         ES[Elasticsearch]
         CW[CloudWatch Logs]
         Athena[Athena]
     end
 
-    subgraph &quot;Monitoring &amp; Alerting&quot;
+    subgraph "Monitoring &amp; Alerting"
         Rules[Alert Rules]
         SIEM[Security Information &amp; Event Management]
         Dashboard[Security Dashboards]
@@ -880,20 +890,20 @@
 </ol>
 <h3 id="incident-response">Incident Response</h3>
 <pre><code class="language-mermaid">flowchart LR
-    subgraph &quot;Detection Phase&quot;
+    subgraph "Detection Phase"
         Monitor[Security Monitoring]
         Auto[Automated Detection]
         Manual[Manual Report]
     end
 
-    subgraph &quot;Response Phase&quot;
+    subgraph "Response Phase"
         Triage[Incident Triage]
         Contain[Containment]
         Eradicate[Eradication]
         Recover[Recovery]
     end
 
-    subgraph &quot;Post-Incident Phase&quot;
+    subgraph "Post-Incident Phase"
         Analysis[Root Cause Analysis]
         Lessons[Lessons Learned]
         Improvement[Control Improvement]
@@ -1005,7 +1015,7 @@
 </tr>
 </tbody>
 </table>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="disaster-recovery.html">Disaster Recovery &amp; Backup Strategy</a> | <strong>Next</strong>: <a href="README.html">README</a></p>
 </body>
 </html>

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>system-architecture-overview</title>
-    <style>
+<meta charset="utf-8"/>
+<title>system-architecture-overview</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="system-architecture-overview">System Architecture Overview</h1>
+<h1 id="system-architecture-overview">System Architecture Overview</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -79,7 +89,7 @@
 <pre><code class="language-mermaid">graph TD
     Client[Client Application] --&gt; |HTTP/gRPC| API[API Layer]
 
-    subgraph &quot;LLM Gateway Service&quot;
+    subgraph "LLM Gateway Service"
         API --&gt; |calls| Execution[Execution Layer]
         API --&gt; |manages| PromptRegistry[Prompt Registry]
 
@@ -281,7 +291,7 @@
 <li>Access control based on tenant and user roles</li>
 <li>Inheritance and composition for prompt reuse</li>
 </ul>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="README.html">README</a> | <strong>Next</strong>: <a href="module-level-architecture.html">Module-Level Architecture</a></p>
 </body>
 </html>

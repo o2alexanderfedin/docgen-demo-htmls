@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>system-architecture</title>
-    <style>
+<meta charset="utf-8"/>
+<title>system-architecture</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="system-architecture-overview">System Architecture Overview</h1>
+<h1 id="system-architecture-overview">System Architecture Overview</h1>
 <p>This document provides a high-level overview of the LLM Gateway system architecture from an operational perspective, focusing on deployment components, networking, and infrastructure elements.</p>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
@@ -65,7 +75,7 @@
     Client[Client Applications] --&gt;|REST/gRPC| LB[Load Balancer]
     LB --&gt; APIService[API Service]
 
-    subgraph &quot;LLM Gateway Service Cluster&quot;
+    subgraph "LLM Gateway Service Cluster"
         APIService --&gt;|Routing| ExecutionService[Execution Service]
         APIService --&gt;|Management| PromptService[Prompt Management Service]
         APIService --&gt;|Analytics| AnalyticsService[Analytics Service]
@@ -78,14 +88,14 @@
 
     ProviderService --&gt;|External API Calls| ExtProviders[External LLM Providers]
 
-    subgraph &quot;Data Persistence Layer&quot;
+    subgraph "Data Persistence Layer"
         PromptService --&gt; PromptDB[(Prompt Database)]
         VersionService --&gt; PromptDB
         CacheService --&gt; CacheDB[(Cache Database)]
         AnalyticsService --&gt; MetricsDB[(Metrics Database)]
     end
 
-    subgraph &quot;Support Services&quot;
+    subgraph "Support Services"
         MonitoringStack[Monitoring Stack]
         LoggingSystem[Logging System]
         SecretManager[Secret Manager]
@@ -228,21 +238,21 @@
 <p>The LLM Gateway is deployed on Kubernetes across multiple availability zones within a single region, with the option for multi-region deployment for global customers.</p>
 <h3 id="infrastructure-diagram">Infrastructure Diagram</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;AWS Cloud&quot;
-        subgraph &quot;Multi-AZ Deployment&quot;
-            subgraph &quot;Availability Zone A&quot;
+    subgraph "AWS Cloud"
+        subgraph "Multi-AZ Deployment"
+            subgraph "Availability Zone A"
                 EKSA[EKS Node Group A]
                 RDSA[RDS Primary]
                 ElastiCacheA[ElastiCache Node A]
             end
 
-            subgraph &quot;Availability Zone B&quot;
+            subgraph "Availability Zone B"
                 EKSB[EKS Node Group B]
                 RDSB[RDS Standby]
                 ElastiCacheB[ElastiCache Node B]
             end
 
-            subgraph &quot;Availability Zone C&quot;
+            subgraph "Availability Zone C"
                 EKSC[EKS Node Group C]
                 ElastiCacheC[ElastiCache Node C]
             end
@@ -306,18 +316,18 @@
     Internet((Internet)) --&gt; WAF[AWS WAF]
     WAF --&gt; ALB[Application Load Balancer]
 
-    subgraph &quot;VPC&quot;
-        subgraph &quot;Public Subnet&quot;
+    subgraph "VPC"
+        subgraph "Public Subnet"
             ALB
             Bastion[Bastion Host]
         end
 
-        subgraph &quot;Private Subnet - App Tier&quot;
+        subgraph "Private Subnet - App Tier"
             EKS[EKS Cluster]
             ALB --&gt; EKS
         end
 
-        subgraph &quot;Private Subnet - Data Tier&quot;
+        subgraph "Private Subnet - Data Tier"
             RDS[(RDS Database)]
             ElastiCache[(ElastiCache)]
             EKS --&gt; RDS
@@ -332,7 +342,7 @@
         Bastion --&gt; EKS
     end
 
-    subgraph &quot;External Services&quot;
+    subgraph "External Services"
         LLMProviders[LLM Providers API]
         Monitoring[Monitoring Services]
     end
@@ -513,7 +523,7 @@
     LLMGateway --&gt; Auth[Authentication Services]
     LLMGateway --&gt; Monitoring[Monitoring Services]
 
-    subgraph &quot;AWS Dependencies&quot;
+    subgraph "AWS Dependencies"
         AWS --&gt; EC2[EC2/EKS]
         AWS --&gt; RDS[RDS]
         AWS --&gt; ElastiCache[ElastiCache]
@@ -522,19 +532,19 @@
         AWS --&gt; SM[Secrets Manager]
     end
 
-    subgraph &quot;LLM Providers&quot;
+    subgraph "LLM Providers"
         LLMProviders --&gt; OpenAI[OpenAI API]
         LLMProviders --&gt; Anthropic[Anthropic API]
         LLMProviders --&gt; Cohere[Cohere API]
         LLMProviders --&gt; AzureOpenAI[Azure OpenAI]
     end
 
-    subgraph &quot;Auth Providers&quot;
+    subgraph "Auth Providers"
         Auth --&gt; Cognito[AWS Cognito]
         Auth --&gt; OIDC[OIDC Provider]
     end
 
-    subgraph &quot;Monitoring Stack&quot;
+    subgraph "Monitoring Stack"
         Monitoring --&gt; Prometheus[Prometheus]
         Monitoring --&gt; Grafana[Grafana]
         Monitoring --&gt; Datadog[Datadog]
@@ -543,7 +553,7 @@
 
     style LLMGateway fill:#f9f,stroke:#333,stroke-width:4px
 </code></pre>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="README.html">README</a> | <strong>Next</strong>: <a href="infrastructure-as-code.html">Infrastructure as Code</a></p>
 </body>
 </html>

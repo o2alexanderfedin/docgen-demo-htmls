@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>monitoring-alerting</title>
-    <style>
+<meta charset="utf-8"/>
+<title>monitoring-alerting</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="monitoring-alerting">Monitoring &amp; Alerting</h1>
+<h1 id="monitoring-alerting">Monitoring &amp; Alerting</h1>
 <p>This document describes the monitoring and alerting strategy for the LLM Gateway service.</p>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
@@ -73,20 +83,20 @@
 </ol>
 <h3 id="monitoring-layers">Monitoring Layers</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Business Metrics&quot;
+    subgraph "Business Metrics"
         BAM[Business Activity Monitoring]
         SLOs[Service Level Objectives]
         UserExp[User Experience Metrics]
     end
 
-    subgraph &quot;Application Metrics&quot;
+    subgraph "Application Metrics"
         ServiceMetrics[Service-level Metrics]
         APIMetrics[API Metrics]
         Dependencies[Dependency Metrics]
         CustomMetrics[Custom Application Metrics]
     end
 
-    subgraph &quot;Infrastructure Metrics&quot;
+    subgraph "Infrastructure Metrics"
         Kubernetes[Kubernetes Metrics]
         AWS[AWS Resource Metrics]
         Network[Network Metrics]
@@ -272,7 +282,7 @@
     Severity --&gt; Routing[Alert Routing]
     Routing --&gt; Notification[Notification Channels]
 
-    subgraph &quot;Severity Levels&quot;
+    subgraph "Severity Levels"
         Critical[P1 - Critical]
         High[P2 - High]
         Medium[P3 - Medium]
@@ -286,7 +296,7 @@
     Severity --- Low
     Severity --- Info
 
-    subgraph &quot;On-Call Rotations&quot;
+    subgraph "On-Call Rotations"
         Primary[Primary On-Call]
         Secondary[Secondary On-Call]
         Manager[Manager Escalation]
@@ -377,13 +387,13 @@
 - name: LLM-Gateway-Alerts
   rules:
   - alert: HighErrorRate
-    expr: sum(rate(http_requests_total{status=~&quot;5..&quot;}[5m])) / sum(rate(http_requests_total[5m])) &gt; 0.01
+    expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) &gt; 0.01
     for: 5m
     labels:
       severity: critical
     annotations:
-      summary: &quot;High error rate detected&quot;
-      description: &quot;Error rate is {{ $value | humanizePercentage }} over the last 5 minutes&quot;
+      summary: "High error rate detected"
+      description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
 </code></pre>
 <h3 id="incident-management-flow">Incident Management Flow</h3>
 <pre><code class="language-mermaid">sequenceDiagram
@@ -438,29 +448,29 @@
 </ul>
 <h3 id="example-dashboard-layout">Example Dashboard Layout</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;LLM Gateway Service Dashboard&quot;
-        subgraph &quot;Service Health&quot;
+    subgraph "LLM Gateway Service Dashboard"
+        subgraph "Service Health"
             SLO[SLO Status]
             Traffic[Request Traffic]
             Errors[Error Rates]
             Latency[Response Latency]
         end
 
-        subgraph &quot;Resource Utilization&quot;
+        subgraph "Resource Utilization"
             CPU[CPU Usage]
             Memory[Memory Usage]
             Network[Network I/O]
             Disk[Disk Utilization]
         end
 
-        subgraph &quot;LLM Providers&quot;
+        subgraph "LLM Providers"
             ProviderHealth[Provider Status]
             ProviderLatency[Provider Latency]
             ProviderErrors[Provider Errors]
             Quotas[Quota Usage]
         end
 
-        subgraph &quot;Business Impact&quot;
+        subgraph "Business Impact"
             TenantImpact[Tenant Impact Map]
             CostMetrics[Cost Metrics]
             CachePerformance[Cache Performance]
@@ -515,24 +525,24 @@
 <h3 id="structured-log-format">Structured Log Format</h3>
 <p>All logs use structured JSON format:</p>
 <pre><code class="language-json">{
-  &quot;timestamp&quot;: &quot;2023-05-15T14:22:33.456Z&quot;,
-  &quot;level&quot;: &quot;INFO&quot;,
-  &quot;service&quot;: &quot;execution-service&quot;,
-  &quot;instance&quot;: &quot;execution-service-5d87f94df6-8nvk2&quot;,
-  &quot;traceId&quot;: &quot;5f4e7b3c2a1e0d9f8c7b6a5e&quot;,
-  &quot;spanId&quot;: &quot;1a2b3c4d5e6f7g8h&quot;,
-  &quot;tenantId&quot;: &quot;tenant-123&quot;,
-  &quot;userId&quot;: &quot;user-456&quot;,
-  &quot;message&quot;: &quot;Prompt execution completed successfully&quot;,
-  &quot;context&quot;: {
-    &quot;promptId&quot;: &quot;pr_7890&quot;,
-    &quot;executionTimeMs&quot;: 450,
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-4&quot;,
-    &quot;cacheHit&quot;: false,
-    &quot;tokenCount&quot;: {
-      &quot;input&quot;: 150,
-      &quot;output&quot;: 300
+  "timestamp": "2023-05-15T14:22:33.456Z",
+  "level": "INFO",
+  "service": "execution-service",
+  "instance": "execution-service-5d87f94df6-8nvk2",
+  "traceId": "5f4e7b3c2a1e0d9f8c7b6a5e",
+  "spanId": "1a2b3c4d5e6f7g8h",
+  "tenantId": "tenant-123",
+  "userId": "user-456",
+  "message": "Prompt execution completed successfully",
+  "context": {
+    "promptId": "pr_7890",
+    "executionTimeMs": 450,
+    "provider": "openai",
+    "model": "gpt-4",
+    "cacheHit": false,
+    "tokenCount": {
+      "input": 150,
+      "output": 300
     }
   }
 }
@@ -732,29 +742,29 @@ startupProbe:
 <h3 id="health-check-response-format">Health Check Response Format</h3>
 <p>Health check endpoints return standardized JSON responses:</p>
 <pre><code class="language-json">{
-  &quot;status&quot;: &quot;healthy&quot;,
-  &quot;version&quot;: &quot;1.2.3&quot;,
-  &quot;checks&quot;: [
+  "status": "healthy",
+  "version": "1.2.3",
+  "checks": [
     {
-      &quot;component&quot;: &quot;api&quot;,
-      &quot;status&quot;: &quot;healthy&quot;,
-      &quot;time&quot;: &quot;2023-05-15T14:22:33.456Z&quot;
+      "component": "api",
+      "status": "healthy",
+      "time": "2023-05-15T14:22:33.456Z"
     },
     {
-      &quot;component&quot;: &quot;database&quot;,
-      &quot;status&quot;: &quot;healthy&quot;,
-      &quot;time&quot;: &quot;2023-05-15T14:22:33.400Z&quot;,
-      &quot;metrics&quot;: {
-        &quot;connectionCount&quot;: 5,
-        &quot;latencyMs&quot;: 3
+      "component": "database",
+      "status": "healthy",
+      "time": "2023-05-15T14:22:33.400Z",
+      "metrics": {
+        "connectionCount": 5,
+        "latencyMs": 3
       }
     },
     {
-      &quot;component&quot;: &quot;cache&quot;,
-      &quot;status&quot;: &quot;healthy&quot;,
-      &quot;time&quot;: &quot;2023-05-15T14:22:33.420Z&quot;,
-      &quot;metrics&quot;: {
-        &quot;hitRate&quot;: 0.85
+      "component": "cache",
+      "status": "healthy",
+      "time": "2023-05-15T14:22:33.420Z",
+      "metrics": {
+        "hitRate": 0.85
       }
     }
   ]
@@ -801,7 +811,7 @@ startupProbe:
 </table>
 <h3 id="capacity-forecasting">Capacity Forecasting</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Capacity Planning Process&quot;
+    subgraph "Capacity Planning Process"
         Collection[Metric Collection]
         Analysis[Trend Analysis]
         Forecasting[Capacity Forecasting]
@@ -880,7 +890,7 @@ startupProbe:
 </table>
 <h3 id="monitoring-architecture">Monitoring Architecture</h3>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Service Cluster&quot;
+    subgraph "Service Cluster"
         Services[Service Pods]
         NodeExporter[Node Exporter]
         cAdvisor[cAdvisor]
@@ -898,7 +908,7 @@ startupProbe:
     Services --&gt;|Traces| OTel
     OTel --&gt;|Forward Traces| Jaeger
 
-    subgraph &quot;Monitoring Cluster&quot;
+    subgraph "Monitoring Cluster"
         Prometheus[Prometheus]
         Thanos[Thanos]
         Alertmanager[Alertmanager]
@@ -929,7 +939,7 @@ startupProbe:
 <li>Alerting for monitoring infrastructure failures</li>
 <li>Automated recovery procedures for common issues</li>
 </ul>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="configuration-secrets.html">Configuration &amp; Secrets Management</a> | <strong>Next</strong>: <a href="runbook.html">Runbook / Operations Playbook</a></p>
 </body>
 </html>

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>system-architecture</title>
-    <style>
+<meta charset="utf-8"/>
+<title>system-architecture</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="system-architecture">System Architecture</h1>
+<h1 id="system-architecture">System Architecture</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#architecture-overview">Architecture Overview</a></li>
@@ -96,15 +106,15 @@
 
     IAM --&gt;|User Directory| UserDB[(User Database)]
 
-    subgraph &quot;Client Layer&quot;
+    subgraph "Client Layer"
         Client
     end
 
-    subgraph &quot;API Layer&quot;
+    subgraph "API Layer"
         ApiGateway
     end
 
-    subgraph &quot;Service Layer&quot;
+    subgraph "Service Layer"
         ExecutionService
         PromptService
         ProviderMgmt
@@ -113,13 +123,13 @@
         IAM
     end
 
-    subgraph &quot;Provider Layer&quot;
+    subgraph "Provider Layer"
         ProviderA
         ProviderB
         ProviderC
     end
 
-    subgraph &quot;Data Layer&quot;
+    subgraph "Data Layer"
         TemplateDB
         CacheDB
         MetricsDB
@@ -551,7 +561,7 @@
 <li><strong>Alerting</strong>: Anomalies trigger notifications based on rules</li>
 <li><strong>Archival</strong>: Historical data is archived according to retention policies</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="user-journeys.html">User Journeys &amp; Use Cases</a> | <strong>Next</strong>: <a href="release-roadmap.html">Release Roadmap</a></p>
 </body>
 </html>

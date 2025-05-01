@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>user-journeys</title>
-    <style>
+<meta charset="utf-8"/>
+<title>user-journeys</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="user-journeys-use-cases">User Journeys &amp; Use Cases</h1>
+<h1 id="user-journeys-use-cases">User Journeys &amp; Use Cases</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#enterprise-adoption-journeys">Enterprise Adoption Journeys</a></li>
@@ -167,28 +177,28 @@
 <h4 id="scenario_2">Scenario</h4>
 <p>As a developer, I want to add intelligent content generation capabilities to our content management system, allowing editors to generate draft content based on topics and guidelines.</p>
 <pre><code class="language-mermaid">flowchart TD
-    subgraph &quot;Requirements Phase&quot;
+    subgraph "Requirements Phase"
         A1[Identify content generation needs] --&gt; A2[Define user interaction flow]
         A2 --&gt; A3[Determine quality requirements]
     end
 
-    subgraph &quot;Setup Phase&quot;
+    subgraph "Setup Phase"
         B1[Obtain API credentials] --&gt; B2[Explore available models]
         B2 --&gt; B3[Test basic prompt execution]
     end
 
-    subgraph &quot;Prompt Engineering&quot;
+    subgraph "Prompt Engineering"
         C1[Create prompt templates] --&gt; C2[Test with sample inputs]
         C2 --&gt; C3[Refine based on quality]
         C3 --&gt; C4[Save optimized templates]
     end
 
-    subgraph &quot;Integration Phase&quot;
+    subgraph "Integration Phase"
         D1[Develop user interface] --&gt; D2[Implement API calls]
         D2 --&gt; D3[Add response handling]
     end
 
-    subgraph &quot;Testing Phase&quot;
+    subgraph "Testing Phase"
         E1[Test with real users] --&gt; E2[Analyze usage patterns]
         E2 --&gt; E3[Optimize implementation]
     end
@@ -709,7 +719,7 @@
 <li>Higher first-contact resolution rates</li>
 <li>Improved agent productivity and satisfaction</li>
 </ul>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="key-features.html">Key Features</a> | <strong>Next</strong>: <a href="system-architecture.html">System Architecture</a></p>
 </body>
 </html>

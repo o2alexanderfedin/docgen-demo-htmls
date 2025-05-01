@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>error-handling-resilience</title>
-    <style>
+<meta charset="utf-8"/>
+<title>error-handling-resilience</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="error-handling-and-resilience">Error Handling and Resilience</h1>
+<h1 id="error-handling-and-resilience">Error Handling and Resilience</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -96,7 +106,7 @@
 <h3 id="error-taxonomy">Error Taxonomy</h3>
 <p>The LLM Gateway categorizes errors using a structured taxonomy for consistent handling and reporting:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Error Categories&quot;
+    subgraph "Error Categories"
         ClientErrors[Client Errors]
         ServerErrors[Server Errors]
         ProviderErrors[Provider Errors]
@@ -104,7 +114,7 @@
         SecurityErrors[Security Errors]
     end
 
-    subgraph &quot;Client Errors&quot;
+    subgraph "Client Errors"
         InvalidRequest[Invalid Request]
         ValidationError[Validation Error]
         AuthenticationError[Authentication Error]
@@ -112,7 +122,7 @@
         RateLimitError[Rate Limit Error]
     end
 
-    subgraph &quot;Server Errors&quot;
+    subgraph "Server Errors"
         InternalError[Internal Server Error]
         ServiceUnavailable[Service Unavailable]
         DependencyFailure[Dependency Failure]
@@ -120,7 +130,7 @@
         UnhandledException[Unhandled Exception]
     end
 
-    subgraph &quot;Provider Errors&quot;
+    subgraph "Provider Errors"
         ProviderTimeout[Provider Timeout]
         ProviderRejection[Provider Rejection]
         ProviderUnavailable[Provider Unavailable]
@@ -128,7 +138,7 @@
         ModelError[Model-Specific Error]
     end
 
-    subgraph &quot;Infrastructure Errors&quot;
+    subgraph "Infrastructure Errors"
         NetworkFailure[Network Failure]
         DatabaseError[Database Error]
         CacheFailure[Cache Failure]
@@ -136,7 +146,7 @@
         ResourceContention[Resource Contention]
     end
 
-    subgraph &quot;Security Errors&quot;
+    subgraph "Security Errors"
         AccessViolation[Access Violation]
         DataLeakPrevention[Data Leak Prevention]
         TamperedRequest[Tampered Request]
@@ -244,26 +254,26 @@
 </code></pre>
 <p><strong>Client Error Response Format:</strong></p>
 <pre><code class="language-json">{
-  &quot;error&quot;: {
-    &quot;code&quot;: &quot;VALIDATION_ERROR&quot;,
-    &quot;message&quot;: &quot;The request could not be processed due to validation errors&quot;,
-    &quot;details&quot;: [
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "The request could not be processed due to validation errors",
+    "details": [
       {
-        &quot;field&quot;: &quot;prompt&quot;,
-        &quot;message&quot;: &quot;Prompt text must not be empty&quot;,
-        &quot;constraint&quot;: &quot;notEmpty&quot;
+        "field": "prompt",
+        "message": "Prompt text must not be empty",
+        "constraint": "notEmpty"
       },
       {
-        &quot;field&quot;: &quot;maxTokens&quot;,
-        &quot;message&quot;: &quot;Maximum tokens must be between 1 and 4096&quot;,
-        &quot;constraint&quot;: &quot;range&quot;,
-        &quot;min&quot;: 1,
-        &quot;max&quot;: 4096
+        "field": "maxTokens",
+        "message": "Maximum tokens must be between 1 and 4096",
+        "constraint": "range",
+        "min": 1,
+        "max": 4096
       }
     ],
-    &quot;requestId&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
-    &quot;documentation&quot;: &quot;https://docs.example.com/api/errors#validation_error&quot;
+    "requestId": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18.543Z",
+    "documentation": "https://docs.example.com/api/errors#validation_error"
   }
 }
 </code></pre>
@@ -296,13 +306,13 @@
 </code></pre>
 <p><strong>Server Error Response Format:</strong></p>
 <pre><code class="language-json">{
-  &quot;error&quot;: {
-    &quot;code&quot;: &quot;INTERNAL_SERVER_ERROR&quot;,
-    &quot;message&quot;: &quot;The server encountered an unexpected condition&quot;,
-    &quot;requestId&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
-    &quot;retryable&quot;: false,
-    &quot;documentation&quot;: &quot;https://docs.example.com/api/errors#internal_server_error&quot;
+  "error": {
+    "code": "INTERNAL_SERVER_ERROR",
+    "message": "The server encountered an unexpected condition",
+    "requestId": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18.543Z",
+    "retryable": false,
+    "documentation": "https://docs.example.com/api/errors#internal_server_error"
   }
 }
 </code></pre>
@@ -427,11 +437,11 @@
 </code></pre>
 <p><strong>Security Error Response Format:</strong></p>
 <pre><code class="language-json">{
-  &quot;error&quot;: {
-    &quot;code&quot;: &quot;ACCESS_DENIED&quot;,
-    &quot;message&quot;: &quot;You do not have permission to perform this action&quot;,
-    &quot;requestId&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;
+  "error": {
+    "code": "ACCESS_DENIED",
+    "message": "You do not have permission to perform this action",
+    "requestId": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18.543Z"
   }
 }
 </code></pre>
@@ -451,7 +461,7 @@
 
     ErrorHandler --&gt; ContextEnrichment[Context Enrichment]
 
-    subgraph &quot;Context Enrichment&quot;
+    subgraph "Context Enrichment"
         RequestContext[Request Context]
         UserContext[User Context]
         TenantContext[Tenant Context]
@@ -830,25 +840,25 @@
 <h3 id="bulkheading">Bulkheading</h3>
 <p>The system uses bulkheading to isolate failures:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;API Layer&quot;
+    subgraph "API Layer"
         APIEndpoint1[API Endpoint 1]
         APIEndpoint2[API Endpoint 2]
         APIEndpoint3[API Endpoint 3]
     end
 
-    subgraph &quot;Service Layer&quot;
+    subgraph "Service Layer"
         Service1[Service 1&lt;br&gt;Thread Pool]
         Service2[Service 2&lt;br&gt;Thread Pool]
         Service3[Service 3&lt;br&gt;Thread Pool]
     end
 
-    subgraph &quot;Provider Layer&quot;
+    subgraph "Provider Layer"
         Provider1[Provider 1&lt;br&gt;Connection Pool]
         Provider2[Provider 2&lt;br&gt;Connection Pool]
         Provider3[Provider 3&lt;br&gt;Connection Pool]
     end
 
-    subgraph &quot;Data Layer&quot;
+    subgraph "Data Layer"
         DataService1[Data Service 1&lt;br&gt;Connection Pool]
         DataService2[Data Service 2&lt;br&gt;Connection Pool]
     end
@@ -1012,7 +1022,7 @@
     Components --&gt;|All Healthy| FullFunction[Full Functionality]
     Components --&gt;|Partial Health| DegradedFunction[Degraded Functionality]
 
-    subgraph &quot;Component Health Evaluation&quot;
+    subgraph "Component Health Evaluation"
         CritComp[Critical Components]
         CoreComp[Core Components]
         NonCritComp[Non-Critical Components]
@@ -1241,13 +1251,13 @@
 <h3 id="redundancy-design">Redundancy Design</h3>
 <p>The system implements multiple layers of redundancy:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Compute Redundancy&quot;
+    subgraph "Compute Redundancy"
         AppNode1[Application Node 1]
         AppNode2[Application Node 2]
         AppNode3[Application Node 3]
     end
 
-    subgraph &quot;Data Redundancy&quot;
+    subgraph "Data Redundancy"
         DBPrimary[Database Primary]
         DBReplica1[Database Replica 1]
         DBReplica2[Database Replica 2]
@@ -1256,13 +1266,13 @@
         CacheReplica[Cache Replica]
     end
 
-    subgraph &quot;Provider Redundancy&quot;
+    subgraph "Provider Redundancy"
         Provider1[Provider 1]
         Provider2[Provider 2]
         Provider3[Provider 3]
     end
 
-    subgraph &quot;Network Redundancy&quot;
+    subgraph "Network Redundancy"
         Path1[Network Path 1]
         Path2[Network Path 2]
     end
@@ -1315,26 +1325,26 @@
 <h3 id="failure-modes-analysis">Failure Modes Analysis</h3>
 <p>The system's design is informed by comprehensive failure modes analysis:</p>
 <pre><code class="language-mermaid">graph LR
-    subgraph &quot;Single Points of Failure&quot;
+    subgraph "Single Points of Failure"
         SPOF1[Load Balancer]
         SPOF2[Configuration Service]
         SPOF3[Authentication Service]
     end
 
-    subgraph &quot;Cascading Failure Paths&quot;
+    subgraph "Cascading Failure Paths"
         Cascade1[DB → Cache → API]
         Cascade2[Auth → All Services]
         Cascade3[Config → All Components]
     end
 
-    subgraph &quot;Resource Exhaustion Risks&quot;
+    subgraph "Resource Exhaustion Risks"
         Resource1[Connection Pool Saturation]
         Resource2[Thread Pool Exhaustion]
         Resource3[Memory Exhaustion]
         Resource4[Disk Space Exhaustion]
     end
 
-    subgraph &quot;External Dependency Risks&quot;
+    subgraph "External Dependency Risks"
         Ext1[LLM Provider Outage]
         Ext2[Identity Provider Outage]
         Ext3[Network Provider Issues]
@@ -1390,30 +1400,30 @@
 </code></pre>
 <p><strong>Error Log Structure:</strong></p>
 <pre><code class="language-json">{
-  &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
-  &quot;level&quot;: &quot;ERROR&quot;,
-  &quot;logger&quot;: &quot;com.aisera.service.llm.execution.ExecutionManagerImpl&quot;,
-  &quot;message&quot;: &quot;Failed to execute prompt request&quot;,
-  &quot;errorCode&quot;: &quot;PROVIDER_UNAVAILABLE&quot;,
-  &quot;errorType&quot;: &quot;ProviderException&quot;,
-  &quot;stackTrace&quot;: &quot;[truncated for brevity]&quot;,
-  &quot;context&quot;: {
-    &quot;requestId&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;tenantId&quot;: &quot;tenant-123&quot;,
-    &quot;userId&quot;: &quot;user-456&quot;,
-    &quot;providerType&quot;: &quot;OPENAI&quot;,
-    &quot;modelId&quot;: &quot;gpt-4&quot;,
-    &quot;operation&quot;: &quot;promptExecution&quot;,
-    &quot;component&quot;: &quot;executionManager&quot;
+  "timestamp": "2023-05-15T14:22:18.543Z",
+  "level": "ERROR",
+  "logger": "com.aisera.service.llm.execution.ExecutionManagerImpl",
+  "message": "Failed to execute prompt request",
+  "errorCode": "PROVIDER_UNAVAILABLE",
+  "errorType": "ProviderException",
+  "stackTrace": "[truncated for brevity]",
+  "context": {
+    "requestId": "req-1234-5678-90ab-cdef",
+    "tenantId": "tenant-123",
+    "userId": "user-456",
+    "providerType": "OPENAI",
+    "modelId": "gpt-4",
+    "operation": "promptExecution",
+    "component": "executionManager"
   },
-  &quot;metadata&quot;: {
-    &quot;attemptNumber&quot;: 2,
-    &quot;elapsedTimeMs&quot;: 1532,
-    &quot;responseStatus&quot;: &quot;503&quot;,
-    &quot;responseBody&quot;: &quot;[sanitized]&quot;
+  "metadata": {
+    "attemptNumber": 2,
+    "elapsedTimeMs": 1532,
+    "responseStatus": "503",
+    "responseBody": "[sanitized]"
   },
-  &quot;traceId&quot;: &quot;trace-1234-5678-90ab-cdef&quot;,
-  &quot;spanId&quot;: &quot;span-1234-5678-90ab-cdef&quot;
+  "traceId": "trace-1234-5678-90ab-cdef",
+  "spanId": "span-1234-5678-90ab-cdef"
 }
 </code></pre>
 <p><strong>Error Logging Implementation:</strong></p>
@@ -1552,7 +1562,7 @@
 
     RCAProcess --&gt; DataCollection[Data Collection]
 
-    subgraph &quot;Data Sources&quot;
+    subgraph "Data Sources"
         Logs[Error Logs]
         Metrics[System Metrics]
         Traces[Distributed Traces]
@@ -1842,7 +1852,7 @@
 <li><strong>Recovery Prioritization</strong>: Service restoration priorities</li>
 <li><strong>Regular Testing</strong>: Disaster recovery drills to validate RTOs</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="security-architecture.html">Security Architecture</a> | <strong>Next</strong>: <a href="api-reference.html">API Reference</a></p>
 </body>
 </html>

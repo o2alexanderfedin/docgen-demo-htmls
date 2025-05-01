@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>data-flow-storage-design</title>
-    <style>
+<meta charset="utf-8"/>
+<title>data-flow-storage-design</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="data-flow-and-storage-design">Data Flow and Storage Design</h1>
+<h1 id="data-flow-and-storage-design">Data Flow and Storage Design</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -121,8 +131,8 @@
         +status: String
     }
 
-    LLMPromptRegistryEntity &quot;1&quot; -- &quot;many&quot; LLMPromptRegistryMappingEntity : contains
-    LLMPromptRegistryEntity &quot;1&quot; -- &quot;many&quot; LLMPromptVersioningEntity : has versions
+    LLMPromptRegistryEntity "1" -- "many" LLMPromptRegistryMappingEntity : contains
+    LLMPromptRegistryEntity "1" -- "many" LLMPromptVersioningEntity : has versions
 </code></pre>
 <p><strong>Entity Descriptions:</strong></p>
 <ul>
@@ -301,8 +311,8 @@
         timestamp updated_at
     }
 
-    LLM_PROMPT_REGISTRY ||--o{ LLM_PROMPT_REGISTRY_MAPPING : &quot;has parameters&quot;
-    LLM_PROMPT_REGISTRY ||--o{ LLM_PROMPT_VERSIONING : &quot;has versions&quot;
+    LLM_PROMPT_REGISTRY ||--o{ LLM_PROMPT_REGISTRY_MAPPING : "has parameters"
+    LLM_PROMPT_REGISTRY ||--o{ LLM_PROMPT_VERSIONING : "has versions"
 </code></pre>
 <p><strong>Table Descriptions:</strong></p>
 <ul>
@@ -315,11 +325,11 @@
 <h3 id="cache-architecture">Cache Architecture</h3>
 <p>The LLM Gateway uses a Redis-based cache for various caching needs:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Redis Cache&quot;
-        Response[&quot;Response Cache&lt;br&gt;(Hash: Request → Response)&quot;]
-        TokenCount[&quot;Token Count Cache&lt;br&gt;(String: Text → Count)&quot;]
-        PromptCache[&quot;Prompt Template Cache&lt;br&gt;(Hash: ID → Template)&quot;]
-        ConfigCache[&quot;Config Cache&lt;br&gt;(Hash: TenantID → Config)&quot;]
+    subgraph "Redis Cache"
+        Response["Response Cache&lt;br&gt;(Hash: Request → Response)"]
+        TokenCount["Token Count Cache&lt;br&gt;(String: Text → Count)"]
+        PromptCache["Prompt Template Cache&lt;br&gt;(Hash: ID → Template)"]
+        ConfigCache["Config Cache&lt;br&gt;(Hash: TenantID → Config)"]
     end
 
     Client[Client] --&gt; Gateway[LLM Gateway]
@@ -428,14 +438,14 @@
 
     API --&gt;|4. Process Request| PromptMgr[Prompt Manager]
 
-    subgraph &quot;Prompt Creation Flow&quot;
+    subgraph "Prompt Creation Flow"
         PromptMgr --&gt;|4.1 Create Template| DB[(Database)]
         PromptMgr --&gt;|4.2 Extract Params| ParamExtractor[Parameter Extractor]
         ParamExtractor --&gt;|4.3 Param Definitions| PromptMgr
         PromptMgr --&gt;|4.4 Store Params| DB
     end
 
-    subgraph &quot;Version Management Flow&quot;
+    subgraph "Version Management Flow"
         PromptMgr --&gt;|4.5 Create Version| DB
         PromptMgr --&gt;|4.6 Update Status| DB
     end
@@ -540,7 +550,7 @@
 <li>Operational Events: 90 days</li>
 <li>Retention Policy: Configurable per tenant and log type</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="module-level-architecture.html">Module-Level Architecture</a> | <strong>Next</strong>: <a href="runtime-behavior-concurrency.html">Runtime Behavior &amp; Concurrency</a></p>
 </body>
 </html>

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>cicd-pipeline</title>
-    <style>
+<meta charset="utf-8"/>
+<title>cicd-pipeline</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="cicd-pipeline">CI/CD Pipeline</h1>
+<h1 id="cicd-pipeline">CI/CD Pipeline</h1>
 <p>This document details the Continuous Integration and Continuous Deployment (CI/CD) pipeline used for the LLM Gateway service.</p>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
@@ -75,7 +85,7 @@
     Dev -.-&gt;|Feedback| CI
     Staging -.-&gt;|Feedback| CI
 
-    subgraph &quot;Quality Gates&quot;
+    subgraph "Quality Gates"
         QG_Code[Code Quality]
         QG_Security[Security Scans]
         QG_Tests[Automated Tests]
@@ -525,7 +535,7 @@
 - Slack (#llm-gateway-deployments)
 - Email (for critical notifications)
 - PagerDuty (for failures)</p>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="infrastructure-as-code.html">Infrastructure as Code</a> | <strong>Next</strong>: <a href="configuration-secrets.html">Configuration &amp; Secrets Management</a></p>
 </body>
 </html>

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>api-reference</title>
-    <style>
+<meta charset="utf-8"/>
+<title>api-reference</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="api-reference">API Reference</h1>
+<h1 id="api-reference">API Reference</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -191,18 +201,18 @@ X-API-Key: apikey_12345
 <p>API responses follow these format conventions:</p>
 <p><strong>JSON Response Structure:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
+  "data": {
     // Main response data
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   },
-  &quot;pagination&quot;: {
-    &quot;page&quot;: 1,
-    &quot;page_size&quot;: 10,
-    &quot;total_pages&quot;: 5,
-    &quot;total_items&quot;: 42
+  "pagination": {
+    "page": 1,
+    "page_size": 10,
+    "total_pages": 5,
+    "total_items": 42
   }
 }
 </code></pre>
@@ -333,18 +343,18 @@ X-Rate-Limit-Reset: 1589458800
 </code></pre>
 <p><strong>Response Pagination Object:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: [...],
-  &quot;pagination&quot;: {
-    &quot;page&quot;: 2,
-    &quot;page_size&quot;: 10,
-    &quot;total_pages&quot;: 5,
-    &quot;total_items&quot;: 42,
-    &quot;links&quot;: {
-      &quot;self&quot;: &quot;/api/v1/prompts?page=2&amp;page_size=10&quot;,
-      &quot;first&quot;: &quot;/api/v1/prompts?page=1&amp;page_size=10&quot;,
-      &quot;prev&quot;: &quot;/api/v1/prompts?page=1&amp;page_size=10&quot;,
-      &quot;next&quot;: &quot;/api/v1/prompts?page=3&amp;page_size=10&quot;,
-      &quot;last&quot;: &quot;/api/v1/prompts?page=5&amp;page_size=10&quot;
+  "data": [...],
+  "pagination": {
+    "page": 2,
+    "page_size": 10,
+    "total_pages": 5,
+    "total_items": 42,
+    "links": {
+      "self": "/api/v1/prompts?page=2&amp;page_size=10",
+      "first": "/api/v1/prompts?page=1&amp;page_size=10",
+      "prev": "/api/v1/prompts?page=1&amp;page_size=10",
+      "next": "/api/v1/prompts?page=3&amp;page_size=10",
+      "last": "/api/v1/prompts?page=5&amp;page_size=10"
     }
   }
 }
@@ -370,26 +380,26 @@ GET /api/v1/prompts?sort=-created_at,name
 <h3 id="error-handling">Error Handling</h3>
 <p>The API returns standardized error responses:</p>
 <pre><code class="language-json">{
-  &quot;error&quot;: {
-    &quot;code&quot;: &quot;VALIDATION_ERROR&quot;,
-    &quot;message&quot;: &quot;The request could not be processed due to validation errors&quot;,
-    &quot;details&quot;: [
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "The request could not be processed due to validation errors",
+    "details": [
       {
-        &quot;field&quot;: &quot;prompt&quot;,
-        &quot;message&quot;: &quot;Prompt text must not be empty&quot;,
-        &quot;constraint&quot;: &quot;notEmpty&quot;
+        "field": "prompt",
+        "message": "Prompt text must not be empty",
+        "constraint": "notEmpty"
       },
       {
-        &quot;field&quot;: &quot;maxTokens&quot;,
-        &quot;message&quot;: &quot;Maximum tokens must be between 1 and 4096&quot;,
-        &quot;constraint&quot;: &quot;range&quot;,
-        &quot;min&quot;: 1,
-        &quot;max&quot;: 4096
+        "field": "maxTokens",
+        "message": "Maximum tokens must be between 1 and 4096",
+        "constraint": "range",
+        "min": 1,
+        "max": 4096
       }
     ],
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;documentation&quot;: &quot;https://docs.example.com/api/errors#validation_error&quot;
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z",
+    "documentation": "https://docs.example.com/api/errors#validation_error"
   }
 }
 </code></pre>
@@ -408,7 +418,7 @@ GET /api/v1/prompts?sort=-created_at,name
 <pre><code class="language-mermaid">graph TD
     Client[Client Application] --&gt; |1. Authenticate| AuthN[Authentication Layer]
 
-    subgraph &quot;Authentication Methods&quot;
+    subgraph "Authentication Methods"
         APIKey[API Key]
         OAuth[OAuth 2.0]
         JWT[JWT]
@@ -513,11 +523,11 @@ grant_type=client_credentials&amp;client_id=client123&amp;client_secret=secret45
 </code></pre>
 <p><strong>Token Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;access_token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;,
-  &quot;token_type&quot;: &quot;Bearer&quot;,
-  &quot;expires_in&quot;: 3600,
-  &quot;scope&quot;: &quot;llm:execute prompt:read&quot;,
-  &quot;refresh_token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "llm:execute prompt:read",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 </code></pre>
 <p><strong>Token Refresh:</strong></p>
@@ -619,85 +629,85 @@ token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&amp;token_type_hint=access_token
 <p><strong>Request and Response Format:</strong></p>
 <p><strong>Prompt Execution Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;prompt&quot;: &quot;Explain the concept of quantum computing&quot;,
-  &quot;max_tokens&quot;: 500,
-  &quot;temperature&quot;: 0.7,
-  &quot;provider&quot;: &quot;openai&quot;,
-  &quot;model&quot;: &quot;gpt-4&quot;,
-  &quot;options&quot;: {
-    &quot;top_p&quot;: 0.95,
-    &quot;frequency_penalty&quot;: 0.5,
-    &quot;presence_penalty&quot;: 0.5
+  "prompt": "Explain the concept of quantum computing",
+  "max_tokens": 500,
+  "temperature": 0.7,
+  "provider": "openai",
+  "model": "gpt-4",
+  "options": {
+    "top_p": 0.95,
+    "frequency_penalty": 0.5,
+    "presence_penalty": 0.5
   },
-  &quot;cache&quot;: true
+  "cache": true
 }
 </code></pre>
 <p><strong>Prompt Execution Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;response&quot;: &quot;Quantum computing is a type of computing that uses quantum-mechanical phenomena, such as superposition and entanglement, to perform operations on data...&quot;,
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-4&quot;,
-    &quot;usage&quot;: {
-      &quot;prompt_tokens&quot;: 6,
-      &quot;completion_tokens&quot;: 128,
-      &quot;total_tokens&quot;: 134
+  "data": {
+    "response": "Quantum computing is a type of computing that uses quantum-mechanical phenomena, such as superposition and entanglement, to perform operations on data...",
+    "provider": "openai",
+    "model": "gpt-4",
+    "usage": {
+      "prompt_tokens": 6,
+      "completion_tokens": 128,
+      "total_tokens": 134
     },
-    &quot;metadata&quot;: {
-      &quot;finish_reason&quot;: &quot;stop&quot;,
-      &quot;cached&quot;: false
+    "metadata": {
+      "finish_reason": "stop",
+      "cached": false
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
 <p><strong>Chat Execution Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;messages&quot;: [
+  "messages": [
     {
-      &quot;role&quot;: &quot;system&quot;,
-      &quot;content&quot;: &quot;You are a helpful assistant.&quot;
+      "role": "system",
+      "content": "You are a helpful assistant."
     },
     {
-      &quot;role&quot;: &quot;user&quot;,
-      &quot;content&quot;: &quot;Explain the concept of quantum computing.&quot;
+      "role": "user",
+      "content": "Explain the concept of quantum computing."
     }
   ],
-  &quot;max_tokens&quot;: 500,
-  &quot;temperature&quot;: 0.7,
-  &quot;provider&quot;: &quot;anthropic&quot;,
-  &quot;model&quot;: &quot;claude-2&quot;,
-  &quot;options&quot;: {
-    &quot;top_p&quot;: 0.95
+  "max_tokens": 500,
+  "temperature": 0.7,
+  "provider": "anthropic",
+  "model": "claude-2",
+  "options": {
+    "top_p": 0.95
   },
-  &quot;cache&quot;: true
+  "cache": true
 }
 </code></pre>
 <p><strong>Chat Execution Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;message&quot;: {
-      &quot;role&quot;: &quot;assistant&quot;,
-      &quot;content&quot;: &quot;Quantum computing is a type of computing that uses quantum-mechanical phenomena, such as superposition and entanglement, to perform operations on data...&quot;
+  "data": {
+    "message": {
+      "role": "assistant",
+      "content": "Quantum computing is a type of computing that uses quantum-mechanical phenomena, such as superposition and entanglement, to perform operations on data..."
     },
-    &quot;provider&quot;: &quot;anthropic&quot;,
-    &quot;model&quot;: &quot;claude-2&quot;,
-    &quot;usage&quot;: {
-      &quot;prompt_tokens&quot;: 25,
-      &quot;completion_tokens&quot;: 128,
-      &quot;total_tokens&quot;: 153
+    "provider": "anthropic",
+    "model": "claude-2",
+    "usage": {
+      "prompt_tokens": 25,
+      "completion_tokens": 128,
+      "total_tokens": 153
     },
-    &quot;metadata&quot;: {
-      &quot;finish_reason&quot;: &quot;stop&quot;,
-      &quot;cached&quot;: false
+    "metadata": {
+      "finish_reason": "stop",
+      "cached": false
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -763,111 +773,111 @@ token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&amp;token_type_hint=access_token
 <p><strong>Request and Response Format:</strong></p>
 <p><strong>Create Prompt Template Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;name&quot;: &quot;Customer Support Assistant&quot;,
-  &quot;description&quot;: &quot;Template for answering customer support questions&quot;,
-  &quot;template&quot;: &quot;You are a helpful customer support agent.\n\nHere is information about our products: {{context}}\n\nUser question: {{question}}\n\nProvide a helpful response:&quot;,
-  &quot;parameters&quot;: [
+  "name": "Customer Support Assistant",
+  "description": "Template for answering customer support questions",
+  "template": "You are a helpful customer support agent.\n\nHere is information about our products: {{context}}\n\nUser question: {{question}}\n\nProvide a helpful response:",
+  "parameters": [
     {
-      &quot;name&quot;: &quot;context&quot;,
-      &quot;type&quot;: &quot;text&quot;,
-      &quot;description&quot;: &quot;Product information&quot;,
-      &quot;required&quot;: true
+      "name": "context",
+      "type": "text",
+      "description": "Product information",
+      "required": true
     },
     {
-      &quot;name&quot;: &quot;question&quot;,
-      &quot;type&quot;: &quot;text&quot;,
-      &quot;description&quot;: &quot;User's question&quot;,
-      &quot;required&quot;: true
+      "name": "question",
+      "type": "text",
+      "description": "User's question",
+      "required": true
     }
   ],
-  &quot;provider_settings&quot;: {
-    &quot;default_provider&quot;: &quot;openai&quot;,
-    &quot;default_model&quot;: &quot;gpt-3.5-turbo&quot;,
-    &quot;default_parameters&quot;: {
-      &quot;temperature&quot;: 0.5,
-      &quot;max_tokens&quot;: 500
+  "provider_settings": {
+    "default_provider": "openai",
+    "default_model": "gpt-3.5-turbo",
+    "default_parameters": {
+      "temperature": 0.5,
+      "max_tokens": 500
     }
   },
-  &quot;tags&quot;: [&quot;customer-support&quot;, &quot;product-info&quot;]
+  "tags": ["customer-support", "product-info"]
 }
 </code></pre>
 <p><strong>Create Prompt Template Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;id&quot;: &quot;pt-1234-5678-90ab-cdef&quot;,
-    &quot;name&quot;: &quot;Customer Support Assistant&quot;,
-    &quot;description&quot;: &quot;Template for answering customer support questions&quot;,
-    &quot;template&quot;: &quot;You are a helpful customer support agent.\n\nHere is information about our products: {{context}}\n\nUser question: {{question}}\n\nProvide a helpful response:&quot;,
-    &quot;parameters&quot;: [
+  "data": {
+    "id": "pt-1234-5678-90ab-cdef",
+    "name": "Customer Support Assistant",
+    "description": "Template for answering customer support questions",
+    "template": "You are a helpful customer support agent.\n\nHere is information about our products: {{context}}\n\nUser question: {{question}}\n\nProvide a helpful response:",
+    "parameters": [
       {
-        &quot;name&quot;: &quot;context&quot;,
-        &quot;type&quot;: &quot;text&quot;,
-        &quot;description&quot;: &quot;Product information&quot;,
-        &quot;required&quot;: true
+        "name": "context",
+        "type": "text",
+        "description": "Product information",
+        "required": true
       },
       {
-        &quot;name&quot;: &quot;question&quot;,
-        &quot;type&quot;: &quot;text&quot;,
-        &quot;description&quot;: &quot;User's question&quot;,
-        &quot;required&quot;: true
+        "name": "question",
+        "type": "text",
+        "description": "User's question",
+        "required": true
       }
     ],
-    &quot;provider_settings&quot;: {
-      &quot;default_provider&quot;: &quot;openai&quot;,
-      &quot;default_model&quot;: &quot;gpt-3.5-turbo&quot;,
-      &quot;default_parameters&quot;: {
-        &quot;temperature&quot;: 0.5,
-        &quot;max_tokens&quot;: 500
+    "provider_settings": {
+      "default_provider": "openai",
+      "default_model": "gpt-3.5-turbo",
+      "default_parameters": {
+        "temperature": 0.5,
+        "max_tokens": 500
       }
     },
-    &quot;tags&quot;: [&quot;customer-support&quot;, &quot;product-info&quot;],
-    &quot;version&quot;: &quot;1.0&quot;,
-    &quot;status&quot;: &quot;draft&quot;,
-    &quot;created_by&quot;: &quot;user-123&quot;,
-    &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;updated_at&quot;: &quot;2023-05-15T14:22:18Z&quot;
+    "tags": ["customer-support", "product-info"],
+    "version": "1.0",
+    "status": "draft",
+    "created_by": "user-123",
+    "created_at": "2023-05-15T14:22:18Z",
+    "updated_at": "2023-05-15T14:22:18Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
 <p><strong>Execute Prompt Template Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;prompt_id&quot;: &quot;pt-1234-5678-90ab-cdef&quot;,
-  &quot;parameters&quot;: {
-    &quot;context&quot;: &quot;Our product XYZ is a software tool for managing customer relationships. It has features for contact management, task tracking, and email integration.&quot;,
-    &quot;question&quot;: &quot;Does your product integrate with Gmail?&quot;
+  "prompt_id": "pt-1234-5678-90ab-cdef",
+  "parameters": {
+    "context": "Our product XYZ is a software tool for managing customer relationships. It has features for contact management, task tracking, and email integration.",
+    "question": "Does your product integrate with Gmail?"
   },
-  &quot;provider_settings&quot;: {
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-4&quot;,
-    &quot;temperature&quot;: 0.3
+  "provider_settings": {
+    "provider": "openai",
+    "model": "gpt-4",
+    "temperature": 0.3
   }
 }
 </code></pre>
 <p><strong>Execute Prompt Template Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;response&quot;: &quot;Yes, our product XYZ integrates with Gmail. This integration allows you to sync your emails directly within the platform, track email conversations with customers, and manage your Gmail contacts within our CRM system. You can set up the integration through the Settings &gt; Integrations menu in the application.&quot;,
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-4&quot;,
-    &quot;usage&quot;: {
-      &quot;prompt_tokens&quot;: 84,
-      &quot;completion_tokens&quot;: 62,
-      &quot;total_tokens&quot;: 146
+  "data": {
+    "response": "Yes, our product XYZ integrates with Gmail. This integration allows you to sync your emails directly within the platform, track email conversations with customers, and manage your Gmail contacts within our CRM system. You can set up the integration through the Settings &gt; Integrations menu in the application.",
+    "provider": "openai",
+    "model": "gpt-4",
+    "usage": {
+      "prompt_tokens": 84,
+      "completion_tokens": 62,
+      "total_tokens": 146
     },
-    &quot;metadata&quot;: {
-      &quot;prompt_id&quot;: &quot;pt-1234-5678-90ab-cdef&quot;,
-      &quot;version&quot;: &quot;1.0&quot;,
-      &quot;finish_reason&quot;: &quot;stop&quot;,
-      &quot;cached&quot;: false
+    "metadata": {
+      "prompt_id": "pt-1234-5678-90ab-cdef",
+      "version": "1.0",
+      "finish_reason": "stop",
+      "cached": false
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -918,68 +928,68 @@ token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&amp;token_type_hint=access_token
 <p><strong>Request and Response Format:</strong></p>
 <p><strong>Provider Configuration:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;id&quot;: &quot;openai&quot;,
-    &quot;name&quot;: &quot;OpenAI&quot;,
-    &quot;description&quot;: &quot;OpenAI API provider&quot;,
-    &quot;status&quot;: &quot;active&quot;,
-    &quot;endpoint&quot;: &quot;https://api.openai.com/v1&quot;,
-    &quot;models&quot;: [
+  "data": {
+    "id": "openai",
+    "name": "OpenAI",
+    "description": "OpenAI API provider",
+    "status": "active",
+    "endpoint": "https://api.openai.com/v1",
+    "models": [
       {
-        &quot;id&quot;: &quot;gpt-3.5-turbo&quot;,
-        &quot;name&quot;: &quot;GPT-3.5 Turbo&quot;,
-        &quot;context_window&quot;: 4096,
-        &quot;capabilities&quot;: [&quot;chat&quot;, &quot;function-calling&quot;],
-        &quot;status&quot;: &quot;active&quot;
+        "id": "gpt-3.5-turbo",
+        "name": "GPT-3.5 Turbo",
+        "context_window": 4096,
+        "capabilities": ["chat", "function-calling"],
+        "status": "active"
       },
       {
-        &quot;id&quot;: &quot;gpt-4&quot;,
-        &quot;name&quot;: &quot;GPT-4&quot;,
-        &quot;context_window&quot;: 8192,
-        &quot;capabilities&quot;: [&quot;chat&quot;, &quot;function-calling&quot;, &quot;vision&quot;],
-        &quot;status&quot;: &quot;active&quot;
+        "id": "gpt-4",
+        "name": "GPT-4",
+        "context_window": 8192,
+        "capabilities": ["chat", "function-calling", "vision"],
+        "status": "active"
       }
     ],
-    &quot;default_model&quot;: &quot;gpt-3.5-turbo&quot;,
-    &quot;config&quot;: {
-      &quot;timeout&quot;: 60000,
-      &quot;retry_strategy&quot;: {
-        &quot;max_retries&quot;: 3,
-        &quot;initial_backoff_ms&quot;: 1000,
-        &quot;max_backoff_ms&quot;: 10000
+    "default_model": "gpt-3.5-turbo",
+    "config": {
+      "timeout": 60000,
+      "retry_strategy": {
+        "max_retries": 3,
+        "initial_backoff_ms": 1000,
+        "max_backoff_ms": 10000
       },
-      &quot;rate_limits&quot;: {
-        &quot;requests_per_minute&quot;: 100,
-        &quot;tokens_per_minute&quot;: 10000
+      "rate_limits": {
+        "requests_per_minute": 100,
+        "tokens_per_minute": 10000
       }
     },
-    &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;updated_at&quot;: &quot;2023-05-15T14:22:18Z&quot;
+    "created_at": "2023-05-15T14:22:18Z",
+    "updated_at": "2023-05-15T14:22:18Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
 <p><strong>Provider Credentials Update Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;type&quot;: &quot;api_key&quot;,
-  &quot;credentials&quot;: {
-    &quot;api_key&quot;: &quot;sk-1234567890abcdef&quot;
+  "type": "api_key",
+  "credentials": {
+    "api_key": "sk-1234567890abcdef"
   }
 }
 </code></pre>
 <p><strong>Provider Credentials Update Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;status&quot;: &quot;active&quot;,
-    &quot;last_updated&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;expiration&quot;: &quot;2024-05-15T14:22:18Z&quot;
+  "data": {
+    "status": "active",
+    "last_updated": "2023-05-15T14:22:18Z",
+    "expiration": "2024-05-15T14:22:18Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1033,43 +1043,43 @@ token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&amp;token_type_hint=access_token
 </code></pre>
 <p><strong>Usage Metrics Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;time_period&quot;: {
-      &quot;start&quot;: &quot;2023-05-01T00:00:00Z&quot;,
-      &quot;end&quot;: &quot;2023-05-15T23:59:59Z&quot;,
-      &quot;interval&quot;: &quot;day&quot;
+  "data": {
+    "time_period": {
+      "start": "2023-05-01T00:00:00Z",
+      "end": "2023-05-15T23:59:59Z",
+      "interval": "day"
     },
-    &quot;total_requests&quot;: 12583,
-    &quot;total_tokens&quot;: {
-      &quot;prompt&quot;: 1254890,
-      &quot;completion&quot;: 589305,
-      &quot;total&quot;: 1844195
+    "total_requests": 12583,
+    "total_tokens": {
+      "prompt": 1254890,
+      "completion": 589305,
+      "total": 1844195
     },
-    &quot;time_series&quot;: [
+    "time_series": [
       {
-        &quot;date&quot;: &quot;2023-05-01T00:00:00Z&quot;,
-        &quot;requests&quot;: 824,
-        &quot;tokens&quot;: {
-          &quot;prompt&quot;: 82341,
-          &quot;completion&quot;: 37892,
-          &quot;total&quot;: 120233
+        "date": "2023-05-01T00:00:00Z",
+        "requests": 824,
+        "tokens": {
+          "prompt": 82341,
+          "completion": 37892,
+          "total": 120233
         }
       },
       {
-        &quot;date&quot;: &quot;2023-05-02T00:00:00Z&quot;,
-        &quot;requests&quot;: 912,
-        &quot;tokens&quot;: {
-          &quot;prompt&quot;: 91205,
-          &quot;completion&quot;: 42145,
-          &quot;total&quot;: 133350
+        "date": "2023-05-02T00:00:00Z",
+        "requests": 912,
+        "tokens": {
+          "prompt": 91205,
+          "completion": 42145,
+          "total": 133350
         }
       },
       // Additional days...
     ]
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-16T10:15:30Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-16T10:15:30Z"
   }
 }
 </code></pre>
@@ -1110,43 +1120,43 @@ token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&amp;token_type_hint=access_token
 <p><strong>Request and Response Format:</strong></p>
 <p><strong>Health Status Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;status&quot;: &quot;healthy&quot;,
-    &quot;version&quot;: &quot;1.5.2&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;components&quot;: {
-      &quot;api&quot;: {
-        &quot;status&quot;: &quot;healthy&quot;,
-        &quot;latency_ms&quot;: 12
+  "data": {
+    "status": "healthy",
+    "version": "1.5.2",
+    "timestamp": "2023-05-15T14:22:18Z",
+    "components": {
+      "api": {
+        "status": "healthy",
+        "latency_ms": 12
       },
-      &quot;database&quot;: {
-        &quot;status&quot;: &quot;healthy&quot;,
-        &quot;latency_ms&quot;: 25
+      "database": {
+        "status": "healthy",
+        "latency_ms": 25
       },
-      &quot;cache&quot;: {
-        &quot;status&quot;: &quot;healthy&quot;,
-        &quot;latency_ms&quot;: 3
+      "cache": {
+        "status": "healthy",
+        "latency_ms": 3
       },
-      &quot;providers&quot;: {
-        &quot;openai&quot;: {
-          &quot;status&quot;: &quot;healthy&quot;,
-          &quot;latency_ms&quot;: 245
+      "providers": {
+        "openai": {
+          "status": "healthy",
+          "latency_ms": 245
         },
-        &quot;anthropic&quot;: {
-          &quot;status&quot;: &quot;degraded&quot;,
-          &quot;latency_ms&quot;: 580,
-          &quot;message&quot;: &quot;Elevated response times&quot;
+        "anthropic": {
+          "status": "degraded",
+          "latency_ms": 580,
+          "message": "Elevated response times"
         },
-        &quot;bedrock&quot;: {
-          &quot;status&quot;: &quot;healthy&quot;,
-          &quot;latency_ms&quot;: 320
+        "bedrock": {
+          "status": "healthy",
+          "latency_ms": 320
         }
       }
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1159,36 +1169,36 @@ Content-Type: application/json
 Accept: text/event-stream
 
 {
-  &quot;prompt&quot;: &quot;Write a story about a space explorer&quot;,
-  &quot;max_tokens&quot;: 500,
-  &quot;temperature&quot;: 0.7,
-  &quot;provider&quot;: &quot;openai&quot;,
-  &quot;model&quot;: &quot;gpt-4&quot;
+  "prompt": "Write a story about a space explorer",
+  "max_tokens": 500,
+  "temperature": 0.7,
+  "provider": "openai",
+  "model": "gpt-4"
 }
 </code></pre>
 <p><strong>Streaming Response:</strong></p>
 <pre><code>event: start
-data: {&quot;request_id&quot;:&quot;req-1234-5678-90ab-cdef&quot;,&quot;created_at&quot;:&quot;2023-05-15T14:22:18Z&quot;}
+data: {"request_id":"req-1234-5678-90ab-cdef","created_at":"2023-05-15T14:22:18Z"}
 
 event: token
-data: {&quot;text&quot;:&quot;Once&quot;,&quot;index&quot;:0}
+data: {"text":"Once","index":0}
 
 event: token
-data: {&quot;text&quot;:&quot; upon&quot;,&quot;index&quot;:1}
+data: {"text":" upon","index":1}
 
 event: token
-data: {&quot;text&quot;:&quot; a&quot;,&quot;index&quot;:2}
+data: {"text":" a","index":2}
 
 event: token
-data: {&quot;text&quot;:&quot; time&quot;,&quot;index&quot;:3}
+data: {"text":" time","index":3}
 
 // Additional tokens...
 
 event: metadata
-data: {&quot;usage&quot;:{&quot;prompt_tokens&quot;:9,&quot;completion_tokens&quot;:127,&quot;total_tokens&quot;:136}}
+data: {"usage":{"prompt_tokens":9,"completion_tokens":127,"total_tokens":136}}
 
 event: finish
-data: {&quot;finish_reason&quot;:&quot;stop&quot;}
+data: {"finish_reason":"stop"}
 </code></pre>
 <p><strong>Streaming Implementation:</strong></p>
 <pre><code class="language-mermaid">sequenceDiagram
@@ -1217,63 +1227,63 @@ data: {&quot;finish_reason&quot;:&quot;stop&quot;}
 <p>The API supports function calling for LLM-powered applications.</p>
 <p><strong>Function Calling Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;messages&quot;: [
+  "messages": [
     {
-      &quot;role&quot;: &quot;user&quot;,
-      &quot;content&quot;: &quot;What's the weather like in San Francisco?&quot;
+      "role": "user",
+      "content": "What's the weather like in San Francisco?"
     }
   ],
-  &quot;functions&quot;: [
+  "functions": [
     {
-      &quot;name&quot;: &quot;get_weather&quot;,
-      &quot;description&quot;: &quot;Get the current weather in a given location&quot;,
-      &quot;parameters&quot;: {
-        &quot;type&quot;: &quot;object&quot;,
-        &quot;properties&quot;: {
-          &quot;location&quot;: {
-            &quot;type&quot;: &quot;string&quot;,
-            &quot;description&quot;: &quot;The city and state, e.g. San Francisco, CA&quot;
+      "name": "get_weather",
+      "description": "Get the current weather in a given location",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "description": "The city and state, e.g. San Francisco, CA"
           },
-          &quot;unit&quot;: {
-            &quot;type&quot;: &quot;string&quot;,
-            &quot;enum&quot;: [&quot;celsius&quot;, &quot;fahrenheit&quot;],
-            &quot;description&quot;: &quot;The temperature unit to use&quot;
+          "unit": {
+            "type": "string",
+            "enum": ["celsius", "fahrenheit"],
+            "description": "The temperature unit to use"
           }
         },
-        &quot;required&quot;: [&quot;location&quot;]
+        "required": ["location"]
       }
     }
   ],
-  &quot;provider&quot;: &quot;openai&quot;,
-  &quot;model&quot;: &quot;gpt-4&quot;
+  "provider": "openai",
+  "model": "gpt-4"
 }
 </code></pre>
 <p><strong>Function Calling Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;message&quot;: {
-      &quot;role&quot;: &quot;assistant&quot;,
-      &quot;content&quot;: null,
-      &quot;function_call&quot;: {
-        &quot;name&quot;: &quot;get_weather&quot;,
-        &quot;arguments&quot;: &quot;{\&quot;location\&quot;:\&quot;San Francisco, CA\&quot;,\&quot;unit\&quot;:\&quot;celsius\&quot;}&quot;
+  "data": {
+    "message": {
+      "role": "assistant",
+      "content": null,
+      "function_call": {
+        "name": "get_weather",
+        "arguments": "{\"location\":\"San Francisco, CA\",\"unit\":\"celsius\"}"
       }
     },
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-4&quot;,
-    &quot;usage&quot;: {
-      &quot;prompt_tokens&quot;: 82,
-      &quot;completion_tokens&quot;: 18,
-      &quot;total_tokens&quot;: 100
+    "provider": "openai",
+    "model": "gpt-4",
+    "usage": {
+      "prompt_tokens": 82,
+      "completion_tokens": 18,
+      "total_tokens": 100
     },
-    &quot;metadata&quot;: {
-      &quot;finish_reason&quot;: &quot;function_call&quot;,
-      &quot;cached&quot;: false
+    "metadata": {
+      "finish_reason": "function_call",
+      "cached": false
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1281,90 +1291,90 @@ data: {&quot;finish_reason&quot;:&quot;stop&quot;}
 <p>The API supports batch processing for efficient handling of multiple requests.</p>
 <p><strong>Batch Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;requests&quot;: [
+  "requests": [
     {
-      &quot;id&quot;: &quot;req1&quot;,
-      &quot;prompt&quot;: &quot;Summarize the concept of machine learning&quot;,
-      &quot;max_tokens&quot;: 100,
-      &quot;provider&quot;: &quot;openai&quot;,
-      &quot;model&quot;: &quot;gpt-3.5-turbo&quot;
+      "id": "req1",
+      "prompt": "Summarize the concept of machine learning",
+      "max_tokens": 100,
+      "provider": "openai",
+      "model": "gpt-3.5-turbo"
     },
     {
-      &quot;id&quot;: &quot;req2&quot;,
-      &quot;prompt&quot;: &quot;Explain the difference between supervised and unsupervised learning&quot;,
-      &quot;max_tokens&quot;: 150,
-      &quot;provider&quot;: &quot;anthropic&quot;,
-      &quot;model&quot;: &quot;claude-2&quot;
+      "id": "req2",
+      "prompt": "Explain the difference between supervised and unsupervised learning",
+      "max_tokens": 150,
+      "provider": "anthropic",
+      "model": "claude-2"
     },
     {
-      &quot;id&quot;: &quot;req3&quot;,
-      &quot;prompt&quot;: &quot;What is reinforcement learning?&quot;,
-      &quot;max_tokens&quot;: 100,
-      &quot;provider&quot;: &quot;openai&quot;,
-      &quot;model&quot;: &quot;gpt-4&quot;
+      "id": "req3",
+      "prompt": "What is reinforcement learning?",
+      "max_tokens": 100,
+      "provider": "openai",
+      "model": "gpt-4"
     }
   ],
-  &quot;execution_strategy&quot;: &quot;parallel&quot;,
-  &quot;error_strategy&quot;: &quot;continue&quot;
+  "execution_strategy": "parallel",
+  "error_strategy": "continue"
 }
 </code></pre>
 <p><strong>Batch Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;results&quot;: [
+  "data": {
+    "results": [
       {
-        &quot;id&quot;: &quot;req1&quot;,
-        &quot;status&quot;: &quot;success&quot;,
-        &quot;response&quot;: {
-          &quot;response&quot;: &quot;Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed...&quot;,
-          &quot;provider&quot;: &quot;openai&quot;,
-          &quot;model&quot;: &quot;gpt-3.5-turbo&quot;,
-          &quot;usage&quot;: {
-            &quot;prompt_tokens&quot;: 7,
-            &quot;completion_tokens&quot;: 53,
-            &quot;total_tokens&quot;: 60
+        "id": "req1",
+        "status": "success",
+        "response": {
+          "response": "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed...",
+          "provider": "openai",
+          "model": "gpt-3.5-turbo",
+          "usage": {
+            "prompt_tokens": 7,
+            "completion_tokens": 53,
+            "total_tokens": 60
           }
         }
       },
       {
-        &quot;id&quot;: &quot;req2&quot;,
-        &quot;status&quot;: &quot;success&quot;,
-        &quot;response&quot;: {
-          &quot;response&quot;: &quot;Supervised learning uses labeled data for training, where the algorithm learns to map inputs to known outputs. Unsupervised learning works with unlabeled data...&quot;,
-          &quot;provider&quot;: &quot;anthropic&quot;,
-          &quot;model&quot;: &quot;claude-2&quot;,
-          &quot;usage&quot;: {
-            &quot;prompt_tokens&quot;: 12,
-            &quot;completion_tokens&quot;: 61,
-            &quot;total_tokens&quot;: 73
+        "id": "req2",
+        "status": "success",
+        "response": {
+          "response": "Supervised learning uses labeled data for training, where the algorithm learns to map inputs to known outputs. Unsupervised learning works with unlabeled data...",
+          "provider": "anthropic",
+          "model": "claude-2",
+          "usage": {
+            "prompt_tokens": 12,
+            "completion_tokens": 61,
+            "total_tokens": 73
           }
         }
       },
       {
-        &quot;id&quot;: &quot;req3&quot;,
-        &quot;status&quot;: &quot;success&quot;,
-        &quot;response&quot;: {
-          &quot;response&quot;: &quot;Reinforcement learning is a type of machine learning where an agent learns to make decisions by performing actions and receiving rewards or penalties...&quot;,
-          &quot;provider&quot;: &quot;openai&quot;,
-          &quot;model&quot;: &quot;gpt-4&quot;,
-          &quot;usage&quot;: {
-            &quot;prompt_tokens&quot;: 6,
-            &quot;completion_tokens&quot;: 48,
-            &quot;total_tokens&quot;: 54
+        "id": "req3",
+        "status": "success",
+        "response": {
+          "response": "Reinforcement learning is a type of machine learning where an agent learns to make decisions by performing actions and receiving rewards or penalties...",
+          "provider": "openai",
+          "model": "gpt-4",
+          "usage": {
+            "prompt_tokens": 6,
+            "completion_tokens": 48,
+            "total_tokens": 54
           }
         }
       }
     ],
-    &quot;summary&quot;: {
-      &quot;total&quot;: 3,
-      &quot;succeeded&quot;: 3,
-      &quot;failed&quot;: 0,
-      &quot;total_tokens&quot;: 187
+    "summary": {
+      "total": 3,
+      "succeeded": 3,
+      "failed": 0,
+      "total_tokens": 187
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1372,25 +1382,25 @@ data: {&quot;finish_reason&quot;:&quot;stop&quot;}
 <p>The API supports asynchronous execution for long-running operations.</p>
 <p><strong>Asynchronous Request:</strong></p>
 <pre><code class="language-json">{
-  &quot;prompt&quot;: &quot;Write a detailed essay on the history of artificial intelligence&quot;,
-  &quot;max_tokens&quot;: 4000,
-  &quot;temperature&quot;: 0.7,
-  &quot;provider&quot;: &quot;openai&quot;,
-  &quot;model&quot;: &quot;gpt-4&quot;,
-  &quot;callback_url&quot;: &quot;https://example.com/api/callbacks&quot;
+  "prompt": "Write a detailed essay on the history of artificial intelligence",
+  "max_tokens": 4000,
+  "temperature": 0.7,
+  "provider": "openai",
+  "model": "gpt-4",
+  "callback_url": "https://example.com/api/callbacks"
 }
 </code></pre>
 <p><strong>Asynchronous Response (Immediate):</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;status&quot;: &quot;processing&quot;,
-    &quot;result_url&quot;: &quot;/api/v1/llm/results/res-1234-5678-90ab-cdef&quot;,
-    &quot;estimated_completion_time&quot;: &quot;2023-05-15T14:23:18Z&quot;
+  "data": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "status": "processing",
+    "result_url": "/api/v1/llm/results/res-1234-5678-90ab-cdef",
+    "estimated_completion_time": "2023-05-15T14:23:18Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1399,53 +1409,53 @@ data: {&quot;finish_reason&quot;:&quot;stop&quot;}
 </code></pre>
 <p><strong>Check Result Response:</strong></p>
 <pre><code class="language-json">{
-  &quot;data&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;status&quot;: &quot;completed&quot;,
-    &quot;result&quot;: {
-      &quot;response&quot;: &quot;The history of artificial intelligence begins in antiquity with myths, stories and rumors of artificial beings endowed with intelligence...&quot;,
-      &quot;provider&quot;: &quot;openai&quot;,
-      &quot;model&quot;: &quot;gpt-4&quot;,
-      &quot;usage&quot;: {
-        &quot;prompt_tokens&quot;: 11,
-        &quot;completion_tokens&quot;: 1523,
-        &quot;total_tokens&quot;: 1534
+  "data": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "status": "completed",
+    "result": {
+      "response": "The history of artificial intelligence begins in antiquity with myths, stories and rumors of artificial beings endowed with intelligence...",
+      "provider": "openai",
+      "model": "gpt-4",
+      "usage": {
+        "prompt_tokens": 11,
+        "completion_tokens": 1523,
+        "total_tokens": 1534
       },
-      &quot;metadata&quot;: {
-        &quot;finish_reason&quot;: &quot;stop&quot;,
-        &quot;cached&quot;: false
+      "metadata": {
+        "finish_reason": "stop",
+        "cached": false
       }
     },
-    &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;completed_at&quot;: &quot;2023-05-15T14:23:15Z&quot;
+    "created_at": "2023-05-15T14:22:18Z",
+    "completed_at": "2023-05-15T14:23:15Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-5678-1234-cdef-90ab&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:23:20Z&quot;
+  "meta": {
+    "request_id": "req-5678-1234-cdef-90ab",
+    "timestamp": "2023-05-15T14:23:20Z"
   }
 }
 </code></pre>
 <p><strong>Callback Payload:</strong></p>
 <pre><code class="language-json">{
-  &quot;event_type&quot;: &quot;llm.execution.completed&quot;,
-  &quot;resource_type&quot;: &quot;llm_execution&quot;,
-  &quot;resource_id&quot;: &quot;res-1234-5678-90ab-cdef&quot;,
-  &quot;timestamp&quot;: &quot;2023-05-15T14:23:15Z&quot;,
-  &quot;data&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;status&quot;: &quot;completed&quot;,
-    &quot;result&quot;: {
-      &quot;response&quot;: &quot;The history of artificial intelligence begins in antiquity with myths, stories and rumors of artificial beings endowed with intelligence...&quot;,
-      &quot;provider&quot;: &quot;openai&quot;,
-      &quot;model&quot;: &quot;gpt-4&quot;,
-      &quot;usage&quot;: {
-        &quot;prompt_tokens&quot;: 11,
-        &quot;completion_tokens&quot;: 1523,
-        &quot;total_tokens&quot;: 1534
+  "event_type": "llm.execution.completed",
+  "resource_type": "llm_execution",
+  "resource_id": "res-1234-5678-90ab-cdef",
+  "timestamp": "2023-05-15T14:23:15Z",
+  "data": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "status": "completed",
+    "result": {
+      "response": "The history of artificial intelligence begins in antiquity with myths, stories and rumors of artificial beings endowed with intelligence...",
+      "provider": "openai",
+      "model": "gpt-4",
+      "usage": {
+        "prompt_tokens": 11,
+        "completion_tokens": 1523,
+        "total_tokens": 1534
       },
-      &quot;metadata&quot;: {
-        &quot;finish_reason&quot;: &quot;stop&quot;,
-        &quot;cached&quot;: false
+      "metadata": {
+        "finish_reason": "stop",
+        "cached": false
       }
     }
   }
@@ -1457,32 +1467,32 @@ data: {&quot;finish_reason&quot;:&quot;stop&quot;}
 <pre><code class="language-json">// Request
 POST /api/v1/llm/execute
 {
-  &quot;prompt&quot;: &quot;Explain the concept of machine learning in simple terms&quot;,
-  &quot;max_tokens&quot;: 200,
-  &quot;temperature&quot;: 0.7,
-  &quot;provider&quot;: &quot;openai&quot;,
-  &quot;model&quot;: &quot;gpt-3.5-turbo&quot;
+  "prompt": "Explain the concept of machine learning in simple terms",
+  "max_tokens": 200,
+  "temperature": 0.7,
+  "provider": "openai",
+  "model": "gpt-3.5-turbo"
 }
 
 // Response
 {
-  &quot;data&quot;: {
-    &quot;response&quot;: &quot;Machine learning is like teaching a computer to learn from examples, much like how a child learns from experience. Instead of programming specific instructions for every possible situation, we show the computer lots of examples and it figures out patterns on its own...&quot;,
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-3.5-turbo&quot;,
-    &quot;usage&quot;: {
-      &quot;prompt_tokens&quot;: 11,
-      &quot;completion_tokens&quot;: 85,
-      &quot;total_tokens&quot;: 96
+  "data": {
+    "response": "Machine learning is like teaching a computer to learn from examples, much like how a child learns from experience. Instead of programming specific instructions for every possible situation, we show the computer lots of examples and it figures out patterns on its own...",
+    "provider": "openai",
+    "model": "gpt-3.5-turbo",
+    "usage": {
+      "prompt_tokens": 11,
+      "completion_tokens": 85,
+      "total_tokens": 96
     },
-    &quot;metadata&quot;: {
-      &quot;finish_reason&quot;: &quot;length&quot;,
-      &quot;cached&quot;: false
+    "metadata": {
+      "finish_reason": "length",
+      "cached": false
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1490,44 +1500,44 @@ POST /api/v1/llm/execute
 <pre><code class="language-json">// Request
 POST /api/v1/llm/execute/chat
 {
-  &quot;messages&quot;: [
+  "messages": [
     {
-      &quot;role&quot;: &quot;system&quot;,
-      &quot;content&quot;: &quot;You are a helpful assistant that specializes in technology explanations.&quot;
+      "role": "system",
+      "content": "You are a helpful assistant that specializes in technology explanations."
     },
     {
-      &quot;role&quot;: &quot;user&quot;,
-      &quot;content&quot;: &quot;What is the difference between REST and GraphQL?&quot;
+      "role": "user",
+      "content": "What is the difference between REST and GraphQL?"
     }
   ],
-  &quot;max_tokens&quot;: 300,
-  &quot;temperature&quot;: 0.5,
-  &quot;provider&quot;: &quot;anthropic&quot;,
-  &quot;model&quot;: &quot;claude-2&quot;
+  "max_tokens": 300,
+  "temperature": 0.5,
+  "provider": "anthropic",
+  "model": "claude-2"
 }
 
 // Response
 {
-  &quot;data&quot;: {
-    &quot;message&quot;: {
-      &quot;role&quot;: &quot;assistant&quot;,
-      &quot;content&quot;: &quot;REST and GraphQL are both approaches for building APIs, but they have different philosophies and capabilities:\n\n**REST (Representational State Transfer)**:\n- Uses standard HTTP methods (GET, POST, PUT, DELETE)\n- Operates on resources with fixed endpoints for each resource type\n- Returns fixed data structures defined by the server\n- Typically requires multiple requests to fetch related data\n- Simple caching with HTTP cache headers\n\n**GraphQL**:\n- Uses a single endpoint for all operations\n- Clients specify exactly what data they need in the query\n- Returns precisely the data requested, no more or less\n- Can fetch multiple related resources in a single request\n- Requires custom caching solutions\n- Provides introspection to explore the API schema\n\nIn essence, REST is simpler but less flexible, while GraphQL gives clients more control over exactly what data they receive but with added complexity in implementation.&quot;
+  "data": {
+    "message": {
+      "role": "assistant",
+      "content": "REST and GraphQL are both approaches for building APIs, but they have different philosophies and capabilities:\n\n**REST (Representational State Transfer)**:\n- Uses standard HTTP methods (GET, POST, PUT, DELETE)\n- Operates on resources with fixed endpoints for each resource type\n- Returns fixed data structures defined by the server\n- Typically requires multiple requests to fetch related data\n- Simple caching with HTTP cache headers\n\n**GraphQL**:\n- Uses a single endpoint for all operations\n- Clients specify exactly what data they need in the query\n- Returns precisely the data requested, no more or less\n- Can fetch multiple related resources in a single request\n- Requires custom caching solutions\n- Provides introspection to explore the API schema\n\nIn essence, REST is simpler but less flexible, while GraphQL gives clients more control over exactly what data they receive but with added complexity in implementation."
     },
-    &quot;provider&quot;: &quot;anthropic&quot;,
-    &quot;model&quot;: &quot;claude-2&quot;,
-    &quot;usage&quot;: {
-      &quot;prompt_tokens&quot;: 34,
-      &quot;completion_tokens&quot;: 205,
-      &quot;total_tokens&quot;: 239
+    "provider": "anthropic",
+    "model": "claude-2",
+    "usage": {
+      "prompt_tokens": 34,
+      "completion_tokens": 205,
+      "total_tokens": 239
     },
-    &quot;metadata&quot;: {
-      &quot;finish_reason&quot;: &quot;stop&quot;,
-      &quot;cached&quot;: false
+    "metadata": {
+      "finish_reason": "stop",
+      "cached": false
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1536,73 +1546,73 @@ POST /api/v1/llm/execute/chat
 <pre><code class="language-json">// Request
 POST /api/v1/prompts
 {
-  &quot;name&quot;: &quot;SQL Query Generator&quot;,
-  &quot;description&quot;: &quot;Generate SQL queries based on natural language descriptions&quot;,
-  &quot;template&quot;: &quot;You are an expert SQL developer. Your task is to generate a SQL query based on the following requirements:\n\nDatabase schema:\n{{schema}}\n\nQuery request: {{request}}\n\nGenerate ONLY the SQL query without any explanations:&quot;,
-  &quot;parameters&quot;: [
+  "name": "SQL Query Generator",
+  "description": "Generate SQL queries based on natural language descriptions",
+  "template": "You are an expert SQL developer. Your task is to generate a SQL query based on the following requirements:\n\nDatabase schema:\n{{schema}}\n\nQuery request: {{request}}\n\nGenerate ONLY the SQL query without any explanations:",
+  "parameters": [
     {
-      &quot;name&quot;: &quot;schema&quot;,
-      &quot;type&quot;: &quot;text&quot;,
-      &quot;description&quot;: &quot;Database schema description&quot;,
-      &quot;required&quot;: true
+      "name": "schema",
+      "type": "text",
+      "description": "Database schema description",
+      "required": true
     },
     {
-      &quot;name&quot;: &quot;request&quot;,
-      &quot;type&quot;: &quot;text&quot;,
-      &quot;description&quot;: &quot;Natural language description of the desired query&quot;,
-      &quot;required&quot;: true
+      "name": "request",
+      "type": "text",
+      "description": "Natural language description of the desired query",
+      "required": true
     }
   ],
-  &quot;provider_settings&quot;: {
-    &quot;default_provider&quot;: &quot;openai&quot;,
-    &quot;default_model&quot;: &quot;gpt-4&quot;,
-    &quot;default_parameters&quot;: {
-      &quot;temperature&quot;: 0.2,
-      &quot;max_tokens&quot;: 300
+  "provider_settings": {
+    "default_provider": "openai",
+    "default_model": "gpt-4",
+    "default_parameters": {
+      "temperature": 0.2,
+      "max_tokens": 300
     }
   },
-  &quot;tags&quot;: [&quot;sql&quot;, &quot;database&quot;, &quot;code-generation&quot;]
+  "tags": ["sql", "database", "code-generation"]
 }
 
 // Response
 {
-  &quot;data&quot;: {
-    &quot;id&quot;: &quot;pt-1234-5678-90ab-cdef&quot;,
-    &quot;name&quot;: &quot;SQL Query Generator&quot;,
-    &quot;description&quot;: &quot;Generate SQL queries based on natural language descriptions&quot;,
-    &quot;template&quot;: &quot;You are an expert SQL developer. Your task is to generate a SQL query based on the following requirements:\n\nDatabase schema:\n{{schema}}\n\nQuery request: {{request}}\n\nGenerate ONLY the SQL query without any explanations:&quot;,
-    &quot;parameters&quot;: [
+  "data": {
+    "id": "pt-1234-5678-90ab-cdef",
+    "name": "SQL Query Generator",
+    "description": "Generate SQL queries based on natural language descriptions",
+    "template": "You are an expert SQL developer. Your task is to generate a SQL query based on the following requirements:\n\nDatabase schema:\n{{schema}}\n\nQuery request: {{request}}\n\nGenerate ONLY the SQL query without any explanations:",
+    "parameters": [
       {
-        &quot;name&quot;: &quot;schema&quot;,
-        &quot;type&quot;: &quot;text&quot;,
-        &quot;description&quot;: &quot;Database schema description&quot;,
-        &quot;required&quot;: true
+        "name": "schema",
+        "type": "text",
+        "description": "Database schema description",
+        "required": true
       },
       {
-        &quot;name&quot;: &quot;request&quot;,
-        &quot;type&quot;: &quot;text&quot;,
-        &quot;description&quot;: &quot;Natural language description of the desired query&quot;,
-        &quot;required&quot;: true
+        "name": "request",
+        "type": "text",
+        "description": "Natural language description of the desired query",
+        "required": true
       }
     ],
-    &quot;provider_settings&quot;: {
-      &quot;default_provider&quot;: &quot;openai&quot;,
-      &quot;default_model&quot;: &quot;gpt-4&quot;,
-      &quot;default_parameters&quot;: {
-        &quot;temperature&quot;: 0.2,
-        &quot;max_tokens&quot;: 300
+    "provider_settings": {
+      "default_provider": "openai",
+      "default_model": "gpt-4",
+      "default_parameters": {
+        "temperature": 0.2,
+        "max_tokens": 300
       }
     },
-    &quot;tags&quot;: [&quot;sql&quot;, &quot;database&quot;, &quot;code-generation&quot;],
-    &quot;version&quot;: &quot;1.0&quot;,
-    &quot;status&quot;: &quot;draft&quot;,
-    &quot;created_by&quot;: &quot;user-123&quot;,
-    &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;updated_at&quot;: &quot;2023-05-15T14:22:18Z&quot;
+    "tags": ["sql", "database", "code-generation"],
+    "version": "1.0",
+    "status": "draft",
+    "created_by": "user-123",
+    "created_at": "2023-05-15T14:22:18Z",
+    "updated_at": "2023-05-15T14:22:18Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1610,33 +1620,33 @@ POST /api/v1/prompts
 <pre><code class="language-json">// Request
 POST /api/v1/prompts/pt-1234-5678-90ab-cdef/execute
 {
-  &quot;parameters&quot;: {
-    &quot;schema&quot;: &quot;Tables:\n- users(id, name, email, created_at)\n- orders(id, user_id, total, status, created_at)\n- order_items(id, order_id, product_id, quantity, price)&quot;,
-    &quot;request&quot;: &quot;Find all users who have placed orders with a total value greater than $100 in the last 30 days&quot;
+  "parameters": {
+    "schema": "Tables:\n- users(id, name, email, created_at)\n- orders(id, user_id, total, status, created_at)\n- order_items(id, order_id, product_id, quantity, price)",
+    "request": "Find all users who have placed orders with a total value greater than $100 in the last 30 days"
   }
 }
 
 // Response
 {
-  &quot;data&quot;: {
-    &quot;response&quot;: &quot;SELECT DISTINCT u.id, u.name, u.email\nFROM users u\nJOIN orders o ON u.id = o.user_id\nWHERE o.total &gt; 100\nAND o.created_at &gt;= DATE_SUB(NOW(), INTERVAL 30 DAY)\nAND o.status = 'completed'\nORDER BY u.name;&quot;,
-    &quot;provider&quot;: &quot;openai&quot;,
-    &quot;model&quot;: &quot;gpt-4&quot;,
-    &quot;usage&quot;: {
-      &quot;prompt_tokens&quot;: 128,
-      &quot;completion_tokens&quot;: 42,
-      &quot;total_tokens&quot;: 170
+  "data": {
+    "response": "SELECT DISTINCT u.id, u.name, u.email\nFROM users u\nJOIN orders o ON u.id = o.user_id\nWHERE o.total &gt; 100\nAND o.created_at &gt;= DATE_SUB(NOW(), INTERVAL 30 DAY)\nAND o.status = 'completed'\nORDER BY u.name;",
+    "provider": "openai",
+    "model": "gpt-4",
+    "usage": {
+      "prompt_tokens": 128,
+      "completion_tokens": 42,
+      "total_tokens": 170
     },
-    &quot;metadata&quot;: {
-      &quot;prompt_id&quot;: &quot;pt-1234-5678-90ab-cdef&quot;,
-      &quot;version&quot;: &quot;1.0&quot;,
-      &quot;finish_reason&quot;: &quot;stop&quot;,
-      &quot;cached&quot;: false
+    "metadata": {
+      "prompt_id": "pt-1234-5678-90ab-cdef",
+      "version": "1.0",
+      "finish_reason": "stop",
+      "cached": false
     }
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1647,41 +1657,41 @@ GET /api/v1/providers
 
 // Response
 {
-  &quot;data&quot;: [
+  "data": [
     {
-      &quot;id&quot;: &quot;openai&quot;,
-      &quot;name&quot;: &quot;OpenAI&quot;,
-      &quot;description&quot;: &quot;OpenAI API provider&quot;,
-      &quot;status&quot;: &quot;active&quot;,
-      &quot;default_model&quot;: &quot;gpt-3.5-turbo&quot;,
-      &quot;models_count&quot;: 5,
-      &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-      &quot;updated_at&quot;: &quot;2023-05-15T14:22:18Z&quot;
+      "id": "openai",
+      "name": "OpenAI",
+      "description": "OpenAI API provider",
+      "status": "active",
+      "default_model": "gpt-3.5-turbo",
+      "models_count": 5,
+      "created_at": "2023-05-15T14:22:18Z",
+      "updated_at": "2023-05-15T14:22:18Z"
     },
     {
-      &quot;id&quot;: &quot;anthropic&quot;,
-      &quot;name&quot;: &quot;Anthropic&quot;,
-      &quot;description&quot;: &quot;Anthropic API provider&quot;,
-      &quot;status&quot;: &quot;active&quot;,
-      &quot;default_model&quot;: &quot;claude-2&quot;,
-      &quot;models_count&quot;: 3,
-      &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-      &quot;updated_at&quot;: &quot;2023-05-15T14:22:18Z&quot;
+      "id": "anthropic",
+      "name": "Anthropic",
+      "description": "Anthropic API provider",
+      "status": "active",
+      "default_model": "claude-2",
+      "models_count": 3,
+      "created_at": "2023-05-15T14:22:18Z",
+      "updated_at": "2023-05-15T14:22:18Z"
     },
     {
-      &quot;id&quot;: &quot;bedrock&quot;,
-      &quot;name&quot;: &quot;AWS Bedrock&quot;,
-      &quot;description&quot;: &quot;AWS Bedrock API provider&quot;,
-      &quot;status&quot;: &quot;active&quot;,
-      &quot;default_model&quot;: &quot;amazon.titan-tg1-large&quot;,
-      &quot;models_count&quot;: 8,
-      &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-      &quot;updated_at&quot;: &quot;2023-05-15T14:22:18Z&quot;
+      "id": "bedrock",
+      "name": "AWS Bedrock",
+      "description": "AWS Bedrock API provider",
+      "status": "active",
+      "default_model": "amazon.titan-tg1-large",
+      "models_count": 8,
+      "created_at": "2023-05-15T14:22:18Z",
+      "updated_at": "2023-05-15T14:22:18Z"
     }
   ],
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1689,50 +1699,50 @@ GET /api/v1/providers
 <pre><code class="language-json">// Request
 PUT /api/v1/providers/openai
 {
-  &quot;status&quot;: &quot;active&quot;,
-  &quot;endpoint&quot;: &quot;https://api.openai.com/v1&quot;,
-  &quot;default_model&quot;: &quot;gpt-4&quot;,
-  &quot;config&quot;: {
-    &quot;timeout&quot;: 90000,
-    &quot;retry_strategy&quot;: {
-      &quot;max_retries&quot;: 5,
-      &quot;initial_backoff_ms&quot;: 1000,
-      &quot;max_backoff_ms&quot;: 20000
+  "status": "active",
+  "endpoint": "https://api.openai.com/v1",
+  "default_model": "gpt-4",
+  "config": {
+    "timeout": 90000,
+    "retry_strategy": {
+      "max_retries": 5,
+      "initial_backoff_ms": 1000,
+      "max_backoff_ms": 20000
     },
-    &quot;rate_limits&quot;: {
-      &quot;requests_per_minute&quot;: 150,
-      &quot;tokens_per_minute&quot;: 15000
+    "rate_limits": {
+      "requests_per_minute": 150,
+      "tokens_per_minute": 15000
     }
   }
 }
 
 // Response
 {
-  &quot;data&quot;: {
-    &quot;id&quot;: &quot;openai&quot;,
-    &quot;name&quot;: &quot;OpenAI&quot;,
-    &quot;description&quot;: &quot;OpenAI API provider&quot;,
-    &quot;status&quot;: &quot;active&quot;,
-    &quot;endpoint&quot;: &quot;https://api.openai.com/v1&quot;,
-    &quot;default_model&quot;: &quot;gpt-4&quot;,
-    &quot;config&quot;: {
-      &quot;timeout&quot;: 90000,
-      &quot;retry_strategy&quot;: {
-        &quot;max_retries&quot;: 5,
-        &quot;initial_backoff_ms&quot;: 1000,
-        &quot;max_backoff_ms&quot;: 20000
+  "data": {
+    "id": "openai",
+    "name": "OpenAI",
+    "description": "OpenAI API provider",
+    "status": "active",
+    "endpoint": "https://api.openai.com/v1",
+    "default_model": "gpt-4",
+    "config": {
+      "timeout": 90000,
+      "retry_strategy": {
+        "max_retries": 5,
+        "initial_backoff_ms": 1000,
+        "max_backoff_ms": 20000
       },
-      &quot;rate_limits&quot;: {
-        &quot;requests_per_minute&quot;: 150,
-        &quot;tokens_per_minute&quot;: 15000
+      "rate_limits": {
+        "requests_per_minute": 150,
+        "tokens_per_minute": 15000
       }
     },
-    &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;updated_at&quot;: &quot;2023-05-15T14:25:30Z&quot;
+    "created_at": "2023-05-15T14:22:18Z",
+    "updated_at": "2023-05-15T14:25:30Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:25:30Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:25:30Z"
   }
 }
 </code></pre>
@@ -1743,90 +1753,90 @@ GET /api/v1/analytics/usage/providers?start_date=2023-05-01T00:00:00Z&amp;end_da
 
 // Response
 {
-  &quot;data&quot;: {
-    &quot;time_period&quot;: {
-      &quot;start&quot;: &quot;2023-05-01T00:00:00Z&quot;,
-      &quot;end&quot;: &quot;2023-05-15T23:59:59Z&quot;
+  "data": {
+    "time_period": {
+      "start": "2023-05-01T00:00:00Z",
+      "end": "2023-05-15T23:59:59Z"
     },
-    &quot;total_requests&quot;: 12583,
-    &quot;providers&quot;: [
+    "total_requests": 12583,
+    "providers": [
       {
-        &quot;provider&quot;: &quot;openai&quot;,
-        &quot;requests&quot;: 8754,
-        &quot;percentage&quot;: 69.57,
-        &quot;tokens&quot;: {
-          &quot;prompt&quot;: 875490,
-          &quot;completion&quot;: 412305,
-          &quot;total&quot;: 1287795
+        "provider": "openai",
+        "requests": 8754,
+        "percentage": 69.57,
+        "tokens": {
+          "prompt": 875490,
+          "completion": 412305,
+          "total": 1287795
         },
-        &quot;models&quot;: [
+        "models": [
           {
-            &quot;model&quot;: &quot;gpt-4&quot;,
-            &quot;requests&quot;: 3241,
-            &quot;tokens&quot;: {
-              &quot;prompt&quot;: 324190,
-              &quot;completion&quot;: 152345,
-              &quot;total&quot;: 476535
+            "model": "gpt-4",
+            "requests": 3241,
+            "tokens": {
+              "prompt": 324190,
+              "completion": 152345,
+              "total": 476535
             }
           },
           {
-            &quot;model&quot;: &quot;gpt-3.5-turbo&quot;,
-            &quot;requests&quot;: 5513,
-            &quot;tokens&quot;: {
-              &quot;prompt&quot;: 551300,
-              &quot;completion&quot;: 259960,
-              &quot;total&quot;: 811260
+            "model": "gpt-3.5-turbo",
+            "requests": 5513,
+            "tokens": {
+              "prompt": 551300,
+              "completion": 259960,
+              "total": 811260
             }
           }
         ]
       },
       {
-        &quot;provider&quot;: &quot;anthropic&quot;,
-        &quot;requests&quot;: 2987,
-        &quot;percentage&quot;: 23.74,
-        &quot;tokens&quot;: {
-          &quot;prompt&quot;: 298720,
-          &quot;completion&quot;: 140389,
-          &quot;total&quot;: 439109
+        "provider": "anthropic",
+        "requests": 2987,
+        "percentage": 23.74,
+        "tokens": {
+          "prompt": 298720,
+          "completion": 140389,
+          "total": 439109
         },
-        &quot;models&quot;: [
+        "models": [
           {
-            &quot;model&quot;: &quot;claude-2&quot;,
-            &quot;requests&quot;: 2987,
-            &quot;tokens&quot;: {
-              &quot;prompt&quot;: 298720,
-              &quot;completion&quot;: 140389,
-              &quot;total&quot;: 439109
+            "model": "claude-2",
+            "requests": 2987,
+            "tokens": {
+              "prompt": 298720,
+              "completion": 140389,
+              "total": 439109
             }
           }
         ]
       },
       {
-        &quot;provider&quot;: &quot;bedrock&quot;,
-        &quot;requests&quot;: 842,
-        &quot;percentage&quot;: 6.69,
-        &quot;tokens&quot;: {
-          &quot;prompt&quot;: 80680,
-          &quot;completion&quot;: 36611,
-          &quot;total&quot;: 117291
+        "provider": "bedrock",
+        "requests": 842,
+        "percentage": 6.69,
+        "tokens": {
+          "prompt": 80680,
+          "completion": 36611,
+          "total": 117291
         },
-        &quot;models&quot;: [
+        "models": [
           {
-            &quot;model&quot;: &quot;amazon.titan-tg1-large&quot;,
-            &quot;requests&quot;: 842,
-            &quot;tokens&quot;: {
-              &quot;prompt&quot;: 80680,
-              &quot;completion&quot;: 36611,
-              &quot;total&quot;: 117291
+            "model": "amazon.titan-tg1-large",
+            "requests": 842,
+            "tokens": {
+              "prompt": 80680,
+              "completion": 36611,
+              "total": 117291
             }
           }
         ]
       }
     ]
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-16T10:15:30Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-16T10:15:30Z"
   }
 }
 </code></pre>
@@ -1835,35 +1845,35 @@ GET /api/v1/analytics/usage/providers?start_date=2023-05-01T00:00:00Z&amp;end_da
 <pre><code class="language-json">// Request
 POST /api/v1/webhooks
 {
-  &quot;url&quot;: &quot;https://example.com/webhook/llm-gateway&quot;,
-  &quot;description&quot;: &quot;Production environment webhook&quot;,
-  &quot;events&quot;: [
-    &quot;llm.execution.completed&quot;,
-    &quot;prompt.published&quot;,
-    &quot;provider.status_changed&quot;
+  "url": "https://example.com/webhook/llm-gateway",
+  "description": "Production environment webhook",
+  "events": [
+    "llm.execution.completed",
+    "prompt.published",
+    "provider.status_changed"
   ],
-  &quot;secret&quot;: &quot;whsec_8UvKRPmrnXJTJNh3MrXNtyHowKBZuxtb&quot;,
-  &quot;status&quot;: &quot;active&quot;
+  "secret": "whsec_8UvKRPmrnXJTJNh3MrXNtyHowKBZuxtb",
+  "status": "active"
 }
 
 // Response
 {
-  &quot;data&quot;: {
-    &quot;id&quot;: &quot;wh-1234-5678-90ab-cdef&quot;,
-    &quot;url&quot;: &quot;https://example.com/webhook/llm-gateway&quot;,
-    &quot;description&quot;: &quot;Production environment webhook&quot;,
-    &quot;events&quot;: [
-      &quot;llm.execution.completed&quot;,
-      &quot;prompt.published&quot;,
-      &quot;provider.status_changed&quot;
+  "data": {
+    "id": "wh-1234-5678-90ab-cdef",
+    "url": "https://example.com/webhook/llm-gateway",
+    "description": "Production environment webhook",
+    "events": [
+      "llm.execution.completed",
+      "prompt.published",
+      "provider.status_changed"
     ],
-    &quot;status&quot;: &quot;active&quot;,
-    &quot;created_at&quot;: &quot;2023-05-15T14:22:18Z&quot;,
-    &quot;updated_at&quot;: &quot;2023-05-15T14:22:18Z&quot;
+    "status": "active",
+    "created_at": "2023-05-15T14:22:18Z",
+    "updated_at": "2023-05-15T14:22:18Z"
   },
-  &quot;meta&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;timestamp&quot;: &quot;2023-05-15T14:22:18Z&quot;
+  "meta": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "timestamp": "2023-05-15T14:22:18Z"
   }
 }
 </code></pre>
@@ -1921,35 +1931,35 @@ POST /api/v1/webhooks
 </table>
 <h3 id="webhook-payload-format">Webhook Payload Format</h3>
 <pre><code class="language-json">{
-  &quot;id&quot;: &quot;evt-1234-5678-90ab-cdef&quot;,
-  &quot;event_type&quot;: &quot;llm.execution.completed&quot;,
-  &quot;resource_type&quot;: &quot;llm_execution&quot;,
-  &quot;resource_id&quot;: &quot;res-1234-5678-90ab-cdef&quot;,
-  &quot;timestamp&quot;: &quot;2023-05-15T14:23:15Z&quot;,
-  &quot;data&quot;: {
-    &quot;request_id&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
-    &quot;status&quot;: &quot;completed&quot;,
-    &quot;result&quot;: {
-      &quot;response&quot;: &quot;The history of artificial intelligence begins...&quot;,
-      &quot;provider&quot;: &quot;openai&quot;,
-      &quot;model&quot;: &quot;gpt-4&quot;,
-      &quot;usage&quot;: {
-        &quot;prompt_tokens&quot;: 11,
-        &quot;completion_tokens&quot;: 1523,
-        &quot;total_tokens&quot;: 1534
+  "id": "evt-1234-5678-90ab-cdef",
+  "event_type": "llm.execution.completed",
+  "resource_type": "llm_execution",
+  "resource_id": "res-1234-5678-90ab-cdef",
+  "timestamp": "2023-05-15T14:23:15Z",
+  "data": {
+    "request_id": "req-1234-5678-90ab-cdef",
+    "status": "completed",
+    "result": {
+      "response": "The history of artificial intelligence begins...",
+      "provider": "openai",
+      "model": "gpt-4",
+      "usage": {
+        "prompt_tokens": 11,
+        "completion_tokens": 1523,
+        "total_tokens": 1534
       },
-      &quot;metadata&quot;: {
-        &quot;finish_reason&quot;: &quot;stop&quot;,
-        &quot;cached&quot;: false
+      "metadata": {
+        "finish_reason": "stop",
+        "cached": false
       }
     }
   },
-  &quot;signature&quot;: &quot;t=1684159395,v1=abcdefghijklmnopqrstuvwxyz1234567890&quot;
+  "signature": "t=1684159395,v1=abcdefghijklmnopqrstuvwxyz1234567890"
 }
 </code></pre>
 <h2 id="grpc-interface">gRPC Interface</h2>
 <h3 id="service-definitions">Service Definitions</h3>
-<pre><code class="language-protobuf">syntax = &quot;proto3&quot;;
+<pre><code class="language-protobuf">syntax = "proto3";
 
 package com.aisera.service.llm.grpc;
 
@@ -2112,16 +2122,16 @@ import com.aisera.llm.gateway.model.ExecutePromptRequest;
 import com.aisera.llm.gateway.model.ExecutePromptResponse;
 
 LLMGatewayClient client = LLMGatewayClient.builder()
-    .apiKey(&quot;your-api-key&quot;)
-    .endpoint(&quot;https://api.example.com&quot;)
+    .apiKey("your-api-key")
+    .endpoint("https://api.example.com")
     .build();
 
 ExecutePromptRequest request = ExecutePromptRequest.builder()
-    .prompt(&quot;Explain quantum computing in simple terms&quot;)
+    .prompt("Explain quantum computing in simple terms")
     .maxTokens(200)
     .temperature(0.7f)
-    .provider(&quot;openai&quot;)
-    .model(&quot;gpt-4&quot;)
+    .provider("openai")
+    .model("gpt-4")
     .build();
 
 ExecutePromptResponse response = client.executePrompt(request);
@@ -2132,16 +2142,16 @@ System.out.println(response.getResponse());
 from llm_gateway import LLMGatewayClient
 
 client = LLMGatewayClient(
-    api_key=&quot;your-api-key&quot;,
-    endpoint=&quot;https://api.example.com&quot;
+    api_key="your-api-key",
+    endpoint="https://api.example.com"
 )
 
 response = client.execute_prompt(
-    prompt=&quot;Explain quantum computing in simple terms&quot;,
+    prompt="Explain quantum computing in simple terms",
     max_tokens=200,
     temperature=0.7,
-    provider=&quot;openai&quot;,
-    model=&quot;gpt-4&quot;
+    provider="openai",
+    model="gpt-4"
 )
 
 print(response.text)
@@ -2227,7 +2237,7 @@ getResponse();
 - Removing or renaming required request parameters
 - Changing response structure
 - Changing authentication requirements</p>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="error-handling-resilience.html">Error Handling and Resilience</a> | <strong>Back to <a href="README.html">README</a></strong></p>
 </body>
 </html>

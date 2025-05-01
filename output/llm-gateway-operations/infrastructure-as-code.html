@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>infrastructure-as-code</title>
-    <style>
+<meta charset="utf-8"/>
+<title>infrastructure-as-code</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="infrastructure-as-code">Infrastructure as Code</h1>
+<h1 id="infrastructure-as-code">Infrastructure as Code</h1>
 <p>This document describes the Infrastructure as Code (IaC) approach used for provisioning and managing the LLM Gateway infrastructure.</p>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
@@ -243,17 +253,17 @@
 <h2 id="environment-promotion">Environment Promotion</h2>
 <p>Changes flow through environments in a controlled manner:</p>
 <pre><code class="language-mermaid">flowchart LR
-    subgraph &quot;Development Environment&quot;
+    subgraph "Development Environment"
         DevBranch[Feature Branch]
         DevApply[Apply to Dev]
     end
 
-    subgraph &quot;Staging Environment&quot;
+    subgraph "Staging Environment"
         StageBranch[Release Branch]
         StageApply[Apply to Staging]
     end
 
-    subgraph &quot;Production Environment&quot;
+    subgraph "Production Environment"
         ProdBranch[Main Branch]
         ProdApply[Apply to Production]
     end
@@ -366,7 +376,7 @@
 <li>Automated cost estimation for changes</li>
 <li>Dev/Test environments scheduled to scale down during off-hours</li>
 </ul>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="system-architecture.html">System Architecture Overview</a> | <strong>Next</strong>: <a href="cicd-pipeline.html">CI/CD Pipeline</a></p>
 </body>
 </html>

@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>runtime-behavior-concurrency</title>
-    <style>
+<meta charset="utf-8"/>
+<title>runtime-behavior-concurrency</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="runtime-behavior-concurrency">Runtime Behavior &amp; Concurrency</h1>
+<h1 id="runtime-behavior-concurrency">Runtime Behavior &amp; Concurrency</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -454,7 +464,7 @@ public CompletableFuture&lt;LLMFetchAnswerResponseDTO&gt; executeAsync(LLMFetchA
 <pre><code class="language-mermaid">stateDiagram-v2
     [*] --&gt; Closed
 
-    state &quot;Closed&quot; as Closed {
+    state "Closed" as Closed {
         [*] --&gt; Monitoring
         Monitoring --&gt; Monitoring: Success++
         Monitoring --&gt; Monitoring: Failure++
@@ -465,7 +475,7 @@ public CompletableFuture&lt;LLMFetchAnswerResponseDTO&gt; executeAsync(LLMFetchA
 
     Closed --&gt; Open: ExitClosed
 
-    state &quot;Open&quot; as Open {
+    state "Open" as Open {
         [*] --&gt; Waiting
         Waiting --&gt; CheckTimeout: After sleep window
         CheckTimeout --&gt; ExitOpen
@@ -473,7 +483,7 @@ public CompletableFuture&lt;LLMFetchAnswerResponseDTO&gt; executeAsync(LLMFetchA
 
     Open --&gt; HalfOpen: ExitOpen
 
-    state &quot;HalfOpen&quot; as HalfOpen {
+    state "HalfOpen" as HalfOpen {
         [*] --&gt; Testing
         Testing --&gt; AllowSingleRequest: Request received
         AllowSingleRequest --&gt; CheckResult: Process request
@@ -554,7 +564,7 @@ public CompletableFuture&lt;LLMFetchAnswerResponseDTO&gt; executeAsync(LLMFetchA
 <li>Graceful degradation under high load</li>
 <li>Health check probes for external dependencies</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="data-flow-storage-design.html">Data Flow and Storage Design</a> | <strong>Next</strong>: <a href="extension-points.html">Extension Points and Plug-In Strategy</a></p>
 </body>
 </html>

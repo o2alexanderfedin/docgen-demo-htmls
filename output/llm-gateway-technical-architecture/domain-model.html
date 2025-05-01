@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>domain-model</title>
-    <style>
+<meta charset="utf-8"/>
+<title>domain-model</title>
+<style>
         body { 
             font-family: Arial, sans-serif; 
             line-height: 1.6;
@@ -45,9 +46,18 @@
             max-width: 100%;
         }
     </style>
-</head>
+<style>
+    .mermaid-svg {
+        text-align: center;
+        margin: 20px 0;
+    }
+    .mermaid-svg svg {
+        max-width: 100%;
+        height: auto;
+    }
+    </style></head>
 <body>
-    <h1 id="domain-model-and-business-logic">Domain Model and Business Logic</h1>
+<h1 id="domain-model-and-business-logic">Domain Model and Business Logic</h1>
 <h2 id="table-of-contents">Table of Contents</h2>
 <ul>
 <li><a href="#introduction">Introduction</a></li>
@@ -140,7 +150,7 @@
         +boolean active
     }
 
-    LLMProvider &quot;1&quot; -- &quot;many&quot; ModelDefinition : offers
+    LLMProvider "1" -- "many" ModelDefinition : offers
     LLMProvider -- ProviderType : is of type
     ProviderType -- ProviderCredentials : requires
     ProviderType -- ProviderConfig : configured by
@@ -212,8 +222,8 @@
         DEPRECATED
     }
 
-    PromptTemplate &quot;1&quot; -- &quot;many&quot; PromptParameter : defines
-    PromptTemplate &quot;1&quot; -- &quot;many&quot; PromptVersion : has
+    PromptTemplate "1" -- "many" PromptParameter : defines
+    PromptTemplate "1" -- "many" PromptVersion : has
     PromptParameter -- ParameterType : is of type
     PromptTemplate -- PromptStatus : has status
     PromptVersion -- PromptStatus : has status
@@ -728,21 +738,21 @@
 <h3 id="multi-tenancy">Multi-Tenancy</h3>
 <p>The LLM Gateway implements a multi-tenant architecture:</p>
 <pre><code class="language-mermaid">graph TD
-    subgraph &quot;Tenant A&quot;
+    subgraph "Tenant A"
         ConfigA[Configuration]
         PromptsA[Prompt Templates]
         CredentialsA[Provider Credentials]
         UsageA[Usage Metrics]
     end
 
-    subgraph &quot;Tenant B&quot;
+    subgraph "Tenant B"
         ConfigB[Configuration]
         PromptsB[Prompt Templates]
         CredentialsB[Provider Credentials]
         UsageB[Usage Metrics]
     end
 
-    subgraph &quot;Tenant C&quot;
+    subgraph "Tenant C"
         ConfigC[Configuration]
         PromptsC[Prompt Templates]
         CredentialsC[Provider Credentials]
@@ -921,7 +931,7 @@
 <li>Sensitive operations must be audited</li>
 <li>Compliance requirements must be configurable per tenant</li>
 </ol>
-<hr />
+<hr/>
 <p><strong>Previous</strong>: <a href="extension-points.html">Extension Points and Plug-In Strategy</a> | <strong>Next</strong>: <a href="deployment-scaling.html">Deployment and Scaling Architecture</a></p>
 </body>
 </html>
