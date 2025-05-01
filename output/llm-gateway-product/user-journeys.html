@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>user-journeys</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="user-journeys-use-cases">User Journeys &amp; Use Cases</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#enterprise-adoption-journeys">Enterprise Adoption Journeys</a></li>
+<li><a href="#developer-journeys">Developer Journeys</a></li>
+<li><a href="#ai-engineer-journeys">AI Engineer Journeys</a></li>
+<li><a href="#operations-journeys">Operations Journeys</a></li>
+<li><a href="#business-stakeholder-journeys">Business Stakeholder Journeys</a></li>
+<li><a href="#end-user-journeys">End-User Journeys</a></li>
+</ul>
+<p>This document describes real-world user journeys and use cases enabled by the LLM Gateway. These scenarios illustrate how different personas interact with the system to achieve their goals and realize value from the product.</p>
+<h2 id="enterprise-adoption-journeys">Enterprise Adoption Journeys</h2>
+<h3 id="journey-centralizing-llm-access-and-governance">Journey: Centralizing LLM Access and Governance</h3>
+<p><strong>User</strong>: Enterprise IT and Security Teams</p>
+<h4 id="scenario">Scenario</h4>
+<p>As a large financial services organization, we need to establish governance and security standards before allowing broad LLM adoption across the company. We need centralized controls, monitoring, and auditing capabilities.</p>
+<h4 id="journey-steps">Journey Steps</h4>
+<ol>
+<li><strong>Assessment and Planning</strong></li>
+<li>Identify existing LLM usage across the organization</li>
+<li>Define security and compliance requirements</li>
+<li>
+<p>Establish governance policies and access controls</p>
+</li>
+<li>
+<p><strong>Initial Deployment</strong></p>
+</li>
+<li>Deploy LLM Gateway in a controlled environment</li>
+<li>Connect to approved LLM providers</li>
+<li>
+<p>Implement authentication and access controls</p>
+</li>
+<li>
+<p><strong>Policy Implementation</strong></p>
+</li>
+<li>Configure content filtering policies</li>
+<li>Set up usage quotas and budgets</li>
+<li>
+<p>Establish audit logging</p>
+</li>
+<li>
+<p><strong>Pilot Projects</strong></p>
+</li>
+<li>Enable access for select teams</li>
+<li>Monitor usage and compliance</li>
+<li>
+<p>Gather feedback and refine policies</p>
+</li>
+<li>
+<p><strong>Organization-wide Rollout</strong></p>
+</li>
+<li>Expand access to additional teams</li>
+<li>Implement department-specific policies</li>
+<li>Scale infrastructure to support growing demand</li>
+</ol>
+<h4 id="value-delivered">Value Delivered</h4>
+<ul>
+<li>Consistent security and compliance controls</li>
+<li>Centralized monitoring and management</li>
+<li>Reduced risk of shadow IT</li>
+<li>Cost visibility and control</li>
+<li>Compliance with regulatory requirements</li>
+</ul>
+<h3 id="journey-migrating-from-direct-provider-integration">Journey: Migrating from Direct Provider Integration</h3>
+<p><strong>User</strong>: Technology Leadership and Development Teams</p>
+<h4 id="scenario_1">Scenario</h4>
+<p>Our organization has multiple applications directly integrating with OpenAI's APIs. As we expand our LLM usage and explore additional providers, we need to standardize our approach and reduce dependency on any single provider.</p>
+<h4 id="journey-steps_1">Journey Steps</h4>
+<ol>
+<li><strong>Current State Assessment</strong></li>
+<li>Inventory existing OpenAI integrations</li>
+<li>Document current usage patterns and requirements</li>
+<li>
+<p>Identify pain points and limitations</p>
+</li>
+<li>
+<p><strong>LLM Gateway Implementation</strong></p>
+</li>
+<li>Deploy and configure LLM Gateway</li>
+<li>Connect to OpenAI and alternative providers</li>
+<li>
+<p>Establish migration strategy</p>
+</li>
+<li>
+<p><strong>Initial Migration</strong></p>
+</li>
+<li>Select a non-critical application for migration</li>
+<li>Adapt integration to use LLM Gateway API</li>
+<li>
+<p>Test functionality and performance</p>
+</li>
+<li>
+<p><strong>Provider Diversification</strong></p>
+</li>
+<li>Test alternative models for specific use cases</li>
+<li>Implement smart routing for cost optimization</li>
+<li>
+<p>Configure fallback providers for resilience</p>
+</li>
+<li>
+<p><strong>Complete Migration</strong></p>
+</li>
+<li>Migrate remaining applications</li>
+<li>Decommission direct provider integrations</li>
+<li>Optimize usage across providers</li>
+</ol>
+<h4 id="value-delivered_1">Value Delivered</h4>
+<ul>
+<li>Reduced vendor lock-in</li>
+<li>Improved resilience through provider redundancy</li>
+<li>Consistent interface across applications</li>
+<li>Cost optimization through model selection</li>
+<li>Simplified maintenance and updates</li>
+</ul>
+<h2 id="developer-journeys">Developer Journeys</h2>
+<h3 id="journey-integrating-llm-capabilities-into-a-web-application">Journey: Integrating LLM Capabilities into a Web Application</h3>
+<p><strong>User</strong>: Application Developers</p>
+<h4 id="scenario_2">Scenario</h4>
+<p>As a developer, I want to add intelligent content generation capabilities to our content management system, allowing editors to generate draft content based on topics and guidelines.</p>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph &quot;Requirements Phase&quot;
+        A1[Identify content generation needs] --&gt; A2[Define user interaction flow]
+        A2 --&gt; A3[Determine quality requirements]
+    end
+
+    subgraph &quot;Setup Phase&quot;
+        B1[Obtain API credentials] --&gt; B2[Explore available models]
+        B2 --&gt; B3[Test basic prompt execution]
+    end
+
+    subgraph &quot;Prompt Engineering&quot;
+        C1[Create prompt templates] --&gt; C2[Test with sample inputs]
+        C2 --&gt; C3[Refine based on quality]
+        C3 --&gt; C4[Save optimized templates]
+    end
+
+    subgraph &quot;Integration Phase&quot;
+        D1[Develop user interface] --&gt; D2[Implement API calls]
+        D2 --&gt; D3[Add response handling]
+    end
+
+    subgraph &quot;Testing Phase&quot;
+        E1[Test with real users] --&gt; E2[Analyze usage patterns]
+        E2 --&gt; E3[Optimize implementation]
+    end
+
+    A3 --&gt; B1
+    B3 --&gt; C1
+    C4 --&gt; D1
+    D3 --&gt; E1
+    E3 -.-&gt; C1
+</code></pre>
+<h4 id="journey-steps_2">Journey Steps</h4>
+<ol>
+<li><strong>Requirements Gathering</strong></li>
+<li>Identify specific content generation needs</li>
+<li>Define user interaction flow</li>
+<li>
+<p>Determine quality and performance requirements</p>
+</li>
+<li>
+<p><strong>LLM Gateway Setup</strong></p>
+</li>
+<li>Obtain API credentials for LLM Gateway</li>
+<li>Explore available models and capabilities</li>
+<li>
+<p>Test basic prompt execution</p>
+</li>
+<li>
+<p><strong>Prompt Engineering</strong></p>
+</li>
+<li>Create and test prompt templates for content generation</li>
+<li>Refine prompts based on output quality</li>
+<li>
+<p>Save optimized templates in LLM Gateway</p>
+</li>
+<li>
+<p><strong>Frontend Integration</strong></p>
+</li>
+<li>Develop user interface for content requirements input</li>
+<li>Implement API calls to LLM Gateway</li>
+<li>
+<p>Add response handling and content display</p>
+</li>
+<li>
+<p><strong>Testing and Refinement</strong></p>
+</li>
+<li>Test with real users and content scenarios</li>
+<li>Analyze usage patterns and performance</li>
+<li>Optimize based on feedback and metrics</li>
+</ol>
+<h4 id="value-delivered_2">Value Delivered</h4>
+<ul>
+<li>Rapid implementation of AI capabilities</li>
+<li>Consistent and reliable content generation</li>
+<li>Flexibility to improve without changing application code</li>
+<li>Usage tracking and performance monitoring</li>
+<li>Ease of switching or upgrading underlying models</li>
+</ul>
+<h3 id="journey-building-a-customer-service-ai-assistant">Journey: Building a Customer Service AI Assistant</h3>
+<p><strong>User</strong>: Full-Stack Development Team</p>
+<h4 id="scenario_3">Scenario</h4>
+<p>As a development team, we need to build a customer service AI assistant that can answer product questions, troubleshoot issues, and escalate to human agents when necessary.</p>
+<h4 id="journey-steps_3">Journey Steps</h4>
+<ol>
+<li><strong>Solution Design</strong></li>
+<li>Define assistant capabilities and limitations</li>
+<li>Create conversation flow diagrams</li>
+<li>
+<p>Identify integration points with existing systems</p>
+</li>
+<li>
+<p><strong>Knowledge Base Integration</strong></p>
+</li>
+<li>Connect LLM Gateway to company knowledge base</li>
+<li>Create prompt templates that incorporate relevant documentation</li>
+<li>
+<p>Test knowledge retrieval accuracy</p>
+</li>
+<li>
+<p><strong>Conversation Management</strong></p>
+</li>
+<li>Implement multi-turn conversation handling</li>
+<li>Create context management system</li>
+<li>
+<p>Develop escalation triggers and processes</p>
+</li>
+<li>
+<p><strong>User Experience Development</strong></p>
+</li>
+<li>Build chat interface for customers</li>
+<li>Implement typing indicators and response streaming</li>
+<li>
+<p>Create fallback and clarification flows</p>
+</li>
+<li>
+<p><strong>Deployment and Monitoring</strong></p>
+</li>
+<li>Launch assistant in limited availability</li>
+<li>Monitor conversations and success rates</li>
+<li>Continuously improve based on real interactions</li>
+</ol>
+<h4 id="value-delivered_3">Value Delivered</h4>
+<ul>
+<li>Reduced development time through ready-made LLM infrastructure</li>
+<li>Consistent response quality across different chat scenarios</li>
+<li>Scalable solution that handles peak demand</li>
+<li>Detailed analytics on customer questions and pain points</li>
+<li>Continuous improvement without code changes</li>
+</ul>
+<h2 id="ai-engineer-journeys">AI Engineer Journeys</h2>
+<h3 id="journey-prompt-engineering-and-optimization">Journey: Prompt Engineering and Optimization</h3>
+<p><strong>User</strong>: AI Engineers and Prompt Engineers</p>
+<h4 id="scenario_4">Scenario</h4>
+<p>As an AI engineer, I need to develop and refine prompt templates that deliver consistent, high-quality results across various business use cases while optimizing for cost and performance.</p>
+<h4 id="journey-steps_4">Journey Steps</h4>
+<ol>
+<li><strong>Use Case Analysis</strong></li>
+<li>Define specific requirements for each use case</li>
+<li>Identify success criteria and evaluation metrics</li>
+<li>
+<p>Select appropriate models based on capabilities</p>
+</li>
+<li>
+<p><strong>Prompt Development</strong></p>
+</li>
+<li>Create initial prompt templates in LLM Gateway</li>
+<li>Test with representative input examples</li>
+<li>
+<p>Document prompt structure and rationale</p>
+</li>
+<li>
+<p><strong>Systematic Testing</strong></p>
+</li>
+<li>Run prompts against test datasets</li>
+<li>Compare performance across different models</li>
+<li>
+<p>Identify edge cases and failure modes</p>
+</li>
+<li>
+<p><strong>Optimization</strong></p>
+</li>
+<li>Refine prompts based on test results</li>
+<li>Optimize token usage to reduce costs</li>
+<li>
+<p>Balance quality, latency, and cost considerations</p>
+</li>
+<li>
+<p><strong>Version Management</strong></p>
+</li>
+<li>Publish optimized prompts for production use</li>
+<li>Document version changes and improvements</li>
+<li>Collaborate with other teams on prompt refinement</li>
+</ol>
+<h4 id="value-delivered_4">Value Delivered</h4>
+<ul>
+<li>Systematic approach to prompt engineering</li>
+<li>Measurable quality improvements</li>
+<li>Cost optimization through efficient prompts</li>
+<li>Knowledge sharing across the organization</li>
+<li>Version control for prompts</li>
+</ul>
+<h3 id="journey-llm-evaluation-and-selection">Journey: LLM Evaluation and Selection</h3>
+<p><strong>User</strong>: AI Research Team</p>
+<h4 id="scenario_5">Scenario</h4>
+<p>As an AI research team, we need to evaluate different LLM providers and models to determine which ones are most effective and cost-efficient for our specific use cases.</p>
+<h4 id="journey-steps_5">Journey Steps</h4>
+<ol>
+<li><strong>Evaluation Framework</strong></li>
+<li>Define evaluation criteria and benchmarks</li>
+<li>Create standardized test cases</li>
+<li>
+<p>Establish scoring methodology</p>
+</li>
+<li>
+<p><strong>Provider Integration</strong></p>
+</li>
+<li>Connect multiple LLM providers to LLM Gateway</li>
+<li>Configure authentication and settings</li>
+<li>
+<p>Verify basic connectivity and functionality</p>
+</li>
+<li>
+<p><strong>Systematic Testing</strong></p>
+</li>
+<li>Execute test cases across all models</li>
+<li>Collect performance, quality, and cost metrics</li>
+<li>
+<p>Document strengths and weaknesses of each model</p>
+</li>
+<li>
+<p><strong>Comparative Analysis</strong></p>
+</li>
+<li>Analyze results across dimensions</li>
+<li>Identify optimal models for specific use cases</li>
+<li>
+<p>Calculate cost-performance ratios</p>
+</li>
+<li>
+<p><strong>Recommendations and Implementation</strong></p>
+</li>
+<li>Document findings and recommendations</li>
+<li>Configure routing rules based on results</li>
+<li>Establish ongoing evaluation process</li>
+</ol>
+<h4 id="value-delivered_5">Value Delivered</h4>
+<ul>
+<li>Data-driven model selection</li>
+<li>Optimized cost-quality balance</li>
+<li>Reduced dependency on single providers</li>
+<li>Adaptability to evolving model landscape</li>
+<li>Validated performance for specific use cases</li>
+</ul>
+<h2 id="operations-journeys">Operations Journeys</h2>
+<h3 id="journey-monitoring-and-managing-llm-costs">Journey: Monitoring and Managing LLM Costs</h3>
+<p><strong>User</strong>: DevOps and Finance Teams</p>
+<h4 id="scenario_6">Scenario</h4>
+<p>As operations and finance teams, we need to monitor, control, and optimize our LLM usage costs across all applications and departments.</p>
+<h4 id="journey-steps_6">Journey Steps</h4>
+<ol>
+<li><strong>Cost Structure Analysis</strong></li>
+<li>Analyze current LLM usage patterns</li>
+<li>Identify cost drivers and inefficiencies</li>
+<li>
+<p>Establish cost allocation framework</p>
+</li>
+<li>
+<p><strong>Monitoring Setup</strong></p>
+</li>
+<li>Configure cost tracking in LLM Gateway</li>
+<li>Set up department and application tagging</li>
+<li>
+<p>Create cost dashboards and reports</p>
+</li>
+<li>
+<p><strong>Budget Implementation</strong></p>
+</li>
+<li>Establish usage quotas by department</li>
+<li>Configure budget alerts and notifications</li>
+<li>
+<p>Implement enforcement policies</p>
+</li>
+<li>
+<p><strong>Optimization Initiatives</strong></p>
+</li>
+<li>Identify high-cost, low-value usage patterns</li>
+<li>Implement caching for common requests</li>
+<li>
+<p>Optimize prompt efficiency</p>
+</li>
+<li>
+<p><strong>Continuous Management</strong></p>
+</li>
+<li>Regular cost review meetings</li>
+<li>Adjust budgets based on business priorities</li>
+<li>Forecast future costs based on growth</li>
+</ol>
+<h4 id="value-delivered_6">Value Delivered</h4>
+<ul>
+<li>Transparent cost allocation</li>
+<li>Predictable LLM expenditures</li>
+<li>Early detection of usage anomalies</li>
+<li>Targeted optimization efforts</li>
+<li>Balanced resource allocation</li>
+</ul>
+<h3 id="journey-scaling-llm-infrastructure">Journey: Scaling LLM Infrastructure</h3>
+<p><strong>User</strong>: DevOps and Platform Teams</p>
+<h4 id="scenario_7">Scenario</h4>
+<p>As the platform team, we need to scale our LLM Gateway infrastructure to support growing usage across the organization while maintaining performance and reliability.</p>
+<h4 id="journey-steps_7">Journey Steps</h4>
+<ol>
+<li><strong>Capacity Planning</strong></li>
+<li>Analyze current usage patterns and growth trends</li>
+<li>Identify peak loads and bottlenecks</li>
+<li>
+<p>Project future capacity needs</p>
+</li>
+<li>
+<p><strong>Infrastructure Expansion</strong></p>
+</li>
+<li>Scale horizontal capacity for request handling</li>
+<li>Optimize caching infrastructure</li>
+<li>
+<p>Enhance database performance for prompt storage</p>
+</li>
+<li>
+<p><strong>Load Testing</strong></p>
+</li>
+<li>Create realistic load test scenarios</li>
+<li>Validate performance under projected load</li>
+<li>
+<p>Identify and address performance bottlenecks</p>
+</li>
+<li>
+<p><strong>Reliability Enhancements</strong></p>
+</li>
+<li>Implement enhanced failover mechanisms</li>
+<li>Configure cross-region redundancy</li>
+<li>
+<p>Establish disaster recovery procedures</p>
+</li>
+<li>
+<p><strong>Monitoring and Alerting</strong></p>
+</li>
+<li>Configure performance monitoring</li>
+<li>Set up proactive alerts for potential issues</li>
+<li>Create operational dashboards</li>
+</ol>
+<h4 id="value-delivered_7">Value Delivered</h4>
+<ul>
+<li>Consistent performance under increasing load</li>
+<li>Proactive capacity management</li>
+<li>High availability for critical services</li>
+<li>Reduced operational incidents</li>
+<li>Data-driven infrastructure decisions</li>
+</ul>
+<h2 id="business-stakeholder-journeys">Business Stakeholder Journeys</h2>
+<h3 id="journey-driving-roi-from-llm-investments">Journey: Driving ROI from LLM Investments</h3>
+<p><strong>User</strong>: Business Leaders and Product Owners</p>
+<h4 id="scenario_8">Scenario</h4>
+<p>As business leaders, we need to ensure that our investments in LLM technology deliver measurable business value and support strategic objectives.</p>
+<h4 id="journey-steps_8">Journey Steps</h4>
+<ol>
+<li><strong>Value Identification</strong></li>
+<li>Define business outcomes for LLM initiatives</li>
+<li>Establish success metrics and KPIs</li>
+<li>
+<p>Align with strategic business priorities</p>
+</li>
+<li>
+<p><strong>Usage Analysis</strong></p>
+</li>
+<li>Review LLM usage across business functions</li>
+<li>Identify high-impact applications</li>
+<li>
+<p>Evaluate quality and business outcomes</p>
+</li>
+<li>
+<p><strong>ROI Measurement</strong></p>
+</li>
+<li>Calculate cost savings from automation</li>
+<li>Measure productivity improvements</li>
+<li>
+<p>Evaluate customer experience impacts</p>
+</li>
+<li>
+<p><strong>Strategic Alignment</strong></p>
+</li>
+<li>Prioritize resources based on business impact</li>
+<li>Redirect resources from lower-value use cases</li>
+<li>
+<p>Identify new opportunities for LLM applications</p>
+</li>
+<li>
+<p><strong>Future Planning</strong></p>
+</li>
+<li>Develop roadmap for expanded LLM adoption</li>
+<li>Align budget and resources with priority areas</li>
+<li>Establish governance for ongoing value assessment</li>
+</ol>
+<h4 id="value-delivered_8">Value Delivered</h4>
+<ul>
+<li>Quantified business impact of LLM investments</li>
+<li>Optimized resource allocation</li>
+<li>Strategic alignment of AI initiatives</li>
+<li>Data-driven investment decisions</li>
+<li>Visible return on AI investments</li>
+</ul>
+<h3 id="journey-expanding-llm-use-cases">Journey: Expanding LLM Use Cases</h3>
+<p><strong>User</strong>: Innovation Teams and Business Units</p>
+<h4 id="scenario_9">Scenario</h4>
+<p>As the innovation team, we want to identify and implement new use cases for LLMs across the organization, driving new capabilities and business value.</p>
+<h4 id="journey-steps_9">Journey Steps</h4>
+<ol>
+<li><strong>Opportunity Mapping</strong></li>
+<li>Conduct workshops with business units</li>
+<li>Identify pain points and opportunities</li>
+<li>
+<p>Prioritize potential use cases</p>
+</li>
+<li>
+<p><strong>Proof of Concept Development</strong></p>
+</li>
+<li>Select high-priority use cases for initial testing</li>
+<li>Create rapid prototypes using LLM Gateway</li>
+<li>
+<p>Test with real users and data</p>
+</li>
+<li>
+<p><strong>Value Assessment</strong></p>
+</li>
+<li>Measure impact on efficiency, quality, or experience</li>
+<li>Calculate potential ROI at scale</li>
+<li>
+<p>Document findings and recommendations</p>
+</li>
+<li>
+<p><strong>Expansion Planning</strong></p>
+</li>
+<li>Develop implementation roadmap for successful POCs</li>
+<li>Identify resource requirements</li>
+<li>
+<p>Create training and change management plans</p>
+</li>
+<li>
+<p><strong>Knowledge Sharing</strong></p>
+</li>
+<li>Document successful patterns and best practices</li>
+<li>Create internal case studies and examples</li>
+<li>Build community of practice across teams</li>
+</ol>
+<h4 id="value-delivered_9">Value Delivered</h4>
+<ul>
+<li>Accelerated innovation cycles</li>
+<li>Validated business cases for LLM adoption</li>
+<li>Reusable patterns for similar use cases</li>
+<li>Measured outcomes from AI initiatives</li>
+<li>Cross-organizational knowledge sharing</li>
+</ul>
+<h2 id="end-user-journeys">End-User Journeys</h2>
+<h3 id="journey-content-creation-with-ai-assistance">Journey: Content Creation with AI Assistance</h3>
+<p><strong>User</strong>: Marketing and Content Teams</p>
+<h4 id="scenario_10">Scenario</h4>
+<p>As a marketing team member, I want to leverage AI to accelerate content creation while maintaining our brand voice and quality standards.</p>
+<h4 id="journey-steps_10">Journey Steps</h4>
+<ol>
+<li><strong>Project Setup</strong></li>
+<li>Define content requirements and guidelines</li>
+<li>Create project-specific prompt templates</li>
+<li>
+<p>Establish review and approval workflow</p>
+</li>
+<li>
+<p><strong>Content Generation</strong></p>
+</li>
+<li>Provide topic, audience, and format inputs</li>
+<li>Generate initial content drafts using LLM Gateway</li>
+<li>
+<p>Review and select promising outputs</p>
+</li>
+<li>
+<p><strong>Refinement and Editing</strong></p>
+</li>
+<li>Edit AI-generated content for accuracy and style</li>
+<li>Use AI for targeted improvements and variations</li>
+<li>
+<p>Combine human expertise with AI capabilities</p>
+</li>
+<li>
+<p><strong>Optimization</strong></p>
+</li>
+<li>Test content variations with target audiences</li>
+<li>Use AI to generate optimized versions</li>
+<li>
+<p>Measure performance and refine approach</p>
+</li>
+<li>
+<p><strong>Scaling Production</strong></p>
+</li>
+<li>Standardize successful workflows</li>
+<li>Create reusable templates for common content types</li>
+<li>Train team members on effective AI collaboration</li>
+</ol>
+<h4 id="value-delivered_10">Value Delivered</h4>
+<ul>
+<li>Accelerated content production</li>
+<li>Consistent quality and brand voice</li>
+<li>More creative variations and options</li>
+<li>Reduced time spent on routine writing tasks</li>
+<li>Improved content performance</li>
+</ul>
+<h3 id="journey-customer-support-enhancement">Journey: Customer Support Enhancement</h3>
+<p><strong>User</strong>: Customer Support Teams</p>
+<h4 id="scenario_11">Scenario</h4>
+<p>As a customer support manager, I want to use LLMs to augment my team's capabilities, improve response times, and enhance the quality of customer interactions.</p>
+<h4 id="journey-steps_11">Journey Steps</h4>
+<ol>
+<li><strong>Support Workflow Analysis</strong></li>
+<li>Identify common support scenarios</li>
+<li>Map current response processes</li>
+<li>
+<p>Determine opportunities for AI augmentation</p>
+</li>
+<li>
+<p><strong>AI Assistant Configuration</strong></p>
+</li>
+<li>Create prompt templates for common issues</li>
+<li>Configure knowledge base connections</li>
+<li>
+<p>Establish escalation criteria</p>
+</li>
+<li>
+<p><strong>Agent Augmentation Implementation</strong></p>
+</li>
+<li>Integrate LLM Gateway with support platform</li>
+<li>Train agents on working with AI suggestions</li>
+<li>
+<p>Implement feedback mechanisms</p>
+</li>
+<li>
+<p><strong>Quality and Efficiency Monitoring</strong></p>
+</li>
+<li>Track response times and resolution rates</li>
+<li>Measure customer satisfaction</li>
+<li>
+<p>Identify areas for improvement</p>
+</li>
+<li>
+<p><strong>Continuous Improvement</strong></p>
+</li>
+<li>Refine prompts based on performance data</li>
+<li>Expand coverage to additional scenarios</li>
+<li>Share best practices across support teams</li>
+</ol>
+<h4 id="value-delivered_11">Value Delivered</h4>
+<ul>
+<li>Faster response times for customers</li>
+<li>More consistent support quality</li>
+<li>Reduced agent cognitive load</li>
+<li>Higher first-contact resolution rates</li>
+<li>Improved agent productivity and satisfaction</li>
+</ul>
+<hr />
+<p><strong>Previous</strong>: <a href="key-features.html">Key Features</a> | <strong>Next</strong>: <a href="system-architecture.html">System Architecture</a></p>
+</body>
+</html>

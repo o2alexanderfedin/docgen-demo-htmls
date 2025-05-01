@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>versioning</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="prompt-versioning-api">Prompt Versioning API</h1>
+<p>The Prompt Versioning API allows you to manage versions of prompts, providing a way to track changes and promote drafts to production.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#list-versions">List Versions</a></li>
+<li><a href="#get-version">Get Version</a></li>
+<li><a href="#create-version">Create Version</a></li>
+<li><a href="#update-version">Update Version</a></li>
+<li><a href="#publish-version">Publish Version</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The LLM Gateway supports versioning for prompts, allowing you to create drafts, test changes, and promote versions to production when ready. This ensures a safe workflow for updating prompts without affecting production systems until changes are verified.</p>
+<p>Each prompt can have multiple versions with the following states:
+- <strong>Draft</strong>: A work-in-progress version that can be modified
+- <strong>Published</strong>: An immutable version that's available for use in production
+- <strong>Archived</strong>: A previously published version that's no longer in active use</p>
+<h2 id="list-versions">List Versions</h2>
+<p>Retrieves all versions of a specific prompt.</p>
+<h3 id="endpoint">Endpoint</h3>
+<pre><code>GET /v1/tenants/{tenantId}/llm/prompts/{promptId}/versions
+</code></pre>
+<h3 id="permission">Permission</h3>
+<p><code>llm:read</code></p>
+<h3 id="path-parameters">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+</tbody>
+</table>
+<h3 id="query-parameters">Query Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>status</td>
+<td>string</td>
+<td>No</td>
+<td>Filter by version status (draft, published, archived)</td>
+</tr>
+<tr>
+<td>page</td>
+<td>integer</td>
+<td>No</td>
+<td>Page number for pagination (default: 1)</td>
+</tr>
+<tr>
+<td>limit</td>
+<td>integer</td>
+<td>No</td>
+<td>Number of items per page (default: 20, max: 100)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters">Response Parameters</h3>
+<p>Returns an array of prompt version objects and pagination metadata.</p>
+<h3 id="example">Example</h3>
+<h4 id="request">Request</h4>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/pr_123456/versions&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h4 id="python-example">Python Example</h4>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com&quot;
+tenant_id = &quot;9000&quot;
+prompt_id = &quot;pr_123456&quot;
+
+response = requests.get(
+    f&quot;{base_url}/v1/tenants/{tenant_id}/llm/prompts/{prompt_id}/versions&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    }
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h4 id="response">Response</h4>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    {
+      &quot;id&quot;: &quot;v_abc123&quot;,
+      &quot;promptId&quot;: &quot;pr_123456&quot;,
+      &quot;version&quot;: 3,
+      &quot;status&quot;: &quot;published&quot;,
+      &quot;template&quot;: &quot;Answer the following question about {{topic}}: {{question}}&quot;,
+      &quot;parameters&quot;: {
+        &quot;topic&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The topic of the question&quot;
+        },
+        &quot;question&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The question to answer&quot;
+        }
+      },
+      &quot;createdAt&quot;: &quot;2023-08-15T14:32:10Z&quot;,
+      &quot;createdBy&quot;: &quot;user@example.com&quot;,
+      &quot;publishedAt&quot;: &quot;2023-08-16T09:45:22Z&quot;,
+      &quot;publishedBy&quot;: &quot;admin@example.com&quot;
+    },
+    {
+      &quot;id&quot;: &quot;v_def456&quot;,
+      &quot;promptId&quot;: &quot;pr_123456&quot;,
+      &quot;version&quot;: 2,
+      &quot;status&quot;: &quot;archived&quot;,
+      &quot;template&quot;: &quot;Please answer this question about {{topic}}: {{question}}&quot;,
+      &quot;parameters&quot;: {
+        &quot;topic&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The topic of the question&quot;
+        },
+        &quot;question&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The question to answer&quot;
+        }
+      },
+      &quot;createdAt&quot;: &quot;2023-07-20T11:22:33Z&quot;,
+      &quot;createdBy&quot;: &quot;user@example.com&quot;,
+      &quot;publishedAt&quot;: &quot;2023-07-21T15:30:00Z&quot;,
+      &quot;publishedBy&quot;: &quot;admin@example.com&quot;,
+      &quot;archivedAt&quot;: &quot;2023-08-16T09:45:22Z&quot;,
+      &quot;archivedBy&quot;: &quot;admin@example.com&quot;
+    }
+  ],
+  &quot;pagination&quot;: {
+    &quot;total&quot;: 3,
+    &quot;limit&quot;: 20,
+    &quot;page&quot;: 1,
+    &quot;pages&quot;: 1
+  }
+}
+</code></pre>
+<h2 id="get-version">Get Version</h2>
+<p>Retrieves a specific version of a prompt.</p>
+<h3 id="endpoint_1">Endpoint</h3>
+<pre><code>GET /v1/tenants/{tenantId}/llm/prompts/{promptId}/versions/{versionId}
+</code></pre>
+<h3 id="permission_1">Permission</h3>
+<p><code>llm:read</code></p>
+<h3 id="path-parameters_1">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+<tr>
+<td>versionId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_1">Response Parameters</h3>
+<p>Returns a prompt version object.</p>
+<h3 id="example_1">Example</h3>
+<h4 id="request_1">Request</h4>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/pr_123456/versions/v_abc123&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h4 id="javascriptnodejs-example">JavaScript/Node.js Example</h4>
+<pre><code class="language-javascript">const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com';
+const tenantId = '9000';
+const promptId = 'pr_123456';
+const versionId = 'v_abc123';
+
+async function getVersion() {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/v1/tenants/${tenantId}/llm/prompts/${promptId}/versions/${versionId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      }
+    );
+
+    console.log(`Status: ${response.status}`);
+    console.log(`Response: ${JSON.stringify(response.data, null, 2)}`);
+  } catch (error) {
+    console.error('Error getting version:', error.message);
+  }
+}
+
+getVersion();
+</code></pre>
+<h4 id="response_1">Response</h4>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;v_abc123&quot;,
+  &quot;promptId&quot;: &quot;pr_123456&quot;,
+  &quot;version&quot;: 3,
+  &quot;status&quot;: &quot;published&quot;,
+  &quot;template&quot;: &quot;Answer the following question about {{topic}}: {{question}}&quot;,
+  &quot;parameters&quot;: {
+    &quot;topic&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The topic of the question&quot;
+    },
+    &quot;question&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The question to answer&quot;
+    }
+  },
+  &quot;createdAt&quot;: &quot;2023-08-15T14:32:10Z&quot;,
+  &quot;createdBy&quot;: &quot;user@example.com&quot;,
+  &quot;publishedAt&quot;: &quot;2023-08-16T09:45:22Z&quot;,
+  &quot;publishedBy&quot;: &quot;admin@example.com&quot;
+}
+</code></pre>
+<h2 id="create-version">Create Version</h2>
+<p>Creates a new draft version of a prompt.</p>
+<h3 id="endpoint_2">Endpoint</h3>
+<pre><code>POST /v1/tenants/{tenantId}/llm/prompts/{promptId}/versions
+</code></pre>
+<h3 id="permission_2">Permission</h3>
+<p><code>llm:write</code></p>
+<h3 id="path-parameters_2">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+</tbody>
+</table>
+<h3 id="request-body">Request Body</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>template</td>
+<td>string</td>
+<td>Yes</td>
+<td>The prompt template with parameter placeholders</td>
+</tr>
+<tr>
+<td>parameters</td>
+<td>object</td>
+<td>Yes</td>
+<td>A map of parameter definitions</td>
+</tr>
+<tr>
+<td>defaultModel</td>
+<td>string</td>
+<td>No</td>
+<td>The default LLM model to use</td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td>No</td>
+<td>A description of this version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_2">Response Parameters</h3>
+<p>Returns the newly created prompt version object.</p>
+<h3 id="example_2">Example</h3>
+<h4 id="request_2">Request</h4>
+<pre><code class="language-bash">curl -X POST &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/pr_123456/versions&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;template&quot;: &quot;Answer this {{topic}} question in a {{tone}} tone: {{question}}&quot;,
+    &quot;parameters&quot;: {
+      &quot;topic&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The topic area of the question&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;question&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The question to answer&quot;,
+        &quot;required&quot;: true
+      },
+      &quot;tone&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The tone to use in the response&quot;,
+        &quot;enum&quot;: [&quot;formal&quot;, &quot;casual&quot;, &quot;technical&quot;],
+        &quot;default&quot;: &quot;formal&quot;
+      }
+    },
+    &quot;defaultModel&quot;: &quot;gpt-4&quot;,
+    &quot;description&quot;: &quot;Enhanced prompt with tone control&quot;
+  }'
+</code></pre>
+<h4 id="python-example_1">Python Example</h4>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com&quot;
+tenant_id = &quot;9000&quot;
+prompt_id = &quot;pr_123456&quot;
+
+data = {
+    &quot;template&quot;: &quot;Answer this {{topic}} question in a {{tone}} tone: {{question}}&quot;,
+    &quot;parameters&quot;: {
+        &quot;topic&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;The topic area of the question&quot;,
+            &quot;required&quot;: True
+        },
+        &quot;question&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;The question to answer&quot;,
+            &quot;required&quot;: True
+        },
+        &quot;tone&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;description&quot;: &quot;The tone to use in the response&quot;,
+            &quot;enum&quot;: [&quot;formal&quot;, &quot;casual&quot;, &quot;technical&quot;],
+            &quot;default&quot;: &quot;formal&quot;
+        }
+    },
+    &quot;defaultModel&quot;: &quot;gpt-4&quot;,
+    &quot;description&quot;: &quot;Enhanced prompt with tone control&quot;
+}
+
+response = requests.post(
+    f&quot;{base_url}/v1/tenants/{tenant_id}/llm/prompts/{prompt_id}/versions&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,
+        &quot;Content-Type&quot;: &quot;application/json&quot;
+    },
+    json=data
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h4 id="response_2">Response</h4>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;v_ghi789&quot;,
+  &quot;promptId&quot;: &quot;pr_123456&quot;,
+  &quot;version&quot;: 4,
+  &quot;status&quot;: &quot;draft&quot;,
+  &quot;template&quot;: &quot;Answer this {{topic}} question in a {{tone}} tone: {{question}}&quot;,
+  &quot;parameters&quot;: {
+    &quot;topic&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The topic area of the question&quot;,
+      &quot;required&quot;: true
+    },
+    &quot;question&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The question to answer&quot;,
+      &quot;required&quot;: true
+    },
+    &quot;tone&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The tone to use in the response&quot;,
+      &quot;enum&quot;: [&quot;formal&quot;, &quot;casual&quot;, &quot;technical&quot;],
+      &quot;default&quot;: &quot;formal&quot;
+    }
+  },
+  &quot;defaultModel&quot;: &quot;gpt-4&quot;,
+  &quot;description&quot;: &quot;Enhanced prompt with tone control&quot;,
+  &quot;createdAt&quot;: &quot;2023-09-01T10:23:45Z&quot;,
+  &quot;createdBy&quot;: &quot;user@example.com&quot;
+}
+</code></pre>
+<h2 id="update-version">Update Version</h2>
+<p>Updates a draft version of a prompt. Published versions cannot be updated.</p>
+<h3 id="endpoint_3">Endpoint</h3>
+<pre><code>PATCH /v1/tenants/{tenantId}/llm/prompts/{promptId}/versions/{versionId}
+</code></pre>
+<h3 id="permission_3">Permission</h3>
+<p><code>llm:write</code></p>
+<h3 id="path-parameters_3">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+<tr>
+<td>versionId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="request-body_1">Request Body</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>template</td>
+<td>string</td>
+<td>No</td>
+<td>The prompt template with parameter placeholders</td>
+</tr>
+<tr>
+<td>parameters</td>
+<td>object</td>
+<td>No</td>
+<td>A map of parameter definitions</td>
+</tr>
+<tr>
+<td>defaultModel</td>
+<td>string</td>
+<td>No</td>
+<td>The default LLM model to use</td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td>No</td>
+<td>A description of this version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_3">Response Parameters</h3>
+<p>Returns the updated prompt version object.</p>
+<h3 id="example_3">Example</h3>
+<h4 id="request_3">Request</h4>
+<pre><code class="language-bash">curl -X PATCH &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/pr_123456/versions/v_ghi789&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;template&quot;: &quot;Provide an answer about {{topic}} in a {{tone}} tone. Question: {{question}}&quot;,
+    &quot;description&quot;: &quot;Revised enhanced prompt with tone control&quot;
+  }'
+</code></pre>
+<h4 id="javascriptnodejs-example_1">JavaScript/Node.js Example</h4>
+<pre><code class="language-javascript">const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com';
+const tenantId = '9000';
+const promptId = 'pr_123456';
+const versionId = 'v_ghi789';
+
+const data = {
+  template: &quot;Provide an answer about {{topic}} in a {{tone}} tone. Question: {{question}}&quot;,
+  description: &quot;Revised enhanced prompt with tone control&quot;
+};
+
+async function updateVersion() {
+  try {
+    const response = await axios.patch(
+      `${baseUrl}/v1/tenants/${tenantId}/llm/prompts/${promptId}/versions/${versionId}`,
+      data,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log(`Status: ${response.status}`);
+    console.log(`Response: ${JSON.stringify(response.data, null, 2)}`);
+  } catch (error) {
+    console.error('Error updating version:', error.message);
+    if (error.response) {
+      console.error(`Status: ${error.response.status}`);
+      console.error(`Response: ${JSON.stringify(error.response.data, null, 2)}`);
+    }
+  }
+}
+
+updateVersion();
+</code></pre>
+<h4 id="response_3">Response</h4>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;v_ghi789&quot;,
+  &quot;promptId&quot;: &quot;pr_123456&quot;,
+  &quot;version&quot;: 4,
+  &quot;status&quot;: &quot;draft&quot;,
+  &quot;template&quot;: &quot;Provide an answer about {{topic}} in a {{tone}} tone. Question: {{question}}&quot;,
+  &quot;parameters&quot;: {
+    &quot;topic&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The topic area of the question&quot;,
+      &quot;required&quot;: true
+    },
+    &quot;question&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The question to answer&quot;,
+      &quot;required&quot;: true
+    },
+    &quot;tone&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The tone to use in the response&quot;,
+      &quot;enum&quot;: [&quot;formal&quot;, &quot;casual&quot;, &quot;technical&quot;],
+      &quot;default&quot;: &quot;formal&quot;
+    }
+  },
+  &quot;defaultModel&quot;: &quot;gpt-4&quot;,
+  &quot;description&quot;: &quot;Revised enhanced prompt with tone control&quot;,
+  &quot;createdAt&quot;: &quot;2023-09-01T10:23:45Z&quot;,
+  &quot;createdBy&quot;: &quot;user@example.com&quot;,
+  &quot;updatedAt&quot;: &quot;2023-09-01T11:05:33Z&quot;,
+  &quot;updatedBy&quot;: &quot;user@example.com&quot;
+}
+</code></pre>
+<h2 id="publish-version">Publish Version</h2>
+<p>Publishes a draft version, making it the active version for the prompt and archiving the previously published version.</p>
+<h3 id="endpoint_4">Endpoint</h3>
+<pre><code>POST /v1/tenants/{tenantId}/llm/prompts/{promptId}/versions/{versionId}/publish
+</code></pre>
+<h3 id="permission_4">Permission</h3>
+<p><code>llm:admin</code></p>
+<h3 id="path-parameters_4">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+<tr>
+<td>versionId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_4">Response Parameters</h3>
+<p>Returns the published prompt version object.</p>
+<h3 id="example_4">Example</h3>
+<h4 id="request_4">Request</h4>
+<pre><code class="language-bash">curl -X POST &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/pr_123456/versions/v_ghi789/publish&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h4 id="python-example_2">Python Example</h4>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com&quot;
+tenant_id = &quot;9000&quot;
+prompt_id = &quot;pr_123456&quot;
+version_id = &quot;v_ghi789&quot;
+
+response = requests.post(
+    f&quot;{base_url}/v1/tenants/{tenant_id}/llm/prompts/{prompt_id}/versions/{version_id}/publish&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    }
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h4 id="response_4">Response</h4>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;v_ghi789&quot;,
+  &quot;promptId&quot;: &quot;pr_123456&quot;,
+  &quot;version&quot;: 4,
+  &quot;status&quot;: &quot;published&quot;,
+  &quot;template&quot;: &quot;Provide an answer about {{topic}} in a {{tone}} tone. Question: {{question}}&quot;,
+  &quot;parameters&quot;: {
+    &quot;topic&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The topic area of the question&quot;,
+      &quot;required&quot;: true
+    },
+    &quot;question&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The question to answer&quot;,
+      &quot;required&quot;: true
+    },
+    &quot;tone&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The tone to use in the response&quot;,
+      &quot;enum&quot;: [&quot;formal&quot;, &quot;casual&quot;, &quot;technical&quot;],
+      &quot;default&quot;: &quot;formal&quot;
+    }
+  },
+  &quot;defaultModel&quot;: &quot;gpt-4&quot;,
+  &quot;description&quot;: &quot;Revised enhanced prompt with tone control&quot;,
+  &quot;createdAt&quot;: &quot;2023-09-01T10:23:45Z&quot;,
+  &quot;createdBy&quot;: &quot;user@example.com&quot;,
+  &quot;updatedAt&quot;: &quot;2023-09-01T11:05:33Z&quot;,
+  &quot;updatedBy&quot;: &quot;user@example.com&quot;,
+  &quot;publishedAt&quot;: &quot;2023-09-01T14:20:15Z&quot;,
+  &quot;publishedBy&quot;: &quot;admin@example.com&quot;
+}
+</code></pre>
+</body>
+</html>

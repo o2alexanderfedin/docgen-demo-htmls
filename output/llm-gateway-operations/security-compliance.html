@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>security-compliance</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="security-and-compliance">Security and Compliance</h1>
+<p>This document outlines the security architecture, controls, and compliance frameworks for the LLM Gateway service.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#security-architecture">Security Architecture</a></li>
+<li><a href="#identity-and-access-management">Identity and Access Management</a></li>
+<li><a href="#data-protection">Data Protection</a></li>
+<li><a href="#network-security">Network Security</a></li>
+<li><a href="#infrastructure-security">Infrastructure Security</a></li>
+<li><a href="#application-security">Application Security</a></li>
+<li><a href="#compliance-framework">Compliance Framework</a></li>
+<li><a href="#auditing-and-logging">Auditing and Logging</a></li>
+<li><a href="#security-operations">Security Operations</a></li>
+</ul>
+<h2 id="security-architecture">Security Architecture</h2>
+<p>The LLM Gateway follows a defense-in-depth approach with security controls at multiple layers.</p>
+<h3 id="security-architecture-overview">Security Architecture Overview</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;External Layer&quot;
+        WAF[WAF &amp; DDoS Protection]
+        DNS[DNS Security]
+    end
+
+    subgraph &quot;Network Layer&quot;
+        VPC[VPC &amp; Subnets]
+        NACL[Network ACLs]
+        SG[Security Groups]
+    end
+
+    subgraph &quot;Identity Layer&quot;
+        IAM[IAM Roles &amp; Policies]
+        SSO[Single Sign-On]
+        RBAC[K8s RBAC]
+    end
+
+    subgraph &quot;Application Layer&quot;
+        Auth[Authentication &amp; Authorization]
+        Validation[Input Validation]
+        Secrets[Secrets Management]
+    end
+
+    subgraph &quot;Data Layer&quot;
+        Encryption[Data Encryption]
+        Masking[Data Masking]
+        PII[PII Protection]
+    end
+
+    subgraph &quot;Operational Layer&quot;
+        Logging[Security Logging]
+        Monitoring[Security Monitoring]
+        Scanning[Vulnerability Scanning]
+    end
+
+    External[External Users] --&gt; WAF
+    WAF --&gt; VPC
+    VPC --&gt; IAM
+    IAM --&gt; Auth
+    Auth --&gt; Encryption
+
+    VPC --&gt; NACL --&gt; SG
+    IAM --&gt; SSO --&gt; RBAC
+    Auth --&gt; Validation --&gt; Secrets
+    Encryption --&gt; Masking --&gt; PII
+
+    Logging --&gt; Monitoring --&gt; Scanning
+</code></pre>
+<h3 id="security-principles">Security Principles</h3>
+<p>The LLM Gateway security architecture is guided by the following principles:</p>
+<ol>
+<li><strong>Zero Trust Architecture</strong>: No implicit trust based on network location</li>
+<li><strong>Least Privilege</strong>: Minimal access rights for entities</li>
+<li><strong>Defense in Depth</strong>: Multiple security controls at different layers</li>
+<li><strong>Secure by Default</strong>: Security built in from the beginning</li>
+<li><strong>Security as Code</strong>: Security controls defined and deployed as code</li>
+<li><strong>Continuous Verification</strong>: Regular testing and validation of controls</li>
+</ol>
+<h2 id="identity-and-access-management">Identity and Access Management</h2>
+<p>The LLM Gateway implements comprehensive identity and access management controls.</p>
+<h3 id="iam-architecture">IAM Architecture</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Identity Sources&quot;
+        AD[Active Directory]
+        OIDC[OIDC Provider]
+        SAML[SAML Provider]
+    end
+
+    subgraph &quot;Authentication&quot;
+        SSO[AWS SSO]
+        Cognito[AWS Cognito]
+        IAMDB[IAM Identity Center]
+    end
+
+    subgraph &quot;Authorization&quot;
+        Roles[IAM Roles]
+        Groups[IAM Groups]
+        Policies[IAM Policies]
+        KRBAC[Kubernetes RBAC]
+    end
+
+    subgraph &quot;Service Access&quot;
+        Service[Service Accounts]
+        IRSA[IAM Roles for Service Accounts]
+        ResourcePolicies[Resource Policies]
+    end
+
+    AD --&gt; SSO
+    OIDC --&gt; Cognito
+    SAML --&gt; IAMDB
+
+    SSO --&gt; Roles
+    Cognito --&gt; Groups
+    IAMDB --&gt; Policies
+
+    Roles --&gt; KRBAC
+    Groups --&gt; Service
+    Policies --&gt; IRSA
+    KRBAC --&gt; ResourcePolicies
+</code></pre>
+<h3 id="access-control-model">Access Control Model</h3>
+<p>The LLM Gateway implements a role-based access control (RBAC) model with the following components:</p>
+<h4 id="user-roles">User Roles</h4>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Description</th>
+<th>Permissions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Administrator</td>
+<td>System administration</td>
+<td>Full access to all resources</td>
+</tr>
+<tr>
+<td>Operator</td>
+<td>Day-to-day operations</td>
+<td>Read/write access to operational resources</td>
+</tr>
+<tr>
+<td>Developer</td>
+<td>Development and testing</td>
+<td>Read/write access to dev resources</td>
+</tr>
+<tr>
+<td>Auditor</td>
+<td>Compliance auditing</td>
+<td>Read-only access to all resources</td>
+</tr>
+<tr>
+<td>User</td>
+<td>End-user of the service</td>
+<td>Access to specific API endpoints</td>
+</tr>
+</tbody>
+</table>
+<h4 id="service-roles">Service Roles</h4>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Purpose</th>
+<th>Access Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API Service</td>
+<td>Handle API requests</td>
+<td>API Gateway, Lambda</td>
+</tr>
+<tr>
+<td>Execution Service</td>
+<td>Execute LLM requests</td>
+<td>LLM provider connections, cache</td>
+</tr>
+<tr>
+<td>Monitoring Service</td>
+<td>Collect metrics</td>
+<td>CloudWatch, custom metrics</td>
+</tr>
+<tr>
+<td>Backup Service</td>
+<td>Perform backups</td>
+<td>S3, RDS, EBS</td>
+</tr>
+</tbody>
+</table>
+<h3 id="authentication-methods">Authentication Methods</h3>
+<p>The LLM Gateway supports multiple authentication methods:</p>
+<ol>
+<li><strong>API Access</strong>:</li>
+<li>API Keys with mandatory rotation</li>
+<li>JWT tokens for short-lived access</li>
+<li>
+<p>OAuth2 client credentials flow</p>
+</li>
+<li>
+<p><strong>Management Access</strong>:</p>
+</li>
+<li>SAML-based SSO for console access</li>
+<li>MFA enforced for all human users</li>
+<li>
+<p>Temporary credentials for CLI access</p>
+</li>
+<li>
+<p><strong>Service-to-Service</strong>:</p>
+</li>
+<li>IAM roles for internal AWS services</li>
+<li>Service accounts for Kubernetes resources</li>
+<li>mTLS for critical service communication</li>
+</ol>
+<h2 id="data-protection">Data Protection</h2>
+<p>The LLM Gateway implements comprehensive data protection measures for data at rest and in transit.</p>
+<h3 id="data-classification">Data Classification</h3>
+<p>Data is classified according to sensitivity:</p>
+<table>
+<thead>
+<tr>
+<th>Classification</th>
+<th>Examples</th>
+<th>Protection Requirements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Public</td>
+<td>Model capabilities, documentation</td>
+<td>No special protection required</td>
+</tr>
+<tr>
+<td>Internal</td>
+<td>System metrics, non-sensitive logs</td>
+<td>Encryption in transit</td>
+</tr>
+<tr>
+<td>Confidential</td>
+<td>Customer prompt templates, usage analytics</td>
+<td>Encryption in transit and at rest</td>
+</tr>
+<tr>
+<td>Restricted</td>
+<td>API keys, credentials, PII in prompts</td>
+<td>Encryption, access controls, audit logging</td>
+</tr>
+</tbody>
+</table>
+<h3 id="encryption-architecture">Encryption Architecture</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Key Management&quot;
+        KMS[AWS KMS]
+        CMK[Customer Managed Keys]
+        KeyPolicies[Key Policies]
+    end
+
+    subgraph &quot;Data at Rest&quot;
+        S3[S3 Encryption]
+        RDS[RDS Encryption]
+        EBS[EBS Encryption]
+        Secrets[Secrets Manager]
+    end
+
+    subgraph &quot;Data in Transit&quot;
+        TLS[TLS 1.3]
+        HTTPS[HTTPS Endpoints]
+        VPCEndpoints[VPC Endpoints]
+    end
+
+    KMS --&gt; CMK --&gt; KeyPolicies
+    CMK --&gt; S3
+    CMK --&gt; RDS
+    CMK --&gt; EBS
+    CMK --&gt; Secrets
+
+    TLS --&gt; HTTPS
+    TLS --&gt; VPCEndpoints
+</code></pre>
+<h3 id="encryption-implementation">Encryption Implementation</h3>
+<ol>
+<li><strong>Data at Rest</strong>:</li>
+<li>RDS with AWS KMS encryption (AES-256)</li>
+<li>S3 with server-side encryption</li>
+<li>EBS volumes encrypted by default</li>
+<li>ElastiCache with encryption enabled</li>
+<li>
+<p>Secrets Manager with KMS encryption</p>
+</li>
+<li>
+<p><strong>Data in Transit</strong>:</p>
+</li>
+<li>TLS 1.3 for all API endpoints</li>
+<li>TLS for all internal service communication</li>
+<li>mTLS for critical service interfaces</li>
+<li>VPC endpoints for AWS service access</li>
+</ol>
+<h3 id="data-handling-controls">Data Handling Controls</h3>
+<ol>
+<li><strong>PII Handling</strong>:</li>
+<li>PII detection in prompt content</li>
+<li>Automated redaction capabilities</li>
+<li>Strict access controls for PII data</li>
+<li>
+<p>Retention limits for sensitive data</p>
+</li>
+<li>
+<p><strong>Data Minimization</strong>:</p>
+</li>
+<li>Collection limited to necessary data</li>
+<li>Automated data purging workflows</li>
+<li>Anonymization for analytics data</li>
+<li>Temporary storage for transient data</li>
+</ol>
+<h2 id="network-security">Network Security</h2>
+<p>The LLM Gateway implements multiple layers of network security controls.</p>
+<h3 id="network-architecture">Network Architecture</h3>
+<pre><code class="language-mermaid">graph TD
+    Internet((Internet)) --&gt; Route53[Route 53]
+    Route53 --&gt; WAF[AWS WAF]
+    WAF --&gt; ALB[Application Load Balancer]
+
+    subgraph &quot;VPC&quot;
+        subgraph &quot;Public Subnets&quot;
+            ALB
+            NAT[NAT Gateway]
+        end
+
+        subgraph &quot;Application Subnets&quot;
+            EKS[EKS Cluster]
+            ALB --&gt; EKS
+        end
+
+        subgraph &quot;Database Subnets&quot;
+            RDS[(RDS Database)]
+            ElastiCache[(ElastiCache)]
+            EKS --&gt; RDS
+            EKS --&gt; ElastiCache
+        end
+
+        EKS --&gt; NAT
+        NAT --&gt; Internet
+
+        VPCEndpoint[VPC Endpoints]
+        EKS --&gt; VPCEndpoint
+    end
+
+    subgraph &quot;AWS Services&quot;
+        S3[(S3)]
+        SM[(Secrets Manager)]
+        ECR[(ECR)]
+        CW[(CloudWatch)]
+    end
+
+    VPCEndpoint --&gt; S3
+    VPCEndpoint --&gt; SM
+    VPCEndpoint --&gt; ECR
+    VPCEndpoint --&gt; CW
+</code></pre>
+<h3 id="network-security-controls">Network Security Controls</h3>
+<ol>
+<li><strong>VPC Configuration</strong>:</li>
+<li>Isolated VPC with private subnets</li>
+<li>Public subnets only for load balancers</li>
+<li>No direct internet access from application layer</li>
+<li>
+<p>VPC flow logs enabled for network monitoring</p>
+</li>
+<li>
+<p><strong>Access Controls</strong>:</p>
+</li>
+<li>Security groups with least-privilege rules</li>
+<li>Network ACLs as subnet-level firewalls</li>
+<li>Service security groups for fine-grained control</li>
+<li>
+<p>Default deny for all ingress/egress traffic</p>
+</li>
+<li>
+<p><strong>Traffic Protection</strong>:</p>
+</li>
+<li>WAF for application layer protection</li>
+<li>Shield Advanced for DDoS protection</li>
+<li>TLS termination at load balancer</li>
+<li>
+<p>Private API Gateway endpoints</p>
+</li>
+<li>
+<p><strong>Service Isolation</strong>:</p>
+</li>
+<li>Kubernetes network policies</li>
+<li>Service mesh for inter-service TLS</li>
+<li>Namespace isolation for service boundaries</li>
+<li>Micro-segmentation for critical services</li>
+</ol>
+<h2 id="infrastructure-security">Infrastructure Security</h2>
+<p>The LLM Gateway employs multiple infrastructure security controls.</p>
+<h3 id="infrastructure-hardening">Infrastructure Hardening</h3>
+<ol>
+<li><strong>Compute Resources</strong>:</li>
+<li>Hardened AMIs for EC2 instances</li>
+<li>Regular patching through automation</li>
+<li>Immutable infrastructure approach</li>
+<li>
+<p>Host-based intrusion detection</p>
+</li>
+<li>
+<p><strong>Container Security</strong>:</p>
+</li>
+<li>Image scanning in CI/CD pipeline</li>
+<li>Minimal base images</li>
+<li>Non-root container execution</li>
+<li>
+<p>Image signing and verification</p>
+</li>
+<li>
+<p><strong>Kubernetes Security</strong>:</p>
+</li>
+<li>Pod security policies</li>
+<li>Admission controllers</li>
+<li>Security context constraints</li>
+<li>Control plane security</li>
+</ol>
+<h3 id="vulnerability-management">Vulnerability Management</h3>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph &quot;Vulnerability Sources&quot;
+        SAST[Static Analysis]
+        DAST[Dynamic Analysis]
+        SCA[Dependency Scanning]
+        Image[Container Scanning]
+        Infra[Infrastructure Scanning]
+    end
+
+    subgraph &quot;Vulnerability Management&quot;
+        Triage[Vulnerability Triage]
+        Prioritize[Risk Prioritization]
+        Remediate[Remediation]
+        Verify[Verification]
+    end
+
+    SAST &amp; DAST &amp; SCA &amp; Image &amp; Infra --&gt; Triage
+    Triage --&gt; Prioritize
+    Prioritize --&gt; Remediate
+    Remediate --&gt; Verify
+    Verify --&gt;|Continuous| SAST
+</code></pre>
+<ol>
+<li><strong>Scanning Schedule</strong>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Asset Type</th>
+<th>Tool</th>
+<th>Frequency</th>
+<th>Integration Point</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source Code</td>
+<td>SonarQube, Snyk</td>
+<td>On commit</td>
+<td>CI/CD pipeline</td>
+</tr>
+<tr>
+<td>Dependencies</td>
+<td>Dependabot, Snyk</td>
+<td>Daily</td>
+<td>Repository</td>
+</tr>
+<tr>
+<td>Container Images</td>
+<td>Trivy, ECR scanning</td>
+<td>On build</td>
+<td>CI/CD pipeline</td>
+</tr>
+<tr>
+<td>Infrastructure</td>
+<td>Prowler, ScoutSuite</td>
+<td>Weekly</td>
+<td>Scheduled scan</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>Falco</td>
+<td>Continuous</td>
+<td>Kubernetes</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li><strong>Remediation SLAs</strong>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Timeframe</th>
+<th>Approval Process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critical</td>
+<td>24 hours</td>
+<td>Emergency change</td>
+</tr>
+<tr>
+<td>High</td>
+<td>7 days</td>
+<td>Expedited review</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>30 days</td>
+<td>Standard review</td>
+</tr>
+<tr>
+<td>Low</td>
+<td>90 days</td>
+<td>Batch process</td>
+</tr>
+</tbody>
+</table>
+<h2 id="application-security">Application Security</h2>
+<p>The LLM Gateway includes multiple application security controls.</p>
+<h3 id="secure-development-practices">Secure Development Practices</h3>
+<ol>
+<li><strong>Secure SDLC</strong>:</li>
+<li>Security requirements definition</li>
+<li>Threat modeling for new features</li>
+<li>Security code reviews</li>
+<li>
+<p>Secure coding guidelines</p>
+</li>
+<li>
+<p><strong>Security Testing</strong>:</p>
+</li>
+<li>Unit tests for security controls</li>
+<li>Integration testing for security features</li>
+<li>Penetration testing (quarterly)</li>
+<li>Fuzz testing for API endpoints</li>
+</ol>
+<h3 id="api-security">API Security</h3>
+<ol>
+<li><strong>Input Validation</strong>:</li>
+<li>Schema validation for all inputs</li>
+<li>Strict type checking</li>
+<li>Input sanitization</li>
+<li>
+<p>Maximum size limits</p>
+</li>
+<li>
+<p><strong>Output Encoding</strong>:</p>
+</li>
+<li>Content security policy implementation</li>
+<li>Safe output encoding</li>
+<li>Response validation</li>
+<li>
+<p>Error message scrubbing</p>
+</li>
+<li>
+<p><strong>Rate Limiting</strong>:</p>
+</li>
+<li>Per-endpoint rate limits</li>
+<li>Per-user quotas</li>
+<li>Graduated response to abusive traffic</li>
+<li>Automated abuse detection</li>
+</ol>
+<h3 id="prompt-security">Prompt Security</h3>
+<ol>
+<li><strong>Prompt Injection Protection</strong>:</li>
+<li>Prompt boundary enforcement</li>
+<li>Context isolation</li>
+<li>Input sanitization</li>
+<li>
+<p>Dangerous pattern detection</p>
+</li>
+<li>
+<p><strong>LLM Output Safety</strong>:</p>
+</li>
+<li>Content filtering</li>
+<li>Toxicity detection</li>
+<li>PII detection in responses</li>
+<li>Output validation</li>
+</ol>
+<h2 id="compliance-framework">Compliance Framework</h2>
+<p>The LLM Gateway is designed to meet various compliance requirements.</p>
+<h3 id="compliance-certifications">Compliance Certifications</h3>
+<p>The service is compliant with or designed to support:</p>
+<table>
+<thead>
+<tr>
+<th>Framework</th>
+<th>Status</th>
+<th>Scope</th>
+<th>Last Assessment</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SOC 2 Type II</td>
+<td>Certified</td>
+<td>Security, Availability, Confidentiality</td>
+<td>Q2 2023</td>
+</tr>
+<tr>
+<td>ISO 27001</td>
+<td>Certified</td>
+<td>Information Security Management</td>
+<td>Q2 2023</td>
+</tr>
+<tr>
+<td>GDPR</td>
+<td>Compliant</td>
+<td>Data Protection</td>
+<td>Q1 2023</td>
+</tr>
+<tr>
+<td>HIPAA</td>
+<td>BAA Available</td>
+<td>For healthcare customers</td>
+<td>Q3 2023</td>
+</tr>
+<tr>
+<td>FedRAMP Moderate</td>
+<td>In Progress</td>
+<td>For government customers</td>
+<td>Expected Q4 2023</td>
+</tr>
+</tbody>
+</table>
+<h3 id="compliance-controls-mapping">Compliance Controls Mapping</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Control Frameworks&quot;
+        SOC2[SOC 2]
+        ISO[ISO 27001]
+        GDPR[GDPR]
+        HIPAA[HIPAA]
+        FedRAMP[FedRAMP]
+    end
+
+    subgraph &quot;Control Categories&quot;
+        IAM[Identity &amp; Access]
+        Config[Secure Configuration]
+        DataProt[Data Protection]
+        Incident[Incident Response]
+        BCP[Business Continuity]
+        SecOps[Security Operations]
+    end
+
+    SOC2 --&gt; IAM &amp; Config &amp; DataProt &amp; Incident &amp; BCP &amp; SecOps
+    ISO --&gt; IAM &amp; Config &amp; DataProt &amp; Incident &amp; BCP &amp; SecOps
+    GDPR --&gt; IAM &amp; DataProt &amp; Incident
+    HIPAA --&gt; IAM &amp; DataProt &amp; Incident &amp; BCP
+    FedRAMP --&gt; IAM &amp; Config &amp; DataProt &amp; Incident &amp; BCP &amp; SecOps
+
+    IAM --&gt; IAMControls[IAM Controls Implementation]
+    Config --&gt; ConfigControls[Configuration Controls]
+    DataProt --&gt; DataControls[Data Protection Controls]
+    Incident --&gt; IncidentControls[Incident Response Controls]
+    BCP --&gt; BCPControls[BCP Controls]
+    SecOps --&gt; SecOpsControls[SecOps Controls]
+</code></pre>
+<h3 id="compliance-documentation">Compliance Documentation</h3>
+<p>The following compliance documentation is maintained:</p>
+<ol>
+<li><strong>System Security Plan (SSP)</strong>:</li>
+<li>Comprehensive system description</li>
+<li>Control implementation details</li>
+<li>Risk assessment results</li>
+<li>
+<p>Continuous monitoring approach</p>
+</li>
+<li>
+<p><strong>Policies and Procedures</strong>:</p>
+</li>
+<li>Information security policy</li>
+<li>Access control policy</li>
+<li>Data protection policy</li>
+<li>Incident response procedures</li>
+<li>Change management procedures</li>
+<li>
+<p>Backup and recovery procedures</p>
+</li>
+<li>
+<p><strong>Compliance Evidence</strong>:</p>
+</li>
+<li>Control testing results</li>
+<li>Vulnerability scanning reports</li>
+<li>Penetration testing reports</li>
+<li>Audit logs and reviews</li>
+<li>Access reviews</li>
+<li>Training records</li>
+</ol>
+<h2 id="auditing-and-logging">Auditing and Logging</h2>
+<p>The LLM Gateway implements comprehensive audit logging for security and compliance purposes.</p>
+<h3 id="logging-architecture">Logging Architecture</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Log Sources&quot;
+        App[Application Logs]
+        Infra[Infrastructure Logs]
+        Network[Network Logs]
+        DB[Database Logs]
+        Security[Security Logs]
+    end
+
+    subgraph &quot;Collection &amp; Processing&quot;
+        Fluent[FluentBit]
+        Stream[Kinesis Data Streams]
+        Firehose[Kinesis Firehose]
+        Lambda[Lambda Enrichment]
+    end
+
+    subgraph &quot;Storage &amp; Analysis&quot;
+        S3[S3 Bucket]
+        ES[Elasticsearch]
+        CW[CloudWatch Logs]
+        Athena[Athena]
+    end
+
+    subgraph &quot;Monitoring &amp; Alerting&quot;
+        Rules[Alert Rules]
+        SIEM[Security Information &amp; Event Management]
+        Dashboard[Security Dashboards]
+    end
+
+    App &amp; Infra &amp; Network &amp; DB &amp; Security --&gt; Fluent
+    Fluent --&gt; Stream
+    Stream --&gt; Firehose
+    Stream --&gt; Lambda
+    Firehose --&gt; S3
+    Lambda --&gt; ES
+    Lambda --&gt; CW
+
+    S3 --&gt; Athena
+    ES &amp; CW &amp; Athena --&gt; Rules
+    ES &amp; CW &amp; Athena --&gt; SIEM
+    ES &amp; CW &amp; Athena --&gt; Dashboard
+</code></pre>
+<h3 id="logged-events">Logged Events</h3>
+<p>The following security events are logged:</p>
+<ol>
+<li><strong>Authentication Events</strong>:</li>
+<li>Authentication attempts (successful and failed)</li>
+<li>Token issuance and validation</li>
+<li>Session management</li>
+<li>
+<p>Privilege changes</p>
+</li>
+<li>
+<p><strong>Authorization Events</strong>:</p>
+</li>
+<li>Authorization decisions</li>
+<li>Permission changes</li>
+<li>Access denials</li>
+<li>
+<p>Privilege escalation</p>
+</li>
+<li>
+<p><strong>Data Access Events</strong>:</p>
+</li>
+<li>Sensitive data access</li>
+<li>Data modifications</li>
+<li>Bulk data exports</li>
+<li>
+<p>Unusual data access patterns</p>
+</li>
+<li>
+<p><strong>Administrative Events</strong>:</p>
+</li>
+<li>Configuration changes</li>
+<li>Security control modifications</li>
+<li>User and role management</li>
+<li>
+<p>Policy changes</p>
+</li>
+<li>
+<p><strong>System Events</strong>:</p>
+</li>
+<li>Service starts and stops</li>
+<li>System failures</li>
+<li>Resource exhaustion</li>
+<li>Security boundary violations</li>
+</ol>
+<h3 id="log-management">Log Management</h3>
+<p>Logs are managed according to the following policies:</p>
+<ol>
+<li><strong>Retention</strong>:</li>
+<li>Security logs: 1 year</li>
+<li>Compliance-related logs: 7 years</li>
+<li>Operational logs: 90 days</li>
+<li>
+<p>Debug logs: 7 days</p>
+</li>
+<li>
+<p><strong>Protection</strong>:</p>
+</li>
+<li>Immutable storage in S3</li>
+<li>Encryption at rest</li>
+<li>Access controls on log data</li>
+<li>
+<p>Integrity verification</p>
+</li>
+<li>
+<p><strong>Monitoring</strong>:</p>
+</li>
+<li>Real-time alerting for critical events</li>
+<li>Automated log analysis</li>
+<li>Anomaly detection</li>
+<li>Correlation across log sources</li>
+</ol>
+<h2 id="security-operations">Security Operations</h2>
+<p>The LLM Gateway is supported by a Security Operations Center (SOC) that provides continuous monitoring and incident response.</p>
+<h3 id="security-monitoring">Security Monitoring</h3>
+<p>The following security monitoring is performed:</p>
+<ol>
+<li><strong>Continuous Monitoring</strong>:</li>
+<li>Real-time log analysis</li>
+<li>Network traffic analysis</li>
+<li>Behavior anomaly detection</li>
+<li>
+<p>Threat intelligence integration</p>
+</li>
+<li>
+<p><strong>Scheduled Assessments</strong>:</p>
+</li>
+<li>Vulnerability scanning</li>
+<li>Configuration compliance checks</li>
+<li>Security control effectiveness testing</li>
+<li>Access reviews</li>
+</ol>
+<h3 id="incident-response">Incident Response</h3>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph &quot;Detection Phase&quot;
+        Monitor[Security Monitoring]
+        Auto[Automated Detection]
+        Manual[Manual Report]
+    end
+
+    subgraph &quot;Response Phase&quot;
+        Triage[Incident Triage]
+        Contain[Containment]
+        Eradicate[Eradication]
+        Recover[Recovery]
+    end
+
+    subgraph &quot;Post-Incident Phase&quot;
+        Analysis[Root Cause Analysis]
+        Lessons[Lessons Learned]
+        Improvement[Control Improvement]
+    end
+
+    Monitor &amp; Auto &amp; Manual --&gt; Triage
+    Triage --&gt; Contain --&gt; Eradicate --&gt; Recover
+    Recover --&gt; Analysis --&gt; Lessons --&gt; Improvement
+    Improvement -.-&gt; Monitor
+</code></pre>
+<ol>
+<li><strong>Incident Response Process</strong>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Activities</th>
+<th>Timeframe</th>
+<th>Documentation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preparation</td>
+<td>Playbooks, training, tools</td>
+<td>Ongoing</td>
+<td>IR plan, runbooks</td>
+</tr>
+<tr>
+<td>Detection</td>
+<td>Monitoring, alerts, reports</td>
+<td>Real-time</td>
+<td>Alert records</td>
+</tr>
+<tr>
+<td>Analysis</td>
+<td>Triage, impact assessment</td>
+<td>30 minutes</td>
+<td>Incident ticket</td>
+</tr>
+<tr>
+<td>Containment</td>
+<td>Isolation, traffic blocking</td>
+<td>1-2 hours</td>
+<td>Action log</td>
+</tr>
+<tr>
+<td>Eradication</td>
+<td>Malware removal, fixing vulnerabilities</td>
+<td>4-24 hours</td>
+<td>Remediation log</td>
+</tr>
+<tr>
+<td>Recovery</td>
+<td>Service restoration, verification</td>
+<td>2-8 hours</td>
+<td>Recovery report</td>
+</tr>
+<tr>
+<td>Lessons Learned</td>
+<td>Root cause analysis, improvements</td>
+<td>7 days</td>
+<td>Post-mortem report</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li><strong>Incident Severity Levels</strong>:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Description</th>
+<th>Response Time</th>
+<th>Notification</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critical</td>
+<td>Service-wide security breach</td>
+<td>Immediate</td>
+<td>All stakeholders</td>
+<td>Data breach, system compromise</td>
+</tr>
+<tr>
+<td>High</td>
+<td>Limited security breach</td>
+<td>&lt; 1 hour</td>
+<td>Security, engineering, leadership</td>
+<td>Unauthorized access, targeted attack</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td>Security policy violation</td>
+<td>&lt; 4 hours</td>
+<td>Security, engineering</td>
+<td>Misconfiguration, policy violation</td>
+</tr>
+<tr>
+<td>Low</td>
+<td>Potential security issue</td>
+<td>&lt; 24 hours</td>
+<td>Security team</td>
+<td>Suspicious activity, minor vulnerability</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Previous</strong>: <a href="disaster-recovery.html">Disaster Recovery &amp; Backup Strategy</a> | <strong>Next</strong>: <a href="README.html">README</a></p>
+</body>
+</html>

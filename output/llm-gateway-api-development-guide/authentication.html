@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>authentication</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="authentication-authorization">Authentication &amp; Authorization</h1>
+<p>This guide explains how to authenticate with the LLM Gateway API and manage authorization for your requests.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#authentication-methods">Authentication Methods</a></li>
+<li><a href="#api-key-authentication">API Key Authentication</a></li>
+<li><a href="#bearer-token-authentication">Bearer Token Authentication</a></li>
+<li><a href="#oauth-20">OAuth 2.0</a></li>
+<li><a href="#obtaining-access-tokens">Obtaining Access Tokens</a></li>
+<li><a href="#creating-api-keys">Creating API Keys</a></li>
+<li><a href="#acquiring-oauth-tokens">Acquiring OAuth Tokens</a></li>
+<li><a href="#using-tokens-in-requests">Using Tokens in Requests</a></li>
+<li><a href="#header-based-authentication">Header-Based Authentication</a></li>
+<li><a href="#query-parameter-authentication">Query Parameter Authentication</a></li>
+<li><a href="#role-based-access-control">Role-Based Access Control</a></li>
+<li><a href="#tenant-isolation">Tenant Isolation</a></li>
+<li><a href="#security-best-practices">Security Best Practices</a></li>
+</ul>
+<h2 id="authentication-methods">Authentication Methods</h2>
+<p>The LLM Gateway API supports multiple authentication methods to provide flexibility for different integration scenarios.</p>
+<h3 id="api-key-authentication">API Key Authentication</h3>
+<p>API key authentication is the simplest method for accessing the LLM Gateway API. Each API key is associated with a specific tenant and has a set of permissions.</p>
+<h4 id="api-key-format">API Key Format</h4>
+<p>API keys are 32-character alphanumeric strings prefixed with <code>llm_</code> (e.g., <code>llm_1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p</code>).</p>
+<h4 id="using-api-keys">Using API Keys</h4>
+<p>When using API key authentication, include the key in the <code>X-API-Key</code> header:</p>
+<pre><code class="language-http">GET /llm/v1/prompt_group/list HTTP/1.1
+Host: api.aisera.com
+X-API-Key: llm_1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p
+</code></pre>
+<h3 id="bearer-token-authentication">Bearer Token Authentication</h3>
+<p>Bearer token authentication uses JWT (JSON Web Tokens) for authentication. This method is preferred for most production applications.</p>
+<h4 id="bearer-token-format">Bearer Token Format</h4>
+<p>Bearer tokens are JWTs issued by the Aisera authentication service. They contain information about the user, tenant, and permissions.</p>
+<h4 id="using-bearer-tokens">Using Bearer Tokens</h4>
+<p>Include the bearer token in the <code>Authorization</code> header with the <code>Bearer</code> prefix:</p>
+<pre><code class="language-http">GET /llm/v1/prompt_group/list HTTP/1.1
+Host: api.aisera.com
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+</code></pre>
+<h3 id="oauth-20">OAuth 2.0</h3>
+<p>For applications that need to act on behalf of users or integrate with third-party services, the LLM Gateway API supports OAuth 2.0 authentication.</p>
+<h4 id="supported-grant-types">Supported Grant Types</h4>
+<ul>
+<li>Authorization Code Grant</li>
+<li>Client Credentials Grant</li>
+<li>Refresh Token Grant</li>
+</ul>
+<h4 id="oauth-endpoints">OAuth Endpoints</h4>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>URL</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authorization</td>
+<td><code>https://auth.aisera.com/oauth/authorize</code></td>
+<td>Used for authorization code flow</td>
+</tr>
+<tr>
+<td>Token</td>
+<td><code>https://auth.aisera.com/oauth/token</code></td>
+<td>Used to obtain access tokens</td>
+</tr>
+<tr>
+<td>Revoke</td>
+<td><code>https://auth.aisera.com/oauth/revoke</code></td>
+<td>Used to revoke tokens</td>
+</tr>
+</tbody>
+</table>
+<h2 id="obtaining-access-tokens">Obtaining Access Tokens</h2>
+<h3 id="creating-api-keys">Creating API Keys</h3>
+<p>API keys can be created in the Aisera Admin Portal:</p>
+<ol>
+<li>Log in to the <a href="https://admin.aisera.com" target="_blank" rel="noopener noreferrer">Aisera Admin Portal</a></li>
+<li>Navigate to Settings &gt; API Keys</li>
+<li>Click "Create New API Key"</li>
+<li>Select the desired permissions and expiration</li>
+<li>Click "Generate Key"</li>
+<li>Copy the key immediately (it will only be shown once)</li>
+</ol>
+<h4 id="api-key-permissions">API Key Permissions</h4>
+<p>When creating an API key, you can select from the following permission sets:</p>
+<table>
+<thead>
+<tr>
+<th>Permission Set</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read Only</td>
+<td>Can only read prompts and prompt groups</td>
+</tr>
+<tr>
+<td>Execute Only</td>
+<td>Can only execute prompts</td>
+</tr>
+<tr>
+<td>Read &amp; Execute</td>
+<td>Can read and execute prompts</td>
+</tr>
+<tr>
+<td>Full Access</td>
+<td>Can create, read, update, delete, and execute prompts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="acquiring-oauth-tokens">Acquiring OAuth Tokens</h3>
+<h4 id="client-credentials-flow">Client Credentials Flow</h4>
+<p>For server-to-server authentication, use the client credentials flow:</p>
+<pre><code class="language-bash">curl -X POST https://auth.aisera.com/oauth/token \
+  -H &quot;Content-Type: application/x-www-form-urlencoded&quot; \
+  -d &quot;grant_type=client_credentials&amp;client_id=YOUR_CLIENT_ID&amp;client_secret=YOUR_CLIENT_SECRET&amp;scope=llm:read llm:execute&quot;
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;,
+  &quot;token_type&quot;: &quot;bearer&quot;,
+  &quot;expires_in&quot;: 3600,
+  &quot;scope&quot;: &quot;llm:read llm:execute&quot;
+}
+</code></pre>
+<h4 id="authorization-code-flow">Authorization Code Flow</h4>
+<p>For web applications that need to act on behalf of users:</p>
+<ol>
+<li>Redirect users to the authorization endpoint:</li>
+</ol>
+<pre><code>https://auth.aisera.com/oauth/authorize?response_type=code&amp;client_id=YOUR_CLIENT_ID&amp;redirect_uri=YOUR_REDIRECT_URI&amp;scope=llm:read llm:execute
+</code></pre>
+<ol>
+<li>After the user authorizes your application, they'll be redirected to your <code>redirect_uri</code> with an authorization code:</li>
+</ol>
+<pre><code>https://your-app.com/callback?code=AUTHORIZATION_CODE
+</code></pre>
+<ol>
+<li>Exchange the authorization code for an access token:</li>
+</ol>
+<pre><code class="language-bash">curl -X POST https://auth.aisera.com/oauth/token \
+  -H &quot;Content-Type: application/x-www-form-urlencoded&quot; \
+  -d &quot;grant_type=authorization_code&amp;code=AUTHORIZATION_CODE&amp;client_id=YOUR_CLIENT_ID&amp;client_secret=YOUR_CLIENT_SECRET&amp;redirect_uri=YOUR_REDIRECT_URI&quot;
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  &quot;access_token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...&quot;,
+  &quot;token_type&quot;: &quot;bearer&quot;,
+  &quot;expires_in&quot;: 3600,
+  &quot;refresh_token&quot;: &quot;def5020017a6748...&quot;,
+  &quot;scope&quot;: &quot;llm:read llm:execute&quot;
+}
+</code></pre>
+<h2 id="using-tokens-in-requests">Using Tokens in Requests</h2>
+<h3 id="header-based-authentication">Header-Based Authentication</h3>
+<p>The preferred method for authenticating with the LLM Gateway API is to use HTTP headers.</p>
+<h4 id="api-key-header">API Key Header</h4>
+<pre><code class="language-http">GET /llm/v1/prompt_group/list HTTP/1.1
+Host: api.aisera.com
+X-API-Key: llm_1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p
+</code></pre>
+<h4 id="bearer-token-header">Bearer Token Header</h4>
+<pre><code class="language-http">GET /llm/v1/prompt_group/list HTTP/1.1
+Host: api.aisera.com
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+</code></pre>
+<h3 id="query-parameter-authentication">Query Parameter Authentication</h3>
+<p>For situations where setting headers is difficult, you can also authenticate using query parameters. However, this method is less secure and should be avoided in production environments.</p>
+<pre><code>GET /llm/v1/prompt_group/list?api_key=llm_1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p HTTP/1.1
+Host: api.aisera.com
+</code></pre>
+<p><strong>Note</strong>: Query parameter authentication is only supported for API keys, not bearer tokens.</p>
+<h2 id="role-based-access-control">Role-Based Access Control</h2>
+<p>The LLM Gateway API uses role-based access control (RBAC) to determine what actions a user or application can perform.</p>
+<h3 id="available-roles">Available Roles</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ADMIN</td>
+<td>Full access to all API endpoints</td>
+</tr>
+<tr>
+<td>USER</td>
+<td>Can execute prompts and read/edit own prompts</td>
+</tr>
+<tr>
+<td>READONLY</td>
+<td>Can only read data, no modifications allowed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="permissions">Permissions</h3>
+<p>Each role has a set of permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>ADMIN</th>
+<th>USER</th>
+<th>READONLY</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt Management</td>
+<td>✅</td>
+<td>✅*</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Prompt Execution</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>LLM Registry Management</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Versioning</td>
+<td>✅</td>
+<td>✅*</td>
+<td>❌</td>
+</tr>
+</tbody>
+</table>
+<p>*USER role can only manage prompts they created</p>
+<h3 id="endpoint-specific-permissions">Endpoint-Specific Permissions</h3>
+<p>Different API endpoints require different permissions. These are documented in the <a href="api-reference/README.html">API Reference</a> section for each endpoint.</p>
+<h2 id="tenant-isolation">Tenant Isolation</h2>
+<p>The LLM Gateway API enforces tenant isolation to ensure that data is properly segregated between different tenants. Each request must specify the tenant ID, and authentication credentials are validated against this tenant ID to ensure proper access.</p>
+<h3 id="tenant-id-specification">Tenant ID Specification</h3>
+<p>The tenant ID can be specified in one of two ways:</p>
+<ol>
+<li>
+<p>As a query parameter:
+   <code>GET /llm/v1/prompt_group/list?tenantId=9000 HTTP/1.1</code></p>
+</li>
+<li>
+<p>In the request path (for tenant-specific endpoints):
+   <code>GET /v1/tenants/9000/llm/prompts HTTP/1.1</code></p>
+</li>
+</ol>
+<h3 id="default-tenant">Default Tenant</h3>
+<p>If no tenant ID is specified, the default tenant ID (<code>9000</code>) is used. However, it's strongly recommended to explicitly specify the tenant ID in all requests.</p>
+<h2 id="security-best-practices">Security Best Practices</h2>
+<h3 id="token-security">Token Security</h3>
+<ul>
+<li>Never store API keys or bearer tokens in client-side code</li>
+<li>Use environment variables or secure key management services to store tokens</li>
+<li>Rotate API keys regularly</li>
+<li>Use the principle of least privilege (only grant necessary permissions)</li>
+</ul>
+<h3 id="transport-security">Transport Security</h3>
+<ul>
+<li>Always use HTTPS when communicating with the LLM Gateway API</li>
+<li>Validate SSL/TLS certificates</li>
+<li>Use secure cipher suites</li>
+</ul>
+<h3 id="token-expiration-and-refresh">Token Expiration and Refresh</h3>
+<p>Bearer tokens have an expiration time (typically 1 hour). Monitor the expiration and refresh tokens as needed:</p>
+<h4 id="checking-token-expiration">Checking Token Expiration</h4>
+<p>Decode the JWT to check its expiration time:</p>
+<pre><code class="language-javascript">// JavaScript example
+function isTokenExpired(token) {
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  return payload.exp * 1000 &lt; Date.now();
+}
+</code></pre>
+<h4 id="refreshing-tokens">Refreshing Tokens</h4>
+<p>Use the refresh token to obtain a new access token:</p>
+<pre><code class="language-bash">curl -X POST https://auth.aisera.com/oauth/token \
+  -H &quot;Content-Type: application/x-www-form-urlencoded&quot; \
+  -d &quot;grant_type=refresh_token&amp;refresh_token=REFRESH_TOKEN&amp;client_id=YOUR_CLIENT_ID&amp;client_secret=YOUR_CLIENT_SECRET&quot;
+</code></pre>
+<h3 id="revoking-tokens">Revoking Tokens</h3>
+<p>If a token is compromised, revoke it immediately:</p>
+<pre><code class="language-bash">curl -X POST https://auth.aisera.com/oauth/revoke \
+  -H &quot;Content-Type: application/x-www-form-urlencoded&quot; \
+  -d &quot;token=ACCESS_TOKEN&amp;token_type_hint=access_token&amp;client_id=YOUR_CLIENT_ID&amp;client_secret=YOUR_CLIENT_SECRET&quot;
+</code></pre>
+</body>
+</html>

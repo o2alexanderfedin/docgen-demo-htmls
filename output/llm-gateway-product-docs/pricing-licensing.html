@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>pricing-licensing</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="pricing-licensing">Pricing &amp; Licensing</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#pricing-models">Pricing Models</a></li>
+<li><a href="#enterprise-licensing">Enterprise Licensing</a></li>
+<li><a href="#cost-optimization">Cost Optimization</a></li>
+<li><a href="#payment-and-billing">Payment and Billing</a></li>
+<li><a href="#procurement-process">Procurement Process</a></li>
+<li><a href="#total-cost-of-ownership">Total Cost of Ownership</a></li>
+<li><a href="#pricing-case-studies">Pricing Case Studies</a></li>
+</ul>
+<p>This document outlines the pricing models, licensing options, and cost considerations for implementing the LLM Gateway in various enterprise environments.</p>
+<h2 id="pricing-models">Pricing Models</h2>
+<p>The LLM Gateway offers flexible pricing models to accommodate different usage patterns and organizational needs:</p>
+<h3 id="consumption-based-pricing">Consumption-Based Pricing</h3>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Monthly API Calls</th>
+<th>Price per 1K Calls</th>
+<th>Included Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Starter</td>
+<td>Up to 100K</td>
+<td>$0.95</td>
+<td>Core LLM routing, basic observability</td>
+</tr>
+<tr>
+<td>Growth</td>
+<td>100K-500K</td>
+<td>$0.85</td>
+<td>+ Advanced caching, basic vector DB integration</td>
+</tr>
+<tr>
+<td>Scale</td>
+<td>500K-1M</td>
+<td>$0.75</td>
+<td>+ Advanced analytics, all vector DB integrations</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>1M+</td>
+<td>Custom</td>
+<td>All features, dedicated support</td>
+</tr>
+</tbody>
+</table>
+<p><em>Note: API calls are counted based on requests to the LLM Gateway, not downstream requests to LLM providers. LLM provider costs are separate and passed through.</em></p>
+<h3 id="subscription-based-pricing">Subscription-Based Pricing</h3>
+<table>
+<thead>
+<tr>
+<th>Plan</th>
+<th>Annual Price</th>
+<th>Monthly Price</th>
+<th>Max API Calls</th>
+<th>Features</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Basic</td>
+<td>$8,000</td>
+<td>$800</td>
+<td>1M/month</td>
+<td>Core LLM routing, basic monitoring</td>
+</tr>
+<tr>
+<td>Professional</td>
+<td>$25,000</td>
+<td>$2,500</td>
+<td>3M/month</td>
+<td>+ Advanced caching, analytics, common integrations</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>$60,000</td>
+<td>$6,000</td>
+<td>8M/month</td>
+<td>+ All integrations, premium support, SSO</td>
+</tr>
+<tr>
+<td>Custom</td>
+<td>Contact Sales</td>
+<td>Contact Sales</td>
+<td>Unlimited</td>
+<td>Custom SLAs, dedicated support, custom features</td>
+</tr>
+</tbody>
+</table>
+<p><em>All subscription plans include access to new features released during the subscription period.</em></p>
+<h3 id="hybrid-pricing-options">Hybrid Pricing Options</h3>
+<p>For organizations with variable usage patterns, we offer hybrid pricing models that combine:</p>
+<ul>
+<li>Base subscription fee for predictable workloads</li>
+<li>Reduced consumption rates for usage above subscription thresholds</li>
+<li>Reserved capacity options for predictable high-volume needs</li>
+</ul>
+<h2 id="enterprise-licensing">Enterprise Licensing</h2>
+<h3 id="license-types">License Types</h3>
+<table>
+<thead>
+<tr>
+<th>License Type</th>
+<th>Description</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Per Instance</strong></td>
+<td>Fixed price per deployment of the LLM Gateway</td>
+<td>Organizations with stable, predictable workloads</td>
+</tr>
+<tr>
+<td><strong>Per User</strong></td>
+<td>Priced based on number of authorized users</td>
+<td>Teams with variable usage across many users</td>
+</tr>
+<tr>
+<td><strong>Enterprise-Wide</strong></td>
+<td>Unlimited usage within a single organization</td>
+<td>Large enterprises with diverse use cases</td>
+</tr>
+<tr>
+<td><strong>OEM/Embedded</strong></td>
+<td>Special licensing for including in other products</td>
+<td>Software vendors embedding AI capabilities</td>
+</tr>
+</tbody>
+</table>
+<h3 id="volume-discounts">Volume Discounts</h3>
+<table>
+<thead>
+<tr>
+<th>Annual Commitment</th>
+<th>Discount</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$25,000 - $50,000</td>
+<td>5%</td>
+</tr>
+<tr>
+<td>$50,001 - $100,000</td>
+<td>10%</td>
+</tr>
+<tr>
+<td>$100,001 - $250,000</td>
+<td>15%</td>
+</tr>
+<tr>
+<td>$250,001 - $500,000</td>
+<td>20%</td>
+</tr>
+<tr>
+<td>$500,001+</td>
+<td>Custom</td>
+</tr>
+</tbody>
+</table>
+<h3 id="term-options">Term Options</h3>
+<ul>
+<li><strong>Monthly</strong>: Flexible month-to-month arrangements</li>
+<li><strong>Annual</strong>: 10% discount for annual commitment</li>
+<li><strong>Multi-Year</strong>: Up to 25% discount for 3-year commitments</li>
+</ul>
+<h2 id="cost-optimization">Cost Optimization</h2>
+<h3 id="efficiency-features">Efficiency Features</h3>
+<p>The LLM Gateway includes several features designed to optimize costs:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Description</th>
+<th>Typical Cost Savings</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Smart Caching</strong></td>
+<td>Caches common LLM responses to reduce duplicate queries</td>
+<td>15-30%</td>
+</tr>
+<tr>
+<td><strong>Model Selection</strong></td>
+<td>Automatically routes requests to most cost-effective model based on complexity</td>
+<td>20-40%</td>
+</tr>
+<tr>
+<td><strong>Query Optimization</strong></td>
+<td>Refines prompts to reduce token usage while maintaining quality</td>
+<td>10-25%</td>
+</tr>
+<tr>
+<td><strong>Token Management</strong></td>
+<td>Controls maximum tokens used per request</td>
+<td>5-15%</td>
+</tr>
+<tr>
+<td><strong>Usage Analytics</strong></td>
+<td>Provides detailed usage insights to identify optimization opportunities</td>
+<td>Varies</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cost-control-mechanisms">Cost Control Mechanisms</h3>
+<ul>
+<li><strong>Budget Alerts</strong>: Set spending thresholds with automated notifications</li>
+<li><strong>Usage Quotas</strong>: Establish hard or soft limits for departments or applications</li>
+<li><strong>Cost Allocation</strong>: Tag usage for accurate departmental billing</li>
+<li><strong>Idle Resource Management</strong>: Automatically scale down unused resources</li>
+</ul>
+<h2 id="payment-and-billing">Payment and Billing</h2>
+<h3 id="payment-methods">Payment Methods</h3>
+<ul>
+<li>Credit card (for smaller accounts)</li>
+<li>ACH/wire transfer</li>
+<li>Purchase order (for enterprise accounts)</li>
+<li>Customized payment schedules for large contracts</li>
+</ul>
+<h3 id="billing-cycles">Billing Cycles</h3>
+<ul>
+<li>Monthly invoicing with net-30 terms (standard)</li>
+<li>Quarterly or annual billing options for enterprise accounts</li>
+<li>Customized billing cycles available for large enterprises</li>
+</ul>
+<h3 id="invoice-details">Invoice Details</h3>
+<p>All invoices include:
+- Itemized usage by department/cost center (with tagging)
+- Breakdown by feature usage
+- Detailed consumption metrics
+- Credit applications and adjustments</p>
+<h2 id="procurement-process">Procurement Process</h2>
+<h3 id="enterprise-purchasing">Enterprise Purchasing</h3>
+<ol>
+<li><strong>Initial Consultation</strong>: Requirements gathering and solution design</li>
+<li><strong>Custom Quote</strong>: Tailored pricing based on expected usage patterns</li>
+<li><strong>Procurement Documentation</strong>: SOWs, MSAs, and other required documentation</li>
+<li><strong>Security &amp; Compliance Review</strong>: Supporting documentation for vendor approval</li>
+<li><strong>Contract Finalization</strong>: Terms, SLAs, and commitments</li>
+<li><strong>Implementation Planning</strong>: Deployment strategy and timeline</li>
+</ol>
+<h3 id="legal-documentation">Legal Documentation</h3>
+<ul>
+<li>Standard Master Services Agreement (MSA)</li>
+<li>Service Level Agreement (SLA) with availability commitments</li>
+<li>Data Processing Agreement (DPA) for GDPR compliance</li>
+<li>Business Associate Agreement (BAA) for healthcare applications</li>
+<li>Custom terms available for enterprise clients</li>
+</ul>
+<h2 id="total-cost-of-ownership">Total Cost of Ownership</h2>
+<p>When evaluating the total cost of ownership, consider these factors beyond direct licensing costs:</p>
+<h3 id="cost-components">Cost Components</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Description</th>
+<th>Approximate % of TCO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LLM Gateway Licensing</strong></td>
+<td>Direct costs for the platform</td>
+<td>20-30%</td>
+</tr>
+<tr>
+<td><strong>LLM Provider Costs</strong></td>
+<td>Fees from OpenAI, Anthropic, etc.</td>
+<td>40-60%</td>
+</tr>
+<tr>
+<td><strong>Infrastructure</strong></td>
+<td>Cloud or on-premises hosting costs</td>
+<td>5-15%</td>
+</tr>
+<tr>
+<td><strong>Integration</strong></td>
+<td>Initial integration and ongoing maintenance</td>
+<td>5-10%</td>
+</tr>
+<tr>
+<td><strong>Training &amp; Enablement</strong></td>
+<td>Staff training and change management</td>
+<td>3-5%</td>
+</tr>
+<tr>
+<td><strong>Internal Support</strong></td>
+<td>Staffing for administration and support</td>
+<td>5-15%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="roi-timeline">ROI Timeline</h3>
+<p>Based on customer data, typical ROI timelines:
+- <strong>Quick-win use cases</strong>: 3-6 months
+- <strong>Process automation</strong>: 6-12 months
+- <strong>Enterprise-wide transformation</strong>: 12-24 months</p>
+<h2 id="pricing-case-studies">Pricing Case Studies</h2>
+<h3 id="global-financial-services-firm">Global Financial Services Firm</h3>
+<p><strong>Challenge</strong>: Needed to implement AI capabilities across multiple business units with varying usage patterns while maintaining strict cost controls.</p>
+<p><strong>Solution</strong>:
+- Enterprise-wide license with departmental usage tracking
+- Integrated with existing SSO and security infrastructure
+- Custom SLAs for critical financial applications</p>
+<p><strong>Results</strong>:
+- 42% lower TCO compared to direct LLM API usage
+- Predictable annual costs despite usage growth
+- Detailed attribution for internal chargebacks</p>
+<blockquote>
+<p>"The enterprise licensing model gave us the flexibility to experiment with AI across multiple business units without worrying about unpredictable costs or having to manage multiple vendor relationships." - CTO, Global Financial Services Firm</p>
+</blockquote>
+<h3 id="healthcare-technology-provider">Healthcare Technology Provider</h3>
+<p><strong>Challenge</strong>: Needed to embed AI capabilities into their patient management platform while passing costs through to their customers.</p>
+<p><strong>Solution</strong>:
+- OEM license structured as percentage of processed volume
+- White-labeled integration into existing software
+- Custom compliance documentation for healthcare customers</p>
+<p><strong>Results</strong>:
+- Created new revenue stream with 68% gross margin
+- Reduced time-to-market by 9 months compared to in-house development
+- Simplified compliance process for end customers</p>
+<blockquote>
+<p>"The OEM licensing option allowed us to quickly add AI capabilities to our healthcare platform without massive upfront development costs. The consumption-based model perfectly aligns with how we bill our own customers." - VP Product, Healthcare Technology Provider</p>
+</blockquote>
+<h3 id="government-agency">Government Agency</h3>
+<p><strong>Challenge</strong>: Needed fixed, predictable costs that could be budgeted years in advance with strict data sovereignty requirements.</p>
+<p><strong>Solution</strong>:
+- Multi-year fixed price agreement
+- On-premises deployment with air-gapped implementation
+- Pre-purchased capacity with guaranteed availability</p>
+<p><strong>Results</strong>:
+- 100% predictable costs over 3-year term
+- Full compliance with government procurement requirements
+- No exposure to commercial price fluctuations</p>
+<blockquote>
+<p>"The fixed-price, multi-year agreement was essential for our budgeting process. Having guaranteed capacity without variable costs made it possible to secure budget approval for our AI initiatives." - CIO, Government Agency</p>
+</blockquote>
+<hr />
+<p><strong>Previous</strong>: <a href="integration-compatibility.html">Integration &amp; Compatibility</a> | <strong>Next</strong>: <a href="roi-analysis.html">ROI Analysis</a></p>
+</body>
+</html>

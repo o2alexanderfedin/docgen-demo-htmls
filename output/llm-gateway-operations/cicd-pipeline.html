@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>cicd-pipeline</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="cicd-pipeline">CI/CD Pipeline</h1>
+<p>This document details the Continuous Integration and Continuous Deployment (CI/CD) pipeline used for the LLM Gateway service.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#pipeline-overview">Pipeline Overview</a></li>
+<li><a href="#pipeline-stages">Pipeline Stages</a></li>
+<li><a href="#infrastructure">Infrastructure</a></li>
+<li><a href="#pipeline-triggers">Pipeline Triggers</a></li>
+<li><a href="#environments-and-promotion">Environments and Promotion</a></li>
+<li><a href="#quality-gates">Quality Gates</a></li>
+<li><a href="#rollback-process">Rollback Process</a></li>
+<li><a href="#deployment-best-practices">Deployment Best Practices</a></li>
+</ul>
+<h2 id="pipeline-overview">Pipeline Overview</h2>
+<p>The LLM Gateway uses GitHub Actions for CI/CD, enabling automated testing, building, and deployment across multiple environments. The pipeline is designed to ensure consistent, reliable, and secure deployments with appropriate approvals and quality gates.</p>
+<h3 id="high-level-pipeline-flow">High-Level Pipeline Flow</h3>
+<pre><code class="language-mermaid">flowchart TD
+    Code[Code Repository] --&gt;|Commit/PR| CI[CI Pipeline]
+    CI --&gt;|Build &amp; Test| Artifacts[Container Images &amp; Artifacts]
+    Artifacts --&gt;|Push| Registry[Container Registry]
+
+    Registry --&gt;|Deploy| Dev[Development]
+    Dev --&gt;|Promote| Staging[Staging]
+    Staging --&gt;|Promote| Production[Production]
+
+    Dev -.-&gt;|Feedback| CI
+    Staging -.-&gt;|Feedback| CI
+
+    subgraph &quot;Quality Gates&quot;
+        QG_Code[Code Quality]
+        QG_Security[Security Scans]
+        QG_Tests[Automated Tests]
+        QG_Performance[Performance Tests]
+        QG_Approval[Manual Approval]
+    end
+
+    CI --&gt; QG_Code
+    CI --&gt; QG_Security
+    CI --&gt; QG_Tests
+    Staging --&gt; QG_Performance
+    Staging --&gt; QG_Approval
+</code></pre>
+<h2 id="pipeline-stages">Pipeline Stages</h2>
+<p>The CI/CD pipeline consists of the following stages:</p>
+<h3 id="1-code-validation">1. Code Validation</h3>
+<ul>
+<li><strong>Static Code Analysis</strong>: Using SonarQube</li>
+<li><strong>Linting</strong>: Using language-specific linters</li>
+<li><strong>Style Checks</strong>: Enforcing coding standards</li>
+</ul>
+<h3 id="2-build">2. Build</h3>
+<ul>
+<li><strong>Compile code</strong>: Building application artifacts</li>
+<li><strong>Generate Documentation</strong>: Auto-generating API docs</li>
+<li><strong>Create Docker Images</strong>: Building containerized applications</li>
+</ul>
+<h3 id="3-test">3. Test</h3>
+<ul>
+<li><strong>Unit Tests</strong>: Testing individual functions and components</li>
+<li><strong>Integration Tests</strong>: Testing component interactions</li>
+<li><strong>API Tests</strong>: Testing API endpoints</li>
+<li><strong>Security Scans</strong>: Checking for vulnerabilities</li>
+</ul>
+<h3 id="4-publish">4. Publish</h3>
+<ul>
+<li><strong>Tag Images</strong>: Tagging Docker images with build metadata</li>
+<li><strong>Push to Registry</strong>: Publishing to Amazon ECR</li>
+<li><strong>Artifact Storage</strong>: Storing build artifacts in S3</li>
+</ul>
+<h3 id="5-deploy">5. Deploy</h3>
+<ul>
+<li><strong>Infrastructure Updates</strong>: Applying Terraform changes if needed</li>
+<li><strong>Kubernetes Deployments</strong>: Using Helm charts</li>
+<li><strong>Database Migrations</strong>: Applying schema changes</li>
+<li><strong>Smoke Tests</strong>: Verifying basic functionality</li>
+</ul>
+<h3 id="6-validate">6. Validate</h3>
+<ul>
+<li><strong>End-to-End Tests</strong>: Full workflow testing</li>
+<li><strong>Performance Tests</strong>: Load and performance testing</li>
+<li><strong>Security Validation</strong>: Dynamic security analysis</li>
+<li><strong>Monitoring Check</strong>: Verifying monitoring setup</li>
+</ul>
+<h2 id="detailed-pipeline-flow">Detailed Pipeline Flow</h2>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Dev as Developer
+    participant GitHub as GitHub
+    participant Actions as GitHub Actions
+    participant Registry as Container Registry
+    participant Kubernetes as Kubernetes
+    participant QA as QA Team
+
+    Dev-&gt;&gt;GitHub: Create Pull Request
+    GitHub-&gt;&gt;Actions: Trigger CI Pipeline
+
+    Actions-&gt;&gt;Actions: Checkout Code
+    Actions-&gt;&gt;Actions: Build &amp; Unit Test
+    Actions-&gt;&gt;Actions: Static Analysis
+    Actions-&gt;&gt;Actions: Security Scan
+
+    alt Tests or Scans Fail
+        Actions-&gt;&gt;GitHub: Post Failed Status
+        GitHub-&gt;&gt;Dev: Notify of Failures
+    else Tests and Scans Pass
+        Actions-&gt;&gt;GitHub: Post Success Status
+        note over GitHub: Reviews &amp; Approvals
+
+        Dev-&gt;&gt;GitHub: Merge to Main
+        GitHub-&gt;&gt;Actions: Trigger CD Pipeline
+
+        Actions-&gt;&gt;Actions: Build Production Images
+        Actions-&gt;&gt;Registry: Push Images
+
+        Actions-&gt;&gt;Kubernetes: Deploy to Development
+        note over Kubernetes: Automated Tests in Dev
+
+        alt Dev Tests Pass
+            Actions-&gt;&gt;Kubernetes: Deploy to Staging
+            note over Kubernetes: Performance Tests
+
+            QA-&gt;&gt;GitHub: Approve Production Deployment
+            GitHub-&gt;&gt;Actions: Continue Pipeline
+
+            Actions-&gt;&gt;Kubernetes: Deploy to Production
+            Actions-&gt;&gt;Kubernetes: Verify Deployment
+
+            Actions-&gt;&gt;GitHub: Complete Pipeline
+            GitHub-&gt;&gt;Dev: Notify Completion
+        else Dev Tests Fail
+            Actions-&gt;&gt;GitHub: Abort Pipeline
+            GitHub-&gt;&gt;Dev: Notify Failure
+        end
+    end
+</code></pre>
+<h2 id="infrastructure">Infrastructure</h2>
+<p>The CI/CD pipeline uses the following infrastructure components:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Tool</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source Control</td>
+<td>GitHub</td>
+<td>Code and configuration storage</td>
+</tr>
+<tr>
+<td>CI/CD Orchestration</td>
+<td>GitHub Actions</td>
+<td>Pipeline execution</td>
+</tr>
+<tr>
+<td>Artifact Repository</td>
+<td>Amazon ECR</td>
+<td>Container image storage</td>
+</tr>
+<tr>
+<td>Secret Management</td>
+<td>GitHub Secrets &amp; AWS Secrets Manager</td>
+<td>Secure credential storage</td>
+</tr>
+<tr>
+<td>Deployment Tool</td>
+<td>Helm</td>
+<td>Kubernetes application deployment</td>
+</tr>
+<tr>
+<td>Infrastructure Deployment</td>
+<td>Terraform</td>
+<td>Infrastructure provisioning</td>
+</tr>
+</tbody>
+</table>
+<h3 id="self-hosted-runners">Self-Hosted Runners</h3>
+<p>For better performance and security, the pipeline uses self-hosted GitHub Actions runners running in the same AWS account as the deployment targets:</p>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Runner Type</th>
+<th>Count</th>
+<th>Instance Type</th>
+<th>Auto-Scaling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Development</td>
+<td>EC2</td>
+<td>2</td>
+<td>c5.large</td>
+<td>Yes (1-3)</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td>EC2</td>
+<td>2</td>
+<td>c5.large</td>
+<td>Yes (1-3)</td>
+</tr>
+<tr>
+<td>Production</td>
+<td>EC2</td>
+<td>3</td>
+<td>c5.xlarge</td>
+<td>Yes (2-5)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pipeline-triggers">Pipeline Triggers</h2>
+<p>The pipeline is triggered by various events:</p>
+<table>
+<thead>
+<tr>
+<th>Trigger</th>
+<th>Pipeline</th>
+<th>Environments</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pull Request</td>
+<td>CI</td>
+<td>None</td>
+<td>Validation only, no deployment</td>
+</tr>
+<tr>
+<td>Push to Main</td>
+<td>CI/CD</td>
+<td>Development</td>
+<td>Auto-deploy to development</td>
+</tr>
+<tr>
+<td>Manual Trigger</td>
+<td>CD</td>
+<td>Staging</td>
+<td>Manual promotion to staging</td>
+</tr>
+<tr>
+<td>Release Tag</td>
+<td>CD</td>
+<td>Production</td>
+<td>Tagged releases deploy to production</td>
+</tr>
+<tr>
+<td>Schedule</td>
+<td>CI</td>
+<td>None</td>
+<td>Nightly builds and extended tests</td>
+</tr>
+</tbody>
+</table>
+<h2 id="environments-and-promotion">Environments and Promotion</h2>
+<p>The code flows through multiple environments with controlled promotions:</p>
+<h3 id="environment-definitions">Environment Definitions</h3>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Purpose</th>
+<th>Promotion Method</th>
+<th>Auto-deploy?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Development</td>
+<td>Feature testing</td>
+<td>Automatic on merge to main</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td>Pre-production validation</td>
+<td>Manual promotion</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Production</td>
+<td>Live traffic</td>
+<td>Manual promotion with approvals</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="promotion-process">Promotion Process</h3>
+<pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; Feature_Branch
+    Feature_Branch --&gt; Pull_Request: Create PR
+    Pull_Request --&gt; Main_Branch: Merge PR
+    Main_Branch --&gt; Development: Auto Deploy
+    Development --&gt; Promote_To_Staging: Manual Trigger
+    Promote_To_Staging --&gt; Staging: Deploy
+    Staging --&gt; QA_Approval: Testing
+    QA_Approval --&gt; Production_Approval: QA Approved
+    Production_Approval --&gt; Production: Deploy
+    Production --&gt; [*]
+
+    Pull_Request --&gt; Feature_Branch: Changes Requested
+    QA_Approval --&gt; Staging: Failed Testing
+</code></pre>
+<h2 id="quality-gates">Quality Gates</h2>
+<p>The pipeline includes multiple quality gates to ensure code and deployment quality:</p>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Stage</th>
+<th>Tool</th>
+<th>Threshold</th>
+<th>Action on Failure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Code Coverage</td>
+<td>CI</td>
+<td>Jest/Codecov</td>
+<td>≥80%</td>
+<td>Block PR</td>
+</tr>
+<tr>
+<td>Code Quality</td>
+<td>CI</td>
+<td>SonarQube</td>
+<td>No "Blockers" or "Critical"</td>
+<td>Block PR</td>
+</tr>
+<tr>
+<td>Security Vulnerabilities</td>
+<td>CI</td>
+<td>Snyk/Trivy</td>
+<td>No "High" or "Critical"</td>
+<td>Block PR</td>
+</tr>
+<tr>
+<td>Unit Tests</td>
+<td>CI</td>
+<td>Jest</td>
+<td>100% Pass</td>
+<td>Block PR</td>
+</tr>
+<tr>
+<td>Integration Tests</td>
+<td>CI</td>
+<td>Jest</td>
+<td>100% Pass</td>
+<td>Block PR</td>
+</tr>
+<tr>
+<td>API Tests</td>
+<td>CD (Dev)</td>
+<td>Postman/Newman</td>
+<td>100% Pass</td>
+<td>Block Promotion</td>
+</tr>
+<tr>
+<td>Performance Tests</td>
+<td>CD (Staging)</td>
+<td>k6</td>
+<td>Meets SLOs</td>
+<td>Warning</td>
+</tr>
+<tr>
+<td>Security Scan</td>
+<td>CD (Staging)</td>
+<td>OWASP ZAP</td>
+<td>No "High"</td>
+<td>Block Promotion</td>
+</tr>
+<tr>
+<td>Manual Approval</td>
+<td>CD (Prod)</td>
+<td>GitHub</td>
+<td>Required approvals</td>
+<td>Block Deployment</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rollback-process">Rollback Process</h2>
+<p>In case of deployment failures, the pipeline supports automated and manual rollbacks:</p>
+<h3 id="automated-rollback-triggers">Automated Rollback Triggers</h3>
+<ul>
+<li>Health check failures following deployment</li>
+<li>Error rate exceeding threshold (2x baseline)</li>
+<li>Latency exceeding threshold (2x baseline)</li>
+</ul>
+<h3 id="rollback-process_1">Rollback Process</h3>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Deployment as Deployment Pipeline
+    participant Monitor as Monitoring
+    participant Alert as Alerting
+    participant Kubernetes as Kubernetes
+    participant Database as Database
+    participant OnCall as On-Call Engineer
+
+    Deployment-&gt;&gt;Kubernetes: Deploy New Version
+    Deployment-&gt;&gt;Monitor: Start Enhanced Monitoring
+
+    alt Automated Detection
+        Monitor-&gt;&gt;Alert: Detect Performance Degradation
+        Alert-&gt;&gt;Deployment: Trigger Rollback
+    else Manual Detection
+        OnCall-&gt;&gt;Deployment: Manually Trigger Rollback
+    end
+
+    Deployment-&gt;&gt;Kubernetes: Rollback to Previous Deployment
+
+    alt Schema Changes
+        Deployment-&gt;&gt;Database: Execute Rollback Migration
+    end
+
+    Deployment-&gt;&gt;Monitor: Verify Recovery
+    Deployment-&gt;&gt;Alert: Send Rollback Notification
+    Deployment-&gt;&gt;OnCall: Page For Incident Response
+</code></pre>
+<h3 id="rollback-considerations">Rollback Considerations</h3>
+<ul>
+<li><strong>Stateless Components</strong>: Simple rollback via Kubernetes deployment version</li>
+<li><strong>Database Changes</strong>: Requires compatible backward migrations</li>
+<li><strong>Configuration Changes</strong>: Versioned configuration maps</li>
+<li><strong>Dependent Services</strong>: Coordinated rollback for dependent systems</li>
+</ul>
+<h2 id="deployment-best-practices">Deployment Best Practices</h2>
+<p>The following best practices are implemented in the CI/CD pipeline:</p>
+<h3 id="deployment-strategies">Deployment Strategies</h3>
+<ul>
+<li><strong>Blue/Green Deployment</strong>: For major releases</li>
+<li><strong>Canary Releases</strong>: For controlled feature rollouts (10% → 50% → 100%)</li>
+<li><strong>Progressive Delivery</strong>: Using service mesh for traffic control</li>
+</ul>
+<h3 id="deployment-windows">Deployment Windows</h3>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Standard Window</th>
+<th>Blackout Periods</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Development</td>
+<td>Anytime</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Staging</td>
+<td>Business hours</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Production</td>
+<td>Tuesdays &amp; Thursdays 10am-2pm ET</td>
+<td>End of month, holidays</td>
+</tr>
+</tbody>
+</table>
+<h3 id="release-tagging">Release Tagging</h3>
+<p>All releases follow semantic versioning:
+- Format: <code>v{MAJOR}.{MINOR}.{PATCH}</code>
+- Example: <code>v1.3.2</code></p>
+<h3 id="notifications">Notifications</h3>
+<p>The pipeline sends notifications at key points:
+- Pipeline start/complete
+- Deployment start/complete
+- Quality gate failures
+- Rollbacks
+- Production deployments</p>
+<p>Notifications are sent via:
+- Slack (#llm-gateway-deployments)
+- Email (for critical notifications)
+- PagerDuty (for failures)</p>
+<hr />
+<p><strong>Previous</strong>: <a href="infrastructure-as-code.html">Infrastructure as Code</a> | <strong>Next</strong>: <a href="configuration-secrets.html">Configuration &amp; Secrets Management</a></p>
+</body>
+</html>

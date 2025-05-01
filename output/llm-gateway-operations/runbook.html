@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>runbook</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="runbook-operations-playbook">Runbook / Operations Playbook</h1>
+<p>This runbook provides step-by-step procedures for common operational tasks and troubleshooting scenarios for the LLM Gateway service.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#common-operations">Common Operations</a></li>
+<li><a href="#deployment-operations">Deployment Operations</a></li>
+<li><a href="#scaling-operations">Scaling Operations</a></li>
+<li><a href="#maintenance-operations">Maintenance Operations</a></li>
+<li><a href="#health-checks">Health Checks</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#service-degradation">Service Degradation</a></li>
+<li><a href="#external-dependency-issues">External Dependency Issues</a></li>
+<li><a href="#infrastructure-issues">Infrastructure Issues</a></li>
+<li><a href="#common-error-scenarios">Common Error Scenarios</a></li>
+<li><a href="#llm-provider-management">LLM Provider Management</a></li>
+<li><a href="#operational-security">Operational Security</a></li>
+<li><a href="#change-management">Change Management</a></li>
+</ul>
+<h2 id="common-operations">Common Operations</h2>
+<h3 id="deployment-operations">Deployment Operations</h3>
+<h4 id="deploying-a-new-version">Deploying a New Version</h4>
+<p><strong>When to use</strong>: Scheduled release of a new LLM Gateway version</p>
+<p><strong>Prerequisites</strong>:
+- Release has been approved by Change Advisory Board
+- All tests pass in staging environment
+- Deployment window is active (Tuesday/Thursday 10am-2pm ET)</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Verify Release Readiness</strong>
+   ```bash
+   # Check if release branch is ready
+   git checkout release/v1.2.3
+   git pull</li>
+</ol>
+<p># Verify release has passed CI
+   gh run list --branch release/v1.2.3 --status success
+   ```</p>
+<ol>
+<li><strong>Create Deployment PR</strong>
+   ```bash
+   gh pr create --title "Deploy v1.2.3 to Production" --body "
+   # Deployment PR for v1.2.3</li>
+</ol>
+<p>## Changes
+   - Feature A
+   - Bugfix B
+   - Performance improvement C</p>
+<p>## Rollback Plan
+   Standard rollback procedure applies.</p>
+<p>## Testing
+   All tests pass in staging.
+   " --base main --head release/v1.2.3
+   ```</p>
+<ol>
+<li>
+<p><strong>Trigger Deployment</strong>
+   <code>bash
+   # After PR is approved and merged
+   gh workflow run deploy-production.yml --ref main</code></p>
+</li>
+<li>
+<p><strong>Monitor Deployment</strong></p>
+</li>
+<li>Watch deployment in CI/CD dashboard</li>
+<li>Monitor metrics during and after deployment</li>
+<li>
+<p>Check logs for any errors or warnings</p>
+</li>
+<li>
+<p><strong>Verify Deployment</strong>
+   ```bash
+   # Verify deployment status
+   kubectl get deployments -n llm-gateway</p>
+</li>
+</ol>
+<p># Verify service health
+   curl -X GET https://api.example.com/health/deep
+   ```</p>
+<h4 id="rolling-back-a-deployment">Rolling Back a Deployment</h4>
+<p><strong>When to use</strong>: When a deployment causes service degradation or outage</p>
+<p><strong>Prerequisites</strong>:
+- Confirmed that issues are caused by the recent deployment
+- Decision made to roll back rather than fix forward</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Initiate Rollback</strong>
+   ```bash
+   # Option 1: Via GitHub Actions
+   gh workflow run rollback-production.yml -f version=v1.2.2</li>
+</ol>
+<p># Option 2: Manual Kubernetes rollback
+   kubectl rollout undo deployment/api-service -n llm-gateway
+   kubectl rollout undo deployment/execution-service -n llm-gateway
+   kubectl rollout undo deployment/prompt-service -n llm-gateway
+   ```</p>
+<ol>
+<li><strong>Verify Database Compatibility</strong></li>
+<li>Check if DB migrations need to be reversed</li>
+<li>
+<p>If needed, execute downgrade migrations:
+   <code>bash
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=db-migration -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- ./migrate down -version=v1.2.2</code></p>
+</li>
+<li>
+<p><strong>Monitor Rollback</strong></p>
+</li>
+<li>Watch rollback process in dashboard</li>
+<li>Monitor metrics for recovery</li>
+<li>
+<p>Check logs for any errors</p>
+</li>
+<li>
+<p><strong>Communicate Status</strong></p>
+</li>
+<li>Update status page </li>
+<li>Notify stakeholders of rollback</li>
+<li>
+<p>Create incident ticket if needed</p>
+</li>
+<li>
+<p><strong>Post-Rollback Analysis</strong></p>
+</li>
+<li>Investigate what caused the issues</li>
+<li>Update deployment procedures if needed</li>
+<li>Schedule post-mortem meeting</li>
+</ol>
+<h3 id="scaling-operations">Scaling Operations</h3>
+<h4 id="scaling-services-horizontally">Scaling Services Horizontally</h4>
+<p><strong>When to use</strong>: When experiencing high load or in preparation for traffic increase</p>
+<p><strong>Prerequisites</strong>:
+- Monitoring shows increased resource utilization
+- Sufficient cluster capacity is available</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Analyze Current Utilization</strong>
+   ```bash
+   # Check current resource usage
+   kubectl top pods -n llm-gateway</li>
+</ol>
+<p># Check HPA status
+   kubectl get hpa -n llm-gateway
+   ```</p>
+<ol>
+<li><strong>Adjust Horizontal Pod Autoscaler</strong>
+   ```bash
+   # Increase minimum replicas
+   kubectl patch hpa api-service -n llm-gateway --patch '{"spec":{"minReplicas": 5}}'</li>
+</ol>
+<p># Increase maximum replicas
+   kubectl patch hpa execution-service -n llm-gateway --patch '{"spec":{"maxReplicas": 20}}'
+   ```</p>
+<ol>
+<li><strong>Verify Scaling</strong>
+   ```bash
+   # Watch pods being created
+   kubectl get pods -n llm-gateway -w</li>
+</ol>
+<p># Check distribution across nodes
+   kubectl get pods -n llm-gateway -o wide
+   ```</p>
+<ol>
+<li><strong>Monitor Performance</strong></li>
+<li>Watch latency metrics during scaling</li>
+<li>Check database connection pool utilization</li>
+<li>
+<p>Verify cache performance with new instances</p>
+</li>
+<li>
+<p><strong>Adjust Related Resources</strong></p>
+</li>
+<li>Scale related services if needed</li>
+<li>Check if database connections need to be adjusted</li>
+<li>Update cache configuration if necessary</li>
+</ol>
+<h4 id="scaling-database-resources">Scaling Database Resources</h4>
+<p><strong>When to use</strong>: When database performance is degrading under load</p>
+<p><strong>Prerequisites</strong>:
+- Monitoring shows increased database latency or resource utilization
+- Approval for potential brief connection interruption</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li>
+<p><strong>Analyze Database Metrics</strong>
+   <code>bash
+   # Check current metrics
+   aws cloudwatch get-metric-data \
+     --metric-data-queries file://db-metric-queries.json \
+     --start-time 2023-01-01T00:00:00Z \
+     --end-time 2023-01-02T00:00:00Z</code></p>
+</li>
+<li>
+<p><strong>Prepare for Scaling Operation</strong></p>
+</li>
+<li>Notify team of potential brief interruption</li>
+<li>
+<p>Ensure applications have proper retry logic</p>
+</li>
+<li>
+<p><strong>Scale Database Instance</strong>
+   <code>bash
+   # Through AWS CLI
+   aws rds modify-db-instance \
+     --db-instance-identifier llm-gateway-db \
+     --db-instance-class db.r5.2xlarge \
+     --apply-immediately</code></p>
+</li>
+<li>
+<p><strong>Monitor Scaling Operation</strong></p>
+</li>
+<li>Watch RDS events for completion</li>
+<li>Monitor application logs for connection errors</li>
+<li>
+<p>Check latency metrics as scaling completes</p>
+</li>
+<li>
+<p><strong>Verify Successful Scaling</strong>
+   <code>bash
+   # Check instance status
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db \
+     --query 'DBInstances[0].DBInstanceStatus'</code></p>
+</li>
+</ol>
+<h3 id="maintenance-operations">Maintenance Operations</h3>
+<h4 id="database-maintenance">Database Maintenance</h4>
+<p><strong>When to use</strong>: Regular database maintenance or applying patches</p>
+<p><strong>Prerequisites</strong>:
+- Maintenance window approved
+- Read replicas are up-to-date
+- Backups are current</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Prepare for Maintenance</strong>
+   ```bash
+   # Check replica lag
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db-replica \
+     --query 'DBInstances[0].ReplicaLag'</li>
+</ol>
+<p># Take final snapshot before maintenance
+   aws rds create-db-snapshot \
+     --db-snapshot-identifier llm-gateway-pre-maintenance-$(date +%Y%m%d) \
+     --db-instance-identifier llm-gateway-db
+   ```</p>
+<ol>
+<li><strong>Notify Team and Set Expectations</strong></li>
+<li>Send maintenance notification</li>
+<li>
+<p>Set read-only mode if necessary:
+   <code>bash
+   kubectl apply -f maintenance/read-only-mode.yaml</code></p>
+</li>
+<li>
+<p><strong>Perform Maintenance</strong>
+   <code>bash
+   # Apply pending updates
+   aws rds apply-pending-maintenance-action \
+     --resource-identifier arn:aws:rds:us-east-1:123456789012:db:llm-gateway-db \
+     --apply-action system-update \
+     --opt-in-type immediate</code></p>
+</li>
+<li>
+<p><strong>Monitor Maintenance</strong></p>
+</li>
+<li>Watch RDS events</li>
+<li>Check application logs for errors</li>
+<li>
+<p>Monitor metrics for abnormalities</p>
+</li>
+<li>
+<p><strong>Verify and Restore Full Service</strong>
+   ```bash
+   # Verify database is available
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db \
+     --query 'DBInstances[0].DBInstanceStatus'</p>
+</li>
+</ol>
+<p># Remove read-only mode if applied
+   kubectl delete -f maintenance/read-only-mode.yaml
+   ```</p>
+<h2 id="health-checks">Health Checks</h2>
+<h3 id="system-health-verification">System Health Verification</h3>
+<p><strong>When to use</strong>: As part of regular health checks or when investigating issues</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Check Service Health</strong>
+   ```bash
+   # Get overall service health
+   curl -X GET https://api.example.com/health/deep</li>
+</ol>
+<p># Check individual components
+   for component in api-service execution-service prompt-service cache-service; do
+     echo "Checking $component..."
+     kubectl exec -it $(kubectl get pods -n llm-gateway -l app=$component -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/health
+   done
+   ```</p>
+<ol>
+<li><strong>Verify Infrastructure Health</strong>
+   ```bash
+   # Check node status
+   kubectl get nodes</li>
+</ol>
+<p># Check pod status
+   kubectl get pods -n llm-gateway</p>
+<p># Check persistent volumes
+   kubectl get pv,pvc -n llm-gateway
+   ```</p>
+<ol>
+<li><strong>Verify External Dependencies</strong>
+   ```bash
+   # Check database connectivity
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=api-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/health/dependencies?component=database</li>
+</ol>
+<p># Check LLM provider connectivity
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=execution-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/health/dependencies?component=llm-providers
+   ```</p>
+<ol>
+<li>
+<p><strong>Run Synthetic Tests</strong>
+   <code>bash
+   # Execute basic prompt test
+   curl -X POST https://api.example.com/v1/tenants/test/llm/execute \
+     -H "Authorization: Bearer $TEST_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "This is a test", "model": "gpt-3.5-turbo"}'</code></p>
+</li>
+<li>
+<p><strong>Check Metrics and Logs</strong></p>
+</li>
+<li>Review current metrics in monitoring dashboard</li>
+<li>Check recent logs for errors or warnings</li>
+<li>Verify alerting system is functioning</li>
+</ol>
+<h3 id="database-health-check">Database Health Check</h3>
+<p><strong>When to use</strong>: When monitoring indicates potential database issues</p>
+<p><strong>Procedure</strong>:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Start([Start DB Health Check]) --&gt; Connection[Check Connection Pool]
+    Connection --&gt; Replication[Check Replication Status]
+    Replication --&gt; Performance[Check Query Performance]
+    Performance --&gt; Logs[Check DB Logs]
+    Logs --&gt; Backup[Verify Recent Backup]
+
+    Connection -- Issues --&gt; ConnFix[Reset Connection Pool]
+    Replication -- Issues --&gt; ReplFix[Fix Replication]
+    Performance -- Issues --&gt; PerfFix[Identify Slow Queries]
+    Logs -- Issues --&gt; LogFix[Address Log Issues]
+    Backup -- Issues --&gt; BackFix[Trigger Manual Backup]
+
+    ConnFix &amp; ReplFix &amp; PerfFix &amp; LogFix &amp; BackFix --&gt; Report([Report Findings])
+    Backup --&gt; Report
+</code></pre>
+<ol>
+<li><strong>Check Database Connectivity</strong>
+   ```bash
+   # Check connection pool status
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=api-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/actuator/metrics/hikaricp.connections</li>
+</ol>
+<p># Test direct connection
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT 1"
+   ```</p>
+<ol>
+<li>
+<p><strong>Check Replication Status (if applicable)</strong>
+   <code>bash
+   # For PostgreSQL
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT * FROM pg_stat_replication"</code></p>
+</li>
+<li>
+<p><strong>Check Query Performance</strong>
+   <code>bash
+   # Check for slow queries
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT query, calls, total_time, mean_time FROM pg_stat_statements ORDER BY mean_time DESC LIMIT 10"</code></p>
+</li>
+<li>
+<p><strong>Check Database Logs</strong>
+   <code>bash
+   # Get recent database logs
+   aws rds download-db-log-file-portion \
+     --db-instance-identifier llm-gateway-db \
+     --log-file-name postgresql.log \
+     --output text</code></p>
+</li>
+<li>
+<p><strong>Verify Recent Backup</strong>
+   <code>bash
+   # Check recent automated backups
+   aws rds describe-db-snapshots \
+     --db-instance-identifier llm-gateway-db \
+     --query 'sort_by(DBSnapshots, &amp;SnapshotCreateTime)[-5:]'</code></p>
+</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="service-degradation">Service Degradation</h3>
+<h4 id="high-latency-investigation">High Latency Investigation</h4>
+<p><strong>When to use</strong>: When monitoring shows increased API response times</p>
+<p><strong>Procedure</strong>:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Start([Detect High Latency]) --&gt; Traffic[Check Traffic Levels]
+    Traffic --&gt; Resources[Check Resource Utilization]
+    Resources --&gt; Database[Check Database Performance]
+    Database --&gt; Providers[Check LLM Provider Latency]
+    Providers --&gt; Dependencies[Check Other Dependencies]
+    Dependencies --&gt; Traces[Analyze Trace Samples]
+
+    Traffic -- High --&gt; ScaleOut[Scale Out Services]
+    Resources -- High --&gt; Optimize[Optimize or Scale]
+    Database -- Slow --&gt; DBFix[Optimize Queries/Scale DB]
+    Providers -- Slow --&gt; ProviderAction[Switch Providers or Notify]
+    Dependencies -- Issues --&gt; DepFix[Fix Dependency Issues]
+    Traces --&gt; RootCause[Identify Root Cause]
+
+    RootCause --&gt; Resolution([Implement Resolution])
+</code></pre>
+<ol>
+<li>
+<p><strong>Check Traffic and Load</strong>
+   <code>bash
+   # Check current traffic levels
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway"}[5m]))%20by%20(service)'</code></p>
+</li>
+<li>
+<p><strong>Check Resource Utilization</strong>
+   ```bash
+   # Check pod resource usage
+   kubectl top pods -n llm-gateway</p>
+</li>
+</ol>
+<p># Check node resource usage
+   kubectl top nodes
+   ```</p>
+<ol>
+<li>
+<p><strong>Analyze Latency Breakdown</strong>
+   <code>bash
+   # Get latency percentiles
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(http_request_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(service,%20le))'</code></p>
+</li>
+<li>
+<p><strong>Check Database Performance</strong>
+   <code>bash
+   # Get database latency metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(db_query_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(query_type,%20le))'</code></p>
+</li>
+<li>
+<p><strong>Check LLM Provider Performance</strong>
+   <code>bash
+   # Get LLM provider latency
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=histogram_quantile(0.95,sum(rate(llm_request_duration_seconds_bucket{namespace="llm-gateway"}[5m]))%20by%20(provider,%20le))'</code></p>
+</li>
+<li>
+<p><strong>Analyze Distributed Traces</strong></p>
+</li>
+<li>Access Jaeger UI to view trace samples</li>
+<li>Identify slow spans in the request flow</li>
+<li>
+<p>Look for patterns in slow requests</p>
+</li>
+<li>
+<p><strong>Implement Resolution</strong></p>
+</li>
+<li>Scale out services if under load</li>
+<li>Optimize slow code paths</li>
+<li>Address database issues</li>
+<li>Consider switching LLM providers if needed</li>
+<li>Adjust caching strategies</li>
+</ol>
+<h4 id="high-error-rate-troubleshooting">High Error Rate Troubleshooting</h4>
+<p><strong>When to use</strong>: When monitoring shows increased error rates</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li>
+<p><strong>Identify Error Types and Sources</strong>
+   <code>bash
+   # Get error rate by endpoint and status code
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway",status_code=~"5.."}[5m]))%20by%20(service,%20endpoint,%20status_code)'</code></p>
+</li>
+<li>
+<p><strong>Check Recent Deployments or Changes</strong>
+   ```bash
+   # Get recent deployments
+   kubectl rollout history deployment -n llm-gateway</p>
+</li>
+</ol>
+<p># Get recent configuration changes
+   kubectl get configmaps -n llm-gateway -o yaml &gt; current-configmaps.yaml
+   diff saved-configmaps.yaml current-configmaps.yaml
+   ```</p>
+<ol>
+<li><strong>Examine Application Logs</strong>
+   ```bash
+   # Get logs from affected services
+   kubectl logs -n llm-gateway -l app=api-service --tail=100</li>
+</ol>
+<p># Search for specific error patterns
+   kubectl logs -n llm-gateway -l app=execution-service | grep -i error
+   ```</p>
+<ol>
+<li><strong>Check External Dependencies</strong>
+   ```bash
+   # Check LLM provider status
+   curl -X GET https://api.example.com/health/dependencies?component=llm-providers</li>
+</ol>
+<p># Check database status
+   curl -X GET https://api.example.com/health/dependencies?component=database
+   ```</p>
+<ol>
+<li><strong>Take Mitigation Actions</strong></li>
+<li>Rollback recent changes if needed</li>
+<li>Scale resources if under pressure</li>
+<li>Implement circuit breakers for failing dependencies</li>
+<li>Switch to backup providers if primary is failing</li>
+</ol>
+<h3 id="external-dependency-issues">External Dependency Issues</h3>
+<h4 id="llm-provider-outage">LLM Provider Outage</h4>
+<p><strong>When to use</strong>: When a specific LLM provider is experiencing issues</p>
+<p><strong>Procedure</strong>:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Start([Detect Provider Issues]) --&gt; Confirm[Confirm Provider Status]
+    Confirm --&gt; Analyze[Analyze Error Patterns]
+    Analyze --&gt; Decision{Major Outage?}
+
+    Decision -- Yes --&gt; Failover[Failover to Backup Provider]
+    Decision -- No --&gt; CircuitBreaker[Implement Circuit Breaker]
+
+    Failover --&gt; RouteConfig[Update Routing Config]
+    CircuitBreaker --&gt; RateLimit[Apply Rate Limiting]
+
+    RouteConfig &amp; RateLimit --&gt; Monitor[Monitor Recovery]
+    Monitor --&gt; Decision2{Resolved?}
+
+    Decision2 -- Yes --&gt; Restore[Restore Normal Operations]
+    Decision2 -- No --&gt; Escalate[Escalate to Provider]
+</code></pre>
+<ol>
+<li><strong>Confirm Provider Status</strong>
+   ```bash
+   # Check provider error rates
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(llm_request_errors_total{namespace="llm-gateway"}[5m]))%20by%20(provider)'</li>
+</ol>
+<p># Check provider status page (if available)
+   curl -s https://status.openai.com/api/v2/status.json
+   ```</p>
+<ol>
+<li>
+<p><strong>Analyze Error Patterns</strong>
+   <code>bash
+   # Get error details from logs
+   kubectl logs -n llm-gateway -l app=execution-service | grep -i "provider=openai.*error"</code></p>
+</li>
+<li>
+<p><strong>Implement Circuit Breaker</strong>
+   <code>bash
+   # Apply circuit breaker configuration
+   kubectl apply -f operations/circuit-breaker-openai.yaml</code></p>
+</li>
+<li>
+<p><strong>Failover to Backup Provider</strong>
+   <code>bash
+   # Update routing configuration
+   kubectl apply -f operations/provider-failover.yaml</code></p>
+</li>
+<li>
+<p><strong>Adjust Rate Limiting</strong>
+   <code>bash
+   # Reduce traffic to affected provider
+   kubectl apply -f operations/provider-rate-limit.yaml</code></p>
+</li>
+<li>
+<p><strong>Monitor Recovery</strong></p>
+</li>
+<li>Watch error rates and latency</li>
+<li>Monitor backup provider performance</li>
+<li>
+<p>Track provider status announcements</p>
+</li>
+<li>
+<p><strong>Restore Normal Operations</strong>
+   <code>bash
+   # When provider recovers, remove temporary configurations
+   kubectl delete -f operations/provider-failover.yaml
+   kubectl delete -f operations/circuit-breaker-openai.yaml
+   kubectl delete -f operations/provider-rate-limit.yaml</code></p>
+</li>
+</ol>
+<h4 id="database-connectivity-issues">Database Connectivity Issues</h4>
+<p><strong>When to use</strong>: When experiencing database connection problems</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Verify Database Status</strong>
+   ```bash
+   # Check RDS status
+   aws rds describe-db-instances \
+     --db-instance-identifier llm-gateway-db \
+     --query 'DBInstances[0].DBInstanceStatus'</li>
+</ol>
+<p># Check connection from utility pod
+   kubectl exec -it db-util -n llm-gateway -- psql -h $DB_HOST -U $DB_USER -c "SELECT 1"
+   ```</p>
+<ol>
+<li>
+<p><strong>Check Connection Pooling</strong>
+   <code>bash
+   # Check connection pool metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=api-service -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- curl localhost:8080/actuator/metrics/hikaricp.connections</code></p>
+</li>
+<li>
+<p><strong>Verify Network Connectivity</strong>
+   ```bash
+   # Check network policies
+   kubectl get networkpolicies -n llm-gateway</p>
+</li>
+</ol>
+<p># Check security groups
+   aws ec2 describe-security-groups \
+     --group-ids $DB_SECURITY_GROUP \
+     --query 'SecurityGroups[0].IpPermissions'
+   ```</p>
+<ol>
+<li>
+<p><strong>Reset Connection Pools if Needed</strong>
+   <code>bash
+   # Apply connection pool reset
+   kubectl apply -f operations/reset-db-connections.yaml</code></p>
+</li>
+<li>
+<p><strong>Check for Database Resource Constraints</strong>
+   <code>bash
+   # Check CPU and memory metrics
+   aws cloudwatch get-metric-data \
+     --metric-data-queries file://db-resource-metrics.json \
+     --start-time 2023-01-01T00:00:00Z \
+     --end-time 2023-01-02T00:00:00Z</code></p>
+</li>
+<li>
+<p><strong>Implement Remediation</strong></p>
+</li>
+<li>Restart services with connection issues</li>
+<li>Scale database if resource-constrained</li>
+<li>Adjust connection pool settings</li>
+<li>Implement circuit breaker for persistent issues</li>
+</ol>
+<h3 id="infrastructure-issues">Infrastructure Issues</h3>
+<h4 id="kubernetes-node-failures">Kubernetes Node Failures</h4>
+<p><strong>When to use</strong>: When Kubernetes nodes are experiencing issues</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Identify Problem Nodes</strong>
+   ```bash
+   # Check node status
+   kubectl get nodes</li>
+</ol>
+<p># Get node conditions
+   kubectl describe nodes | grep -A5 Conditions</p>
+<p># Check node events
+   kubectl get events --field-selector involvedObject.kind=Node
+   ```</p>
+<ol>
+<li>
+<p><strong>Check Pods on Affected Nodes</strong>
+   <code>bash
+   # List pods on specific node
+   kubectl get pods -A -o wide --field-selector spec.nodeName=node-name</code></p>
+</li>
+<li>
+<p><strong>Cordon Problematic Nodes</strong>
+   <code>bash
+   # Prevent new pods from being scheduled
+   kubectl cordon node-name</code></p>
+</li>
+<li>
+<p><strong>Drain Pods if Necessary</strong>
+   <code>bash
+   # Safely evict pods
+   kubectl drain node-name --ignore-daemonsets --delete-local-data</code></p>
+</li>
+<li>
+<p><strong>Investigate Node Issues</strong>
+   ```bash
+   # Check node logs
+   aws ec2 get-console-output --instance-id i-1234567890abcdef0</p>
+</li>
+</ol>
+<p># Check CloudWatch metrics
+   aws cloudwatch get-metric-data \
+     --metric-data-queries file://node-metrics.json \
+     --start-time 2023-01-01T00:00:00Z \
+     --end-time 2023-01-02T00:00:00Z
+   ```</p>
+<ol>
+<li><strong>Replace or Repair Node</strong>
+   ```bash
+   # For managed node groups
+   aws eks update-nodegroup-version \
+     --cluster-name llm-gateway-cluster \
+     --nodegroup-name workers</li>
+</ol>
+<p># For self-managed nodes
+   aws ec2 terminate-instances --instance-ids i-1234567890abcdef0
+   ```</p>
+<ol>
+<li><strong>Verify Recovery</strong>
+   ```bash
+   # Check new node joins the cluster
+   kubectl get nodes -w</li>
+</ol>
+<p># Check pod distribution
+   kubectl get pods -n llm-gateway -o wide
+   ```</p>
+<h4 id="network-connectivity-issues">Network Connectivity Issues</h4>
+<p><strong>When to use</strong>: When experiencing network communication problems</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Verify Service Connectivity</strong>
+   ```bash
+   # Check service endpoints
+   kubectl get endpoints -n llm-gateway</li>
+</ol>
+<p># Test service DNS resolution
+   kubectl exec -it network-util -n llm-gateway -- nslookup api-service.llm-gateway.svc.cluster.local
+   ```</p>
+<ol>
+<li><strong>Check Network Policies</strong>
+   ```bash
+   # List network policies
+   kubectl get networkpolicies -n llm-gateway -o yaml</li>
+</ol>
+<p># Temporarily disable restrictive policies for testing
+   kubectl annotate networkpolicy restrictive-policy -n llm-gateway network.kubernetes.io/policy-disabled=true
+   ```</p>
+<ol>
+<li>
+<p><strong>Test Pod-to-Pod Communication</strong>
+   <code>bash
+   # Run connectivity test
+   kubectl exec -it network-util -n llm-gateway -- curl api-service.llm-gateway.svc.cluster.local:8080/health</code></p>
+</li>
+<li>
+<p><strong>Check AWS Network Components</strong>
+   <code>bash
+   # Verify VPC components
+   aws ec2 describe-nat-gateways --filter Name=vpc-id,Values=$VPC_ID
+   aws ec2 describe-route-tables --filter Name=vpc-id,Values=$VPC_ID</code></p>
+</li>
+<li>
+<p><strong>Implement Resolution</strong></p>
+</li>
+<li>Update network policies if too restrictive</li>
+<li>Fix DNS configuration issues</li>
+<li>Repair AWS networking components</li>
+<li>Update service definitions if needed</li>
+</ol>
+<h3 id="common-error-scenarios">Common Error Scenarios</h3>
+<h4 id="high-token-usage-costs">High Token Usage Costs</h4>
+<p><strong>When to use</strong>: When monitoring shows unexpected token usage increases</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Analyze Token Usage Patterns</strong>
+   ```bash
+   # Get token usage by tenant and endpoint
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(llm_token_usage_total{namespace="llm-gateway"}[24h]))%20by%20(tenant_id,%20endpoint)'</li>
+</ol>
+<p># Check changes over time
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query_range?query=sum(rate(llm_token_usage_total{namespace="llm-gateway"}[1h]))&amp;start=2023-01-01T00:00:00Z&amp;end=2023-01-02T00:00:00Z&amp;step=1h'
+   ```</p>
+<ol>
+<li>
+<p><strong>Identify High-Usage Tenants or Services</strong>
+   <code>bash
+   # Find top consumers
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=topk(5,sum(llm_token_usage_total{namespace="llm-gateway"})%20by%20(tenant_id))'</code></p>
+</li>
+<li>
+<p><strong>Check for Token Usage Anomalies</strong>
+   <code>bash
+   # Look for unusual patterns
+   kubectl logs -n llm-gateway -l app=analytics-service | grep "token_usage_anomaly"</code></p>
+</li>
+<li>
+<p><strong>Implement Mitigation</strong>
+   ```bash
+   # Apply or update tenant quotas
+   kubectl apply -f operations/update-tenant-quotas.yaml</p>
+</li>
+</ol>
+<p># Enable more aggressive caching
+   kubectl apply -f operations/enhance-caching.yaml
+   ```</p>
+<ol>
+<li><strong>Optimize Prompt Templates</strong></li>
+<li>Review and optimize verbose prompts</li>
+<li>Implement prompt compression techniques</li>
+<li>Use more efficient parameters</li>
+</ol>
+<h4 id="cache-performance-issues">Cache Performance Issues</h4>
+<p><strong>When to use</strong>: When cache hit rate drops significantly</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Analyze Cache Metrics</strong>
+   ```bash
+   # Get cache hit rate
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(cache_hits_total{namespace="llm-gateway"}[5m]))%20/%20sum(rate(cache_requests_total{namespace="llm-gateway"}[5m]))'</li>
+</ol>
+<p># Check cache memory usage
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(redis_memory_used_bytes{namespace="llm-gateway"})%20/%20sum(redis_memory_max_bytes{namespace="llm-gateway"})'
+   ```</p>
+<ol>
+<li>
+<p><strong>Check for Cache Evictions</strong>
+   <code>bash
+   # Get eviction metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=rate(redis_evicted_keys_total{namespace="llm-gateway"}[5m])'</code></p>
+</li>
+<li>
+<p><strong>Inspect Cache Configuration</strong>
+   <code>bash
+   # Get current config
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=redis -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- redis-cli CONFIG GET maxmemory-policy</code></p>
+</li>
+<li>
+<p><strong>Implement Improvements</strong>
+   ```bash
+   # Update cache configuration
+   kubectl apply -f operations/update-cache-config.yaml</p>
+</li>
+</ol>
+<p># Scale cache resources
+   kubectl apply -f operations/scale-cache.yaml
+   ```</p>
+<ol>
+<li><strong>Monitor Recovery</strong></li>
+<li>Watch hit rate trends</li>
+<li>Check cache latency</li>
+<li>Monitor memory usage</li>
+</ol>
+<h2 id="llm-provider-management">LLM Provider Management</h2>
+<h3 id="adding-a-new-llm-provider">Adding a New LLM Provider</h3>
+<p><strong>When to use</strong>: When integrating a new LLM service provider</p>
+<p><strong>Procedure</strong>:</p>
+<pre><code class="language-mermaid">flowchart LR
+    Start([Start]) --&gt; SecretSetup[Setup API Credentials]
+    SecretSetup --&gt; Config[Create Provider Configuration]
+    Config --&gt; Integration[Deploy Provider Integration]
+    Integration --&gt; Testing[Conduct Integration Testing]
+    Testing --&gt; Validation[Validate Performance &amp; Quality]
+    Validation --&gt; Production[Promote to Production]
+</code></pre>
+<ol>
+<li>
+<p><strong>Store Provider Credentials</strong>
+   <code>bash
+   # Create secret in Secrets Manager
+   aws secretsmanager create-secret \
+     --name llm-gateway/providers/new-provider-api-key \
+     --secret-string '{"api_key":"sk-...","organization_id":"org-..."}'</code></p>
+</li>
+<li>
+<p><strong>Create Provider Configuration</strong>
+   <code>bash
+   # Apply configuration
+   kubectl apply -f providers/new-provider-config.yaml</code></p>
+</li>
+<li>
+<p><strong>Deploy Provider Integration</strong>
+   <code>bash
+   # Apply updated service configuration
+   kubectl apply -f providers/deploy-provider-integration.yaml</code></p>
+</li>
+<li>
+<p><strong>Test Provider Integration</strong>
+   <code>bash
+   # Run integration tests
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=test-runner -o jsonpath='{.items[0].metadata.name}') -n llm-gateway -- pytest tests/providers/test_new_provider.py</code></p>
+</li>
+<li>
+<p><strong>Validate Performance</strong></p>
+</li>
+<li>Run benchmark tests</li>
+<li>Compare latency and token efficiency</li>
+<li>
+<p>Evaluate response quality</p>
+</li>
+<li>
+<p><strong>Enable in Production</strong>
+   <code>bash
+   # Update routing configuration to include new provider
+   kubectl apply -f providers/update-routing-config.yaml</code></p>
+</li>
+</ol>
+<h3 id="managing-provider-quotas-and-rate-limits">Managing Provider Quotas and Rate Limits</h3>
+<p><strong>When to use</strong>: When configuring or adjusting provider usage limits</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li>
+<p><strong>Review Current Usage and Limits</strong>
+   <code>bash
+   # Get current usage metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(llm_request_total{namespace="llm-gateway"}[24h]))%20by%20(provider)'</code></p>
+</li>
+<li>
+<p><strong>Configure Provider Rate Limits</strong>
+   <code>bash
+   # Apply or update rate limits
+   kubectl apply -f providers/update-provider-rate-limits.yaml</code></p>
+</li>
+<li>
+<p><strong>Set Up Usage Alerts</strong>
+   <code>bash
+   # Configure alerts for approaching limits
+   kubectl apply -f providers/quota-alerts.yaml</code></p>
+</li>
+<li>
+<p><strong>Implement Token Budgeting</strong>
+   <code>bash
+   # Apply token budget configurations
+   kubectl apply -f providers/token-budgets.yaml</code></p>
+</li>
+<li>
+<p><strong>Monitor Usage</strong></p>
+</li>
+<li>Track usage against quota</li>
+<li>Watch for throttling events</li>
+<li>Monitor cost metrics</li>
+</ol>
+<h2 id="operational-security">Operational Security</h2>
+<h3 id="security-incident-response">Security Incident Response</h3>
+<p><strong>When to use</strong>: When responding to potential security incidents</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Initial Assessment</strong>
+   ```bash
+   # Check for unauthorized access attempts
+   kubectl logs -n llm-gateway -l app=api-gateway | grep -i "unauthorized"</li>
+</ol>
+<p># Check for unusual API usage patterns
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query?query=sum(rate(http_requests_total{namespace="llm-gateway",status_code="401"}[1h]))%20by%20(client_ip)'
+   ```</p>
+<ol>
+<li><strong>Contain the Incident</strong>
+   ```bash
+   # Block suspicious IPs if necessary
+   kubectl apply -f security/block-suspicious-ips.yaml</li>
+</ol>
+<p># Revoke compromised credentials
+   aws secretsmanager update-secret-version-stage \
+     --secret-id llm-gateway/auth/service-credentials \
+     --version-stage AWSCURRENT \
+     --move-to-version-id previous-version-id
+   ```</p>
+<ol>
+<li>
+<p><strong>Investigate the Scope</strong>
+   <code>bash
+   # Review audit logs
+   aws cloudwatch filter-log-events \
+     --log-group-name /aws/eks/llm-gateway/auth-logs \
+     --filter-pattern '{ $.level = "ERROR" || $.level = "WARN" }'</code></p>
+</li>
+<li>
+<p><strong>Document and Report</strong></p>
+</li>
+<li>Create incident ticket</li>
+<li>Document timeline and actions taken</li>
+<li>
+<p>Notify security team</p>
+</li>
+<li>
+<p><strong>Remediate and Recover</strong>
+   ```bash
+   # Apply security patches if needed
+   kubectl apply -f security/patches/</p>
+</li>
+</ol>
+<p># Rotate affected credentials
+   ./scripts/rotate-credentials.sh
+   ```</p>
+<h2 id="change-management">Change Management</h2>
+<h3 id="configuration-changes">Configuration Changes</h3>
+<p><strong>When to use</strong>: When making configuration changes to production environment</p>
+<p><strong>Procedure</strong>:</p>
+<ol>
+<li><strong>Create Configuration Change Plan</strong></li>
+<li>Document current and proposed configuration</li>
+<li>Assess impact and risk</li>
+<li>
+<p>Create rollback plan</p>
+</li>
+<li>
+<p><strong>Test in Lower Environment</strong>
+   ```bash
+   # Apply change to staging
+   kubectl apply -f config/new-cache-config.yaml -n llm-gateway-staging</p>
+</li>
+</ol>
+<p># Verify functionality
+   ./scripts/test-configuration.sh -e staging
+   ```</p>
+<ol>
+<li><strong>Get Approval</strong></li>
+<li>Submit change request</li>
+<li>Get approval from Change Advisory Board</li>
+<li>
+<p>Schedule change window</p>
+</li>
+<li>
+<p><strong>Apply Change</strong>
+   <code>bash
+   # Apply to production
+   kubectl apply -f config/new-cache-config.yaml -n llm-gateway</code></p>
+</li>
+<li>
+<p><strong>Monitor Impact</strong>
+   <code>bash
+   # Watch related metrics
+   kubectl exec -it $(kubectl get pods -n llm-gateway -l app=prometheus -o jsonpath='{.items[0].metadata.name}') -n monitoring -- curl -s 'localhost:9090/api/v1/query_range?query=cache_hit_ratio&amp;start=2023-01-01T00:00:00Z&amp;end=2023-01-02T00:00:00Z&amp;step=5m'</code></p>
+</li>
+<li>
+<p><strong>Document Results</strong></p>
+</li>
+<li>Update configuration documentation</li>
+<li>Update runbook if procedures changed</li>
+<li>Close change request with results</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="monitoring-alerting.html">Monitoring &amp; Alerting</a> | <strong>Next</strong>: <a href="disaster-recovery.html">Disaster Recovery &amp; Backup Strategy</a></p>
+</body>
+</html>

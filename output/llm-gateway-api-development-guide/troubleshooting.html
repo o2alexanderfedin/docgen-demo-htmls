@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>troubleshooting</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="troubleshooting-faqs">Troubleshooting &amp; FAQs</h1>
+<p>This guide provides solutions to common issues you might encounter when using the LLM Gateway API, along with frequently asked questions.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#common-issues">Common Issues</a></li>
+<li><a href="#authentication-problems">Authentication Problems</a></li>
+<li><a href="#rate-limiting">Rate Limiting</a></li>
+<li><a href="#prompt-execution-failures">Prompt Execution Failures</a></li>
+<li><a href="#request-validation-errors">Request Validation Errors</a></li>
+<li><a href="#token-limits">Token Limits</a></li>
+<li><a href="#timeout-errors">Timeout Errors</a></li>
+<li><a href="#debugging-techniques">Debugging Techniques</a></li>
+<li><a href="#request-inspection">Request Inspection</a></li>
+<li><a href="#response-analysis">Response Analysis</a></li>
+<li><a href="#logging-best-practices">Logging Best Practices</a></li>
+<li><a href="#performance-optimization">Performance Optimization</a></li>
+<li><a href="#frequently-asked-questions">Frequently Asked Questions</a></li>
+<li><a href="#support-resources">Support Resources</a></li>
+</ul>
+<h2 id="common-issues">Common Issues</h2>
+<h3 id="authentication-problems">Authentication Problems</h3>
+<h4 id="issue-401-unauthorized-error">Issue: 401 Unauthorized Error</h4>
+<p><strong>Possible Causes:</strong>
+- Invalid API key
+- Expired API key
+- Incorrect authorization header format</p>
+<p><strong>Solutions:</strong>
+1. Verify your API key is correct and hasn't expired
+2. Ensure the Authorization header is formatted correctly: <code>Authorization: Bearer YOUR_API_KEY</code>
+3. Check if your API key has the necessary permissions for the requested operation</p>
+<h4 id="issue-403-forbidden-error">Issue: 403 Forbidden Error</h4>
+<p><strong>Possible Causes:</strong>
+- Insufficient permissions for the requested operation
+- API key restricted to specific IP addresses
+- Tenant ID mismatch</p>
+<p><strong>Solutions:</strong>
+1. Verify that your API key has the required permissions (e.g., <code>llm:read</code>, <code>llm:write</code>, <code>llm:admin</code>)
+2. Check if your API key has IP restrictions and ensure your requests come from allowed IPs
+3. Verify you're using the correct tenant ID for your organization</p>
+<h3 id="rate-limiting">Rate Limiting</h3>
+<h4 id="issue-429-too-many-requests-error">Issue: 429 Too Many Requests Error</h4>
+<p><strong>Possible Causes:</strong>
+- Exceeded rate limits for your plan
+- Too many concurrent requests
+- Unevenly distributed requests causing spikes</p>
+<p><strong>Solutions:</strong>
+1. Implement retry logic with exponential backoff (use the <code>Retry-After</code> header value)
+2. Monitor your usage with the quota endpoints
+3. Distribute requests more evenly over time
+4. Consider upgrading your plan for higher limits</p>
+<p><strong>Example Retry Implementation:</strong></p>
+<pre><code class="language-javascript">async function makeRequestWithRetry(url, options, maxRetries = 5) {
+  let retries = 0;
+
+  while (retries &lt; maxRetries) {
+    try {
+      const response = await fetch(url, options);
+
+      if (response.status !== 429) {
+        return response;
+      }
+
+      // Get retry-after header (in seconds) or default to exponential backoff
+      const retryAfter = parseInt(response.headers.get('Retry-After') || Math.pow(2, retries));
+      console.log(`Rate limited. Retrying after ${retryAfter} seconds.`);
+
+      // Wait for the specified time
+      await new Promise(resolve =&gt; setTimeout(resolve, retryAfter * 1000));
+      retries++;
+
+    } catch (error) {
+      if (retries === maxRetries - 1) throw error;
+      retries++;
+    }
+  }
+}
+</code></pre>
+<h3 id="prompt-execution-failures">Prompt Execution Failures</h3>
+<h4 id="issue-model-specific-failures">Issue: Model-Specific Failures</h4>
+<p><strong>Possible Causes:</strong>
+- Model doesn't support the requested capabilities
+- Model is temporarily unavailable
+- Input text violates model's content policy</p>
+<p><strong>Solutions:</strong>
+1. Check model capabilities in the LLM Registry before using
+2. Implement fallback to alternative models
+3. Review content policy and ensure inputs comply</p>
+<h4 id="issue-context-length-exceeded">Issue: Context Length Exceeded</h4>
+<p><strong>Possible Causes:</strong>
+- Input prompt exceeds the model's maximum token limit</p>
+<p><strong>Solutions:</strong>
+1. Use a model with a larger context window
+2. Implement chunking and summarization techniques
+3. Optimize your prompts to be more concise</p>
+<p><strong>Example Code to Check Token Count:</strong></p>
+<pre><code class="language-python">from aisera.llm_gateway import LLMGatewayClient
+from aisera.llm_gateway.utils import count_tokens
+
+client = LLMGatewayClient(
+    api_key=&quot;YOUR_API_KEY&quot;,
+    tenant_id=&quot;YOUR_TENANT_ID&quot;
+)
+
+def execute_with_token_check(prompt, model=&quot;gpt-4&quot;):
+    # Get model info to check context limit
+    model_info = client.get_model(model)
+    max_tokens = model_info.context_window
+
+    # Count tokens in prompt
+    token_count = count_tokens(prompt, model)
+    print(f&quot;Prompt token count: {token_count}&quot;)
+
+    if token_count &gt; max_tokens:
+        raise ValueError(f&quot;Prompt exceeds token limit ({token_count} &gt; {max_tokens})&quot;)
+
+    # Execute prompt
+    return client.execute_prompt(prompt=prompt, model=model)
+</code></pre>
+<h3 id="request-validation-errors">Request Validation Errors</h3>
+<h4 id="issue-400-bad-request-with-validation-errors">Issue: 400 Bad Request with Validation Errors</h4>
+<p><strong>Possible Causes:</strong>
+- Missing required parameters
+- Parameter type mismatch
+- Invalid parameter format</p>
+<p><strong>Solutions:</strong>
+1. Check the <code>error.details</code> field in the response for specific validation errors
+2. Validate request payloads against the API schemas before sending
+3. Use the SDKs which include built-in validation</p>
+<h3 id="token-limits">Token Limits</h3>
+<h4 id="issue-exceeded-monthly-token-quota">Issue: Exceeded Monthly Token Quota</h4>
+<p><strong>Possible Causes:</strong>
+- Used all allocated tokens for the current period
+- Unexpected usage spike</p>
+<p><strong>Solutions:</strong>
+1. Monitor your token usage proactively using the quota endpoints
+2. Implement token budget management in your application
+3. Request a temporary quota increase for unexpected needs</p>
+<h3 id="timeout-errors">Timeout Errors</h3>
+<h4 id="issue-504-gateway-timeout">Issue: 504 Gateway Timeout</h4>
+<p><strong>Possible Causes:</strong>
+- Model is taking too long to generate a response
+- Complex prompt requiring extensive processing
+- System under heavy load</p>
+<p><strong>Solutions:</strong>
+1. Simplify your prompts or break them into smaller steps
+2. Adjust the timeout parameter in your requests
+3. Consider using a different, faster model for time-sensitive operations
+4. Implement asynchronous processing for non-interactive use cases</p>
+<h2 id="debugging-techniques">Debugging Techniques</h2>
+<h3 id="request-inspection">Request Inspection</h3>
+<p>For systematic debugging, capture the full request details:</p>
+<pre><code class="language-python">import requests
+import json
+
+def debug_request(method, url, headers, data=None):
+    # Print request details
+    print(f&quot;\n---- REQUEST ----&quot;)
+    print(f&quot;{method} {url}&quot;)
+    print(&quot;\nHeaders:&quot;)
+    for key, value in headers.items():
+        # Mask sensitive information
+        if key.lower() == 'authorization':
+            print(f&quot;{key}: Bearer ***&quot;)
+        else:
+            print(f&quot;{key}: {value}&quot;)
+
+    if data:
+        print(&quot;\nPayload:&quot;)
+        print(json.dumps(data, indent=2))
+
+    # Make the request
+    if method.lower() == 'get':
+        response = requests.get(url, headers=headers)
+    else:
+        response = requests.post(url, headers=headers, json=data)
+
+    # Print response details
+    print(f&quot;\n---- RESPONSE ----&quot;)
+    print(f&quot;Status: {response.status_code}&quot;)
+    print(&quot;\nHeaders:&quot;)
+    for key, value in response.headers.items():
+        print(f&quot;{key}: {value}&quot;)
+
+    try:
+        print(&quot;\nBody:&quot;)
+        print(json.dumps(response.json(), indent=2))
+    except:
+        print(response.text)
+
+    return response
+
+# Example usage
+debug_request(
+    'POST',
+    'https://api.aisera.com/v1/tenants/9000/llm/execute',
+    {
+        'Authorization': 'Bearer YOUR_API_KEY',
+        'Content-Type': 'application/json'
+    },
+    {
+        'prompt': 'Explain quantum computing',
+        'model': 'gpt-4'
+    }
+)
+</code></pre>
+<h3 id="response-analysis">Response Analysis</h3>
+<p>When debugging issues, always examine:</p>
+<ol>
+<li><strong>HTTP Status Code</strong>: Indicates the general category of the response</li>
+<li><strong>Response Headers</strong>: Contain metadata like rate limit information</li>
+<li><strong>Error Object</strong>: Contains detailed error information</li>
+<li><strong>Request ID</strong>: Essential for support inquiries</li>
+</ol>
+<h3 id="logging-best-practices">Logging Best Practices</h3>
+<p>Implement structured logging for API interactions:</p>
+<pre><code class="language-javascript">const winston = require('winston');
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'llm-gateway-client' },
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' })
+  ]
+});
+
+function logApiInteraction(requestData, responseData, error = null) {
+  // Create a sanitized copy of request data (remove sensitive info)
+  const sanitizedRequest = { ...requestData };
+  if (sanitizedRequest.headers &amp;&amp; sanitizedRequest.headers.Authorization) {
+    sanitizedRequest.headers.Authorization = 'Bearer ***';
+  }
+
+  const logData = {
+    timestamp: new Date().toISOString(),
+    request: sanitizedRequest,
+    response: responseData ? {
+      status: responseData.status,
+      headers: responseData.headers,
+      requestId: responseData.data?.error?.request_id,
+      errorCode: responseData.data?.error?.code
+    } : null,
+    error: error ? {
+      message: error.message,
+      stack: error.stack
+    } : null
+  };
+
+  if (error || (responseData &amp;&amp; responseData.status &gt;= 400)) {
+    logger.error('API Error', logData);
+  } else {
+    logger.info('API Request', logData);
+  }
+
+  // Always log the request ID if available
+  if (responseData?.data?.error?.request_id) {
+    console.log(`Request ID: ${responseData.data.error.request_id}`);
+  }
+}
+</code></pre>
+<h2 id="performance-optimization">Performance Optimization</h2>
+<h3 id="reducing-latency">Reducing Latency</h3>
+<ol>
+<li><strong>Use the closest region endpoint</strong>:</li>
+<li>US: <code>https://us-api.aisera.com</code></li>
+<li>EU: <code>https://eu-api.aisera.com</code></li>
+<li>
+<p>APAC: <code>https://ap-api.aisera.com</code></p>
+</li>
+<li>
+<p><strong>Optimize prompt length</strong>:</p>
+</li>
+<li>Remove unnecessary context</li>
+<li>
+<p>Use reference pointers instead of embedding large texts</p>
+</li>
+<li>
+<p><strong>Select appropriate models</strong>:</p>
+</li>
+<li>Faster models for interactive use cases</li>
+<li>
+<p>More powerful models for complex reasoning</p>
+</li>
+<li>
+<p><strong>Implement request caching</strong>:</p>
+</li>
+<li>Cache identical prompt executions</li>
+<li>Use sensible cache expiration times</li>
+<li>
+<p>Consider semantic caching for similar prompts</p>
+</li>
+<li>
+<p><strong>Use connection pooling</strong>:</p>
+</li>
+<li>Maintain persistent HTTP connections</li>
+<li>Configure appropriate keepalive settings</li>
+</ol>
+<h3 id="batch-processing">Batch Processing</h3>
+<p>For processing large numbers of prompts:</p>
+<ol>
+<li><strong>Use parallel processing with rate limiting</strong>:</li>
+<li>Control concurrency based on your rate limits</li>
+<li>
+<p>Implement proper error handling and retries</p>
+</li>
+<li>
+<p><strong>Consider asynchronous workflows</strong>:</p>
+</li>
+<li>Submit batch jobs</li>
+<li>Poll for results or use webhooks</li>
+</ol>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="general-questions">General Questions</h3>
+<p><strong>Q: How is the token usage calculated?</strong>
+A: Token usage is calculated based on the tokenization algorithm of the specific LLM model. Both input and output tokens are counted. The API returns the token counts in the response metadata.</p>
+<p><strong>Q: How can I estimate token usage before making a request?</strong>
+A: Use the token counting utilities in our SDKs to estimate usage:</p>
+<pre><code class="language-python">from aisera.llm_gateway.utils import count_tokens
+
+prompt = &quot;This is a test prompt&quot;
+token_count = count_tokens(prompt, model=&quot;gpt-4&quot;)
+print(f&quot;Estimated token count: {token_count}&quot;)
+</code></pre>
+<p><strong>Q: Can I execute prompts in languages other than English?</strong>
+A: Yes, the LLM Gateway supports multi-language prompts. Models vary in their multilingual capabilities, so check the model documentation for specific language support.</p>
+<p><strong>Q: How can I ensure consistent results across multiple calls?</strong>
+A: Set a consistent <code>temperature</code> value (lower for more deterministic outputs) and use the <code>seed</code> parameter to get reproducible results:</p>
+<pre><code class="language-javascript">const response = await client.executePrompt({
+  prompt: &quot;Explain quantum computing&quot;,
+  model: &quot;gpt-4&quot;,
+  temperature: 0.0,
+  seed: 12345  // Fixed seed for reproducibility
+});
+</code></pre>
+<h3 id="prompt-management">Prompt Management</h3>
+<p><strong>Q: How can I organize prompts by category or project?</strong>
+A: Use tags when creating prompts:</p>
+<pre><code class="language-python">client.create_prompt(
+    name=&quot;Customer Inquiry Response&quot;,
+    template=&quot;...&quot;,
+    tags=[&quot;customer-service&quot;, &quot;project-alpha&quot;]
+)
+
+# Later, filter by tags
+prompts = client.list_prompts(tags=[&quot;project-alpha&quot;])
+</code></pre>
+<p><strong>Q: What's the best practice for managing prompt versions in a team?</strong>
+A: Follow these practices:
+1. Always create new versions for changes instead of editing existing ones
+2. Use descriptive comments when creating versions
+3. Test draft versions before publishing
+4. Use version control systems for prompt templates</p>
+<h3 id="security">Security</h3>
+<p><strong>Q: How can I restrict what my API key can access?</strong>
+A: API keys can be configured with specific scopes and permission levels in the developer portal. You can create keys with read-only access, prompt execution only, or full administrative access.</p>
+<p><strong>Q: Is data encrypted in transit and at rest?</strong>
+A: Yes, all data is encrypted in transit using TLS, and at rest using AES-256 encryption.</p>
+<p><strong>Q: How long is my data retained?</strong>
+A: By default, prompt inputs and outputs are retained for 30 days for billing and debugging purposes. You can configure shorter retention periods or opt for immediate deletion in compliance settings.</p>
+<h3 id="billing">Billing</h3>
+<p><strong>Q: How does billing work for token usage?</strong>
+A: Billing is based on the total token count (input + output) for each model. Different models have different pricing tiers. You can view your current usage and projected costs in the billing dashboard.</p>
+<p><strong>Q: What happens if I exceed my plan's quota?</strong>
+A: Behavior depends on your plan settings:
+- Free tier: Requests are rejected with 429 status when limits are reached
+- Paid plans: By default, you'll be billed for overages at the standard rate
+- Enterprise plans: Customizable overage behavior and notifications</p>
+<h2 id="support-resources">Support Resources</h2>
+<h3 id="documentation">Documentation</h3>
+<ul>
+<li><a href="https://api.aisera.com/docs" target="_blank" rel="noopener noreferrer">API Reference</a></li>
+<li><a href="https://api.aisera.com/docs/sdks" target="_blank" rel="noopener noreferrer">SDK Documentation</a></li>
+<li><a href="https://api.aisera.com/docs/tutorials" target="_blank" rel="noopener noreferrer">Tutorials</a></li>
+</ul>
+<h3 id="support-channels">Support Channels</h3>
+<ul>
+<li><strong>Email Support</strong>: support@aisera.com</li>
+<li><strong>Developer Forum</strong>: <a href="https://community.aisera.com" target="_blank" rel="noopener noreferrer">https://community.aisera.com</a></li>
+<li><strong>GitHub Issues</strong> (for SDK bugs): <a href="https://github.com/aisera/llm-gateway-sdk/issues" target="_blank" rel="noopener noreferrer">https://github.com/aisera/llm-gateway-sdk/issues</a></li>
+</ul>
+<h3 id="priority-support">Priority Support</h3>
+<p>Enterprise customers have access to priority support with:
+- Dedicated support contacts
+- 24/7 emergency support
+- 1-hour response SLA for critical issues</p>
+<p>Contact your account manager to enable priority support.</p>
+<h3 id="support-information-to-include">Support Information to Include</h3>
+<p>When contacting support, always include:
+- Request ID from the error response
+- API endpoint and method
+- HTTP status code
+- Error code and message
+- Timestamp of the issue
+- Steps to reproduce the problem</p>
+</body>
+</html>

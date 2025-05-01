@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>error-handling</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="error-handling-status-codes">Error Handling &amp; Status Codes</h1>
+<p>This document describes how the LLM Gateway API handles errors and provides guidance on interpreting and handling error responses in your applications.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#error-response-format">Error Response Format</a></li>
+<li><a href="#http-status-codes">HTTP Status Codes</a></li>
+<li><a href="#error-types">Error Types</a></li>
+<li><a href="#handling-errors">Handling Errors</a></li>
+<li><a href="#rate-limiting-errors">Rate Limiting Errors</a></li>
+<li><a href="#code-examples">Code Examples</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The LLM Gateway API uses conventional HTTP response codes to indicate the success or failure of API requests. In general:</p>
+<ul>
+<li>Codes in the <code>2xx</code> range indicate success</li>
+<li>Codes in the <code>4xx</code> range indicate an error caused by the client (e.g., invalid parameters, authentication issues)</li>
+<li>Codes in the <code>5xx</code> range indicate an error on the server side</li>
+</ul>
+<p>All error responses include a structured JSON body with detailed information to help you identify and resolve the issue.</p>
+<h2 id="error-response-format">Error Response Format</h2>
+<p>Error responses follow a consistent format:</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;invalid_request&quot;,
+    &quot;message&quot;: &quot;The request was malformed or invalid&quot;,
+    &quot;details&quot;: [
+      {
+        &quot;field&quot;: &quot;prompt&quot;,
+        &quot;issue&quot;: &quot;required&quot;,
+        &quot;message&quot;: &quot;Prompt parameter is required&quot;
+      }
+    ],
+    &quot;request_id&quot;: &quot;req_ab12cd34ef56&quot;
+  }
+}
+</code></pre>
+<p>The error object contains:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>code</td>
+<td>A string identifier for the error type</td>
+</tr>
+<tr>
+<td>message</td>
+<td>A human-readable description of the error</td>
+</tr>
+<tr>
+<td>details</td>
+<td>An array of detailed information, often identifying specific fields with issues</td>
+</tr>
+<tr>
+<td>request_id</td>
+<td>A unique identifier for the request, useful when contacting support</td>
+</tr>
+</tbody>
+</table>
+<h2 id="http-status-codes">HTTP Status Codes</h2>
+<p>The LLM Gateway API uses the following HTTP status codes:</p>
+<table>
+<thead>
+<tr>
+<th>Status Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200 OK</td>
+<td>The request was successful</td>
+</tr>
+<tr>
+<td>201 Created</td>
+<td>The resource was successfully created</td>
+</tr>
+<tr>
+<td>400 Bad Request</td>
+<td>The request was invalid or malformed</td>
+</tr>
+<tr>
+<td>401 Unauthorized</td>
+<td>Authentication credentials were missing or invalid</td>
+</tr>
+<tr>
+<td>403 Forbidden</td>
+<td>The authenticated user doesn't have permission for the requested operation</td>
+</tr>
+<tr>
+<td>404 Not Found</td>
+<td>The requested resource was not found</td>
+</tr>
+<tr>
+<td>409 Conflict</td>
+<td>The request conflicts with the current state of the resource</td>
+</tr>
+<tr>
+<td>422 Unprocessable Entity</td>
+<td>The request was well-formed but contains semantic errors</td>
+</tr>
+<tr>
+<td>429 Too Many Requests</td>
+<td>The client has sent too many requests in a given time period</td>
+</tr>
+<tr>
+<td>500 Internal Server Error</td>
+<td>An error occurred on the server</td>
+</tr>
+<tr>
+<td>503 Service Unavailable</td>
+<td>The service is temporarily unavailable</td>
+</tr>
+</tbody>
+</table>
+<h2 id="error-types">Error Types</h2>
+<p>Common error codes you may encounter:</p>
+<table>
+<thead>
+<tr>
+<th>Error Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>authentication_error</td>
+<td>Issues with authentication credentials</td>
+</tr>
+<tr>
+<td>authorization_error</td>
+<td>Permission-related issues</td>
+</tr>
+<tr>
+<td>invalid_request</td>
+<td>General validation errors</td>
+</tr>
+<tr>
+<td>parameter_error</td>
+<td>Issues with specific parameters</td>
+</tr>
+<tr>
+<td>resource_not_found</td>
+<td>The requested resource doesn't exist</td>
+</tr>
+<tr>
+<td>rate_limit_exceeded</td>
+<td>Client exceeded rate limits</td>
+</tr>
+<tr>
+<td>model_error</td>
+<td>Issues with the requested LLM model</td>
+</tr>
+<tr>
+<td>provider_error</td>
+<td>Issues with the LLM provider service</td>
+</tr>
+<tr>
+<td>version_conflict</td>
+<td>Resource version conflict</td>
+</tr>
+<tr>
+<td>internal_error</td>
+<td>Server-side issues</td>
+</tr>
+</tbody>
+</table>
+<h2 id="handling-errors">Handling Errors</h2>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li><strong>Check the HTTP status code first</strong> to understand the general category of the error</li>
+<li><strong>Read the error.code field</strong> to identify the specific error type</li>
+<li><strong>Examine the error.details array</strong> for field-specific issues</li>
+<li><strong>Log the request_id</strong> for troubleshooting purposes</li>
+<li><strong>Implement retry logic</strong> with exponential backoff for 429 and 5xx errors</li>
+<li><strong>Display user-friendly error messages</strong> in your application</li>
+</ol>
+<h3 id="validation-errors">Validation Errors</h3>
+<p>For 400 Bad Request errors, check the <code>details</code> array for specific field issues. Each detail includes:</p>
+<ul>
+<li><code>field</code>: The name of the problematic field</li>
+<li><code>issue</code>: The type of validation issue (e.g., "required", "invalid_format")</li>
+<li><code>message</code>: A descriptive message about the issue</li>
+</ul>
+<h3 id="authentication-errors">Authentication Errors</h3>
+<p>For 401 Unauthorized errors, verify that:</p>
+<ul>
+<li>Your API key is correctly formatted</li>
+<li>Your authorization header is correctly structured</li>
+<li>Your API key has not expired or been revoked</li>
+</ul>
+<h2 id="rate-limiting-errors">Rate Limiting Errors</h2>
+<p>The LLM Gateway implements rate limiting to ensure fair usage and system stability. When you exceed these limits, you'll receive a 429 Too Many Requests error.</p>
+<p>Rate limit response headers:</p>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X-RateLimit-Limit</td>
+<td>The maximum number of requests allowed in the current time window</td>
+</tr>
+<tr>
+<td>X-RateLimit-Remaining</td>
+<td>The number of requests remaining in the current time window</td>
+</tr>
+<tr>
+<td>X-RateLimit-Reset</td>
+<td>The time (in seconds) when the current rate limit window resets</td>
+</tr>
+</tbody>
+</table>
+<p>When receiving a 429 error, implement a backoff strategy before retrying. The response will include a <code>Retry-After</code> header indicating the recommended wait time in seconds.</p>
+<h2 id="code-examples">Code Examples</h2>
+<h3 id="handling-errors-in-python">Handling Errors in Python</h3>
+<pre><code class="language-python">import requests
+import time
+
+def make_api_request(url, headers, data=None, max_retries=3):
+    retries = 0
+    base_delay = 1  # Starting delay in seconds
+
+    while retries &lt; max_retries:
+        try:
+            if data:
+                response = requests.post(url, headers=headers, json=data)
+            else:
+                response = requests.get(url, headers=headers)
+
+            # Successful response
+            if response.status_code &gt;= 200 and response.status_code &lt; 300:
+                return response.json()
+
+            # Rate limiting - implement backoff
+            if response.status_code == 429:
+                retry_after = int(response.headers.get('Retry-After', base_delay * (2 ** retries)))
+                print(f&quot;Rate limit exceeded. Retrying after {retry_after} seconds.&quot;)
+                time.sleep(retry_after)
+                retries += 1
+                continue
+
+            # Server errors - retry with backoff
+            if response.status_code &gt;= 500:
+                delay = base_delay * (2 ** retries)
+                print(f&quot;Server error. Retrying after {delay} seconds.&quot;)
+                time.sleep(delay)
+                retries += 1
+                continue
+
+            # Client errors - parse the error and return it
+            error_data = response.json()
+            request_id = error_data.get('error', {}).get('request_id', 'unknown')
+            error_code = error_data.get('error', {}).get('code', 'unknown')
+            error_message = error_data.get('error', {}).get('message', 'Unknown error')
+
+            print(f&quot;API Error: {error_message} (Code: {error_code}, Request ID: {request_id})&quot;)
+
+            # Format field errors for display
+            if 'details' in error_data.get('error', {}):
+                for detail in error_data['error']['details']:
+                    field = detail.get('field', '')
+                    message = detail.get('message', '')
+                    print(f&quot;  - {field}: {message}&quot;)
+
+            return error_data
+
+        except Exception as e:
+            delay = base_delay * (2 ** retries)
+            print(f&quot;Request exception: {str(e)}. Retrying after {delay} seconds.&quot;)
+            time.sleep(delay)
+            retries += 1
+
+    raise Exception(f&quot;Failed after {max_retries} retries&quot;)
+
+# Example usage
+api_key = &quot;YOUR_API_KEY&quot;
+url = &quot;https://api.aisera.com/v1/tenants/9000/llm/execute&quot;
+
+headers = {
+    &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,
+    &quot;Content-Type&quot;: &quot;application/json&quot;
+}
+
+data = {
+    &quot;prompt&quot;: &quot;Explain quantum computing in simple terms&quot;,
+    &quot;model&quot;: &quot;gpt-4&quot;
+}
+
+response = make_api_request(url, headers, data)
+print(response)
+</code></pre>
+<h3 id="handling-errors-in-javascript">Handling Errors in JavaScript</h3>
+<pre><code class="language-javascript">const axios = require('axios');
+
+async function makeApiRequest(url, headers, data = null, maxRetries = 3) {
+  let retries = 0;
+  const baseDelay = 1000; // Starting delay in milliseconds
+
+  while (retries &lt; maxRetries) {
+    try {
+      const config = {
+        headers,
+        validateStatus: null // Don't throw errors for non-2xx responses
+      };
+
+      const response = data 
+        ? await axios.post(url, data, config)
+        : await axios.get(url, config);
+
+      // Successful response
+      if (response.status &gt;= 200 &amp;&amp; response.status &lt; 300) {
+        return response.data;
+      }
+
+      // Rate limiting - implement backoff
+      if (response.status === 429) {
+        const retryAfter = parseInt(response.headers['retry-after'] || baseDelay * Math.pow(2, retries) / 1000);
+        console.log(`Rate limit exceeded. Retrying after ${retryAfter} seconds.`);
+        await new Promise(resolve =&gt; setTimeout(resolve, retryAfter * 1000));
+        retries++;
+        continue;
+      }
+
+      // Server errors - retry with backoff
+      if (response.status &gt;= 500) {
+        const delay = baseDelay * Math.pow(2, retries);
+        console.log(`Server error. Retrying after ${delay / 1000} seconds.`);
+        await new Promise(resolve =&gt; setTimeout(resolve, delay));
+        retries++;
+        continue;
+      }
+
+      // Client errors - parse the error and return it
+      const errorData = response.data;
+      const requestId = errorData?.error?.request_id || 'unknown';
+      const errorCode = errorData?.error?.code || 'unknown';
+      const errorMessage = errorData?.error?.message || 'Unknown error';
+
+      console.log(`API Error: ${errorMessage} (Code: ${errorCode}, Request ID: ${requestId})`);
+
+      // Format field errors for display
+      if (errorData?.error?.details) {
+        errorData.error.details.forEach(detail =&gt; {
+          const field = detail.field || '';
+          const message = detail.message || '';
+          console.log(`  - ${field}: ${message}`);
+        });
+      }
+
+      return errorData;
+
+    } catch (error) {
+      const delay = baseDelay * Math.pow(2, retries);
+      console.log(`Request exception: ${error.message}. Retrying after ${delay / 1000} seconds.`);
+      await new Promise(resolve =&gt; setTimeout(resolve, delay));
+      retries++;
+    }
+  }
+
+  throw new Error(`Failed after ${maxRetries} retries`);
+}
+
+// Example usage
+const apiKey = 'YOUR_API_KEY';
+const url = 'https://api.aisera.com/v1/tenants/9000/llm/execute';
+
+const headers = {
+  'Authorization': `Bearer ${apiKey}`,
+  'Content-Type': 'application/json'
+};
+
+const data = {
+  prompt: 'Explain quantum computing in simple terms',
+  model: 'gpt-4'
+};
+
+makeApiRequest(url, headers, data)
+  .then(response =&gt; console.log(response))
+  .catch(error =&gt; console.error('Failed to make API request:', error.message));
+</code></pre>
+</body>
+</html>

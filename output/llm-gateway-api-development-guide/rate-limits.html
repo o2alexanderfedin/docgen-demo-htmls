@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>rate-limits</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="rate-limits-throttling">Rate Limits &amp; Throttling</h1>
+<p>This document explains the rate limiting policies and throttling mechanisms implemented in the LLM Gateway API to ensure fair usage and system stability.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#rate-limit-categories">Rate Limit Categories</a></li>
+<li><a href="#rate-limit-headers">Rate Limit Headers</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+<li><a href="#request-costs">Request Costs</a></li>
+<li><a href="#quota-management">Quota Management</a></li>
+<li><a href="#error-handling">Error Handling</a></li>
+<li><a href="#implementation-examples">Implementation Examples</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The LLM Gateway API implements rate limiting to:</p>
+<ul>
+<li>Ensure fair distribution of resources among all clients</li>
+<li>Protect the service from abuse and overwhelming traffic</li>
+<li>Maintain optimal performance and reliability</li>
+</ul>
+<p>When you exceed a rate limit, the API will return a <code>429 Too Many Requests</code> status code with information about when you can resume making requests.</p>
+<h2 id="rate-limit-categories">Rate Limit Categories</h2>
+<p>Rate limits are divided into several categories, each with its own limits and quotas:</p>
+<h3 id="1-global-rate-limits">1. Global Rate Limits</h3>
+<p>Applied to all API requests across all endpoints:</p>
+<table>
+<thead>
+<tr>
+<th>Plan</th>
+<th>Requests per Minute</th>
+<th>Requests per Day</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Developer</td>
+<td>60</td>
+<td>10,000</td>
+</tr>
+<tr>
+<td>Business</td>
+<td>300</td>
+<td>100,000</td>
+</tr>
+<tr>
+<td>Enterprise</td>
+<td>1,000</td>
+<td>1,000,000</td>
+</tr>
+<tr>
+<td>Custom</td>
+<td>Customized based on needs</td>
+<td>Customized based on needs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2-endpoint-specific-rate-limits">2. Endpoint-Specific Rate Limits</h3>
+<p>Different endpoints have different resource costs:</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint Category</th>
+<th>Requests per Minute</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt Execution</td>
+<td>30</td>
+<td>Higher cost operations</td>
+</tr>
+<tr>
+<td>LLM Registry</td>
+<td>120</td>
+<td>Read-heavy operations</td>
+</tr>
+<tr>
+<td>Prompt Management</td>
+<td>60</td>
+<td>Mixed read/write operations</td>
+</tr>
+<tr>
+<td>Versioning</td>
+<td>60</td>
+<td>Version management operations</td>
+</tr>
+</tbody>
+</table>
+<h3 id="3-model-specific-rate-limits">3. Model-Specific Rate Limits</h3>
+<p>Some models have specific rate limits due to their computational requirements:</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Tokens per Minute</th>
+<th>Requests per Minute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-4</td>
+<td>10,000</td>
+<td>20</td>
+</tr>
+<tr>
+<td>GPT-3.5-Turbo</td>
+<td>100,000</td>
+<td>60</td>
+</tr>
+<tr>
+<td>Claude-3-Opus</td>
+<td>30,000</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Claude-3-Sonnet</td>
+<td>80,000</td>
+<td>50</td>
+</tr>
+<tr>
+<td>Llama-2-70B</td>
+<td>50,000</td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-tenant-specific-rate-limits">4. Tenant-Specific Rate Limits</h3>
+<p>Multi-tenant usage is subject to tenant-specific quotas:</p>
+<table>
+<thead>
+<tr>
+<th>Tenant Tier</th>
+<th>Requests per Minute</th>
+<th>Monthly Token Quota</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Basic</td>
+<td>60</td>
+<td>1,000,000</td>
+</tr>
+<tr>
+<td>Standard</td>
+<td>300</td>
+<td>10,000,000</td>
+</tr>
+<tr>
+<td>Premium</td>
+<td>600</td>
+<td>50,000,000</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rate-limit-headers">Rate Limit Headers</h2>
+<p>The API includes the following headers in responses to help you track your rate limit usage:</p>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X-RateLimit-Limit</td>
+<td>The maximum number of requests you can make per time window</td>
+</tr>
+<tr>
+<td>X-RateLimit-Remaining</td>
+<td>The number of requests remaining in the current time window</td>
+</tr>
+<tr>
+<td>X-RateLimit-Reset</td>
+<td>The time (in seconds) when the current rate limit window resets</td>
+</tr>
+<tr>
+<td>X-RateLimit-Type</td>
+<td>The type of rate limit that is currently being tracked (global, endpoint, model)</td>
+</tr>
+</tbody>
+</table>
+<p>When a rate limit is exceeded, the response will include:</p>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retry-After</td>
+<td>The number of seconds to wait before making another request</td>
+</tr>
+</tbody>
+</table>
+<h2 id="best-practices">Best Practices</h2>
+<p>To avoid hitting rate limits, follow these best practices:</p>
+<h3 id="1-implement-client-side-rate-limiting">1. Implement Client-Side Rate Limiting</h3>
+<p>Design your applications to respect rate limits by:</p>
+<ul>
+<li>Tracking rate limit headers in responses</li>
+<li>Implementing retry mechanisms with exponential backoff</li>
+<li>Distributing requests evenly over time</li>
+<li>Batch processing requests when possible</li>
+</ul>
+<h3 id="2-optimize-request-usage">2. Optimize Request Usage</h3>
+<p>Reduce unnecessary API calls:</p>
+<ul>
+<li>Cache responses when appropriate</li>
+<li>Consolidate multiple small requests into batch operations</li>
+<li>Use webhooks for event notifications instead of polling</li>
+<li>Implement request debouncing and throttling in your client application</li>
+</ul>
+<h3 id="3-monitor-usage">3. Monitor Usage</h3>
+<p>Keep track of your API usage:</p>
+<ul>
+<li>Use the quota management endpoints to monitor your usage</li>
+<li>Set up alerts when approaching rate limits</li>
+<li>Review usage patterns to identify optimization opportunities</li>
+</ul>
+<h2 id="request-costs">Request Costs</h2>
+<p>Not all requests have the same "cost" in terms of rate limits. The system uses a cost-based approach:</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Base Cost</th>
+<th>Factors Affecting Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt Execution</td>
+<td>1-10</td>
+<td>Model complexity, input tokens, output tokens</td>
+</tr>
+<tr>
+<td>Prompt Management</td>
+<td>1-2</td>
+<td>Request size, complexity</td>
+</tr>
+<tr>
+<td>Versioning</td>
+<td>1</td>
+<td>Standard cost</td>
+</tr>
+<tr>
+<td>LLM Registry</td>
+<td>1</td>
+<td>Standard cost</td>
+</tr>
+</tbody>
+</table>
+<p>For prompt execution, costs are calculated based on:
+- Base cost for the chosen model
+- Input token count / 1000
+- Output token cost based on model and generation parameters</p>
+<p>Example:</p>
+<pre><code>Request Cost = Base Model Cost + (Input Tokens / 1000) + Output Token Cost
+</code></pre>
+<h2 id="quota-management">Quota Management</h2>
+<p>The API provides endpoints to help you manage your quotas:</p>
+<h3 id="check-current-usage">Check Current Usage</h3>
+<pre><code>GET /v1/tenants/{tenantId}/quotas/usage
+</code></pre>
+<p>Returns your current usage metrics across all categories.</p>
+<h3 id="sample-response">Sample Response</h3>
+<pre><code class="language-json">{
+  &quot;current_period&quot;: {
+    &quot;start&quot;: &quot;2023-09-01T00:00:00Z&quot;,
+    &quot;end&quot;: &quot;2023-09-30T23:59:59Z&quot;
+  },
+  &quot;limits&quot;: {
+    &quot;requests&quot;: {
+      &quot;limit&quot;: 100000,
+      &quot;used&quot;: 45230,
+      &quot;remaining&quot;: 54770
+    },
+    &quot;tokens&quot;: {
+      &quot;limit&quot;: 10000000,
+      &quot;used&quot;: 3245600,
+      &quot;remaining&quot;: 6754400
+    }
+  },
+  &quot;models&quot;: {
+    &quot;gpt-4&quot;: {
+      &quot;tokens&quot;: {
+        &quot;limit&quot;: 1000000,
+        &quot;used&quot;: 420500,
+        &quot;remaining&quot;: 579500
+      }
+    },
+    &quot;claude-3-opus&quot;: {
+      &quot;tokens&quot;: {
+        &quot;limit&quot;: 2000000,
+        &quot;used&quot;: 890300,
+        &quot;remaining&quot;: 1109700
+      }
+    }
+  }
+}
+</code></pre>
+<h3 id="request-quota-increase">Request Quota Increase</h3>
+<p>For temporary quota increases:</p>
+<pre><code>POST /v1/tenants/{tenantId}/quotas/increase
+</code></pre>
+<p>With body:</p>
+<pre><code class="language-json">{
+  &quot;quota_type&quot;: &quot;tokens&quot;,
+  &quot;model&quot;: &quot;gpt-4&quot;,
+  &quot;amount&quot;: 500000,
+  &quot;justification&quot;: &quot;Temporary increase needed for batch processing project&quot;,
+  &quot;duration_days&quot;: 7
+}
+</code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<p>When you exceed a rate limit, you'll receive a <code>429 Too Many Requests</code> response with the following body:</p>
+<pre><code class="language-json">{
+  &quot;error&quot;: {
+    &quot;code&quot;: &quot;rate_limit_exceeded&quot;,
+    &quot;message&quot;: &quot;You have exceeded the rate limit for prompt execution requests&quot;,
+    &quot;details&quot;: {
+      &quot;limit_type&quot;: &quot;requests_per_minute&quot;,
+      &quot;limit&quot;: 30,
+      &quot;reset_at&quot;: &quot;2023-09-15T10:15:00Z&quot;
+    },
+    &quot;request_id&quot;: &quot;req_ab12cd34ef56&quot;
+  }
+}
+</code></pre>
+<h3 id="handling-rate-limit-errors">Handling Rate Limit Errors</h3>
+<ol>
+<li>
+<p><strong>Implement Exponential Backoff</strong>: When you receive a 429 response, wait for the time specified in the <code>Retry-After</code> header before retrying.</p>
+</li>
+<li>
+<p><strong>Scale Backoff with Consecutive Failures</strong>: Increase the wait time exponentially if you continue to receive 429 responses.</p>
+</li>
+<li>
+<p><strong>Consider Circuit Breakers</strong>: Implement circuit breakers to temporarily disable API requests after multiple failures.</p>
+</li>
+</ol>
+<h2 id="implementation-examples">Implementation Examples</h2>
+<h3 id="python-example">Python Example</h3>
+<pre><code class="language-python">import requests
+import time
+
+class RateLimitHandler:
+    def __init__(self, base_url, api_key):
+        self.base_url = base_url
+        self.api_key = api_key
+        self.headers = {
+            &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,
+            &quot;Content-Type&quot;: &quot;application/json&quot;
+        }
+        # Track rate limits
+        self.rate_limits = {
+            &quot;global&quot;: {&quot;limit&quot;: 0, &quot;remaining&quot;: 0, &quot;reset&quot;: 0},
+            &quot;endpoint&quot;: {&quot;limit&quot;: 0, &quot;remaining&quot;: 0, &quot;reset&quot;: 0},
+            &quot;model&quot;: {&quot;limit&quot;: 0, &quot;remaining&quot;: 0, &quot;reset&quot;: 0}
+        }
+
+    def make_request(self, method, endpoint, data=None, max_retries=5):
+        retries = 0
+        base_delay = 1  # Starting delay in seconds
+
+        while retries &lt; max_retries:
+            try:
+                # Check if we should wait based on previous rate limit info
+                self._wait_if_needed()
+
+                # Make the request
+                if method.lower() == &quot;get&quot;:
+                    response = requests.get(
+                        f&quot;{self.base_url}{endpoint}&quot;, 
+                        headers=self.headers
+                    )
+                else:
+                    response = requests.post(
+                        f&quot;{self.base_url}{endpoint}&quot;, 
+                        headers=self.headers, 
+                        json=data
+                    )
+
+                # Update rate limit tracking from headers
+                self._update_rate_limits(response)
+
+                # If successful, return the response
+                if response.status_code &lt; 300:
+                    return response.json()
+
+                # Handle rate limiting
+                if response.status_code == 429:
+                    retry_after = int(response.headers.get('Retry-After', base_delay * (2 ** retries)))
+                    print(f&quot;Rate limit exceeded. Waiting {retry_after} seconds.&quot;)
+                    time.sleep(retry_after)
+                    retries += 1
+                    continue
+
+                # Handle other errors
+                print(f&quot;Error: {response.status_code} - {response.text}&quot;)
+                return response.json()
+
+            except Exception as e:
+                delay = base_delay * (2 ** retries)
+                print(f&quot;Request exception: {str(e)}. Retrying after {delay} seconds.&quot;)
+                time.sleep(delay)
+                retries += 1
+
+        raise Exception(f&quot;Failed after {max_retries} retries&quot;)
+
+    def _update_rate_limits(self, response):
+        # Update our tracking of rate limits based on response headers
+        if 'X-RateLimit-Type' in response.headers:
+            limit_type = response.headers['X-RateLimit-Type']
+            if limit_type in self.rate_limits:
+                self.rate_limits[limit_type]['limit'] = int(response.headers.get('X-RateLimit-Limit', 0))
+                self.rate_limits[limit_type]['remaining'] = int(response.headers.get('X-RateLimit-Remaining', 0))
+                self.rate_limits[limit_type]['reset'] = int(response.headers.get('X-RateLimit-Reset', 0))
+
+    def _wait_if_needed(self):
+        # Check if we need to wait for any rate limits
+        now = time.time()
+        for limit_type, info in self.rate_limits.items():
+            if info['remaining'] == 0 and info['reset'] &gt; now:
+                wait_time = info['reset'] - now
+                print(f&quot;Rate limit ({limit_type}) reached. Waiting {wait_time:.2f} seconds.&quot;)
+                time.sleep(wait_time)
+
+# Example usage
+api_client = RateLimitHandler(&quot;https://api.aisera.com&quot;, &quot;YOUR_API_KEY&quot;)
+
+# Get prompt list
+prompts = api_client.make_request(&quot;GET&quot;, &quot;/v1/tenants/9000/llm/prompts&quot;)
+print(f&quot;Retrieved {len(prompts['items'])} prompts&quot;)
+
+# Execute prompt
+execution_result = api_client.make_request(
+    &quot;POST&quot;, 
+    &quot;/v1/tenants/9000/llm/execute&quot;,
+    {
+        &quot;prompt&quot;: &quot;Explain quantum computing in simple terms&quot;,
+        &quot;model&quot;: &quot;gpt-4&quot;
+    }
+)
+print(execution_result)
+</code></pre>
+<h3 id="javascriptnodejs-example">JavaScript/Node.js Example</h3>
+<pre><code class="language-javascript">const axios = require('axios');
+
+class RateLimitHandler {
+  constructor(baseUrl, apiKey) {
+    this.baseUrl = baseUrl;
+    this.apiKey = apiKey;
+    this.headers = {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    };
+    // Track rate limits
+    this.rateLimits = {
+      global: { limit: 0, remaining: 0, reset: 0 },
+      endpoint: { limit: 0, remaining: 0, reset: 0 },
+      model: { limit: 0, remaining: 0, reset: 0 }
+    };
+  }
+
+  async makeRequest(method, endpoint, data = null, maxRetries = 5) {
+    let retries = 0;
+    const baseDelay = 1000; // Starting delay in milliseconds
+
+    while (retries &lt; maxRetries) {
+      try {
+        // Check if we should wait based on previous rate limit info
+        await this._waitIfNeeded();
+
+        // Make the request
+        const config = {
+          method: method.toLowerCase(),
+          url: `${this.baseUrl}${endpoint}`,
+          headers: this.headers,
+          validateStatus: null // Don't throw on error status codes
+        };
+
+        if (data &amp;&amp; method.toLowerCase() !== 'get') {
+          config.data = data;
+        }
+
+        const response = await axios(config);
+
+        // Update rate limit tracking from headers
+        this._updateRateLimits(response);
+
+        // If successful, return the response
+        if (response.status &lt; 300) {
+          return response.data;
+        }
+
+        // Handle rate limiting
+        if (response.status === 429) {
+          const retryAfter = parseInt(response.headers['retry-after'] || baseDelay * Math.pow(2, retries) / 1000);
+          console.log(`Rate limit exceeded. Waiting ${retryAfter} seconds.`);
+          await new Promise(resolve =&gt; setTimeout(resolve, retryAfter * 1000));
+          retries++;
+          continue;
+        }
+
+        // Handle other errors
+        console.log(`Error: ${response.status} - ${JSON.stringify(response.data)}`);
+        return response.data;
+
+      } catch (error) {
+        const delay = baseDelay * Math.pow(2, retries);
+        console.log(`Request exception: ${error.message}. Retrying after ${delay / 1000} seconds.`);
+        await new Promise(resolve =&gt; setTimeout(resolve, delay));
+        retries++;
+      }
+    }
+
+    throw new Error(`Failed after ${maxRetries} retries`);
+  }
+
+  _updateRateLimits(response) {
+    // Update our tracking of rate limits based on response headers
+    const limitType = response.headers['x-ratelimit-type'];
+    if (limitType &amp;&amp; this.rateLimits[limitType]) {
+      this.rateLimits[limitType].limit = parseInt(response.headers['x-ratelimit-limit'] || 0);
+      this.rateLimits[limitType].remaining = parseInt(response.headers['x-ratelimit-remaining'] || 0);
+      this.rateLimits[limitType].reset = parseInt(response.headers['x-ratelimit-reset'] || 0);
+    }
+  }
+
+  async _waitIfNeeded() {
+    // Check if we need to wait for any rate limits
+    const now = Math.floor(Date.now() / 1000);
+    for (const [limitType, info] of Object.entries(this.rateLimits)) {
+      if (info.remaining === 0 &amp;&amp; info.reset &gt; now) {
+        const waitTime = info.reset - now;
+        console.log(`Rate limit (${limitType}) reached. Waiting ${waitTime} seconds.`);
+        await new Promise(resolve =&gt; setTimeout(resolve, waitTime * 1000));
+      }
+    }
+  }
+}
+
+// Example usage
+async function main() {
+  const apiClient = new RateLimitHandler('https://api.aisera.com', 'YOUR_API_KEY');
+
+  try {
+    // Get prompt list
+    const prompts = await apiClient.makeRequest('GET', '/v1/tenants/9000/llm/prompts');
+    console.log(`Retrieved ${prompts.items.length} prompts`);
+
+    // Execute prompt
+    const executionResult = await apiClient.makeRequest(
+      'POST', 
+      '/v1/tenants/9000/llm/execute',
+      {
+        prompt: 'Explain quantum computing in simple terms',
+        model: 'gpt-4'
+      }
+    );
+    console.log(executionResult);
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+}
+
+main();
+</code></pre>
+</body>
+</html>

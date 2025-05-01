@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>versioning-policy</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="api-versioning-deprecation-policy">API Versioning &amp; Deprecation Policy</h1>
+<p>This document outlines the LLM Gateway API versioning strategy, backward compatibility guarantees, and deprecation policies to help you plan and manage your integration.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#api-versioning-strategy">API Versioning Strategy</a></li>
+<li><a href="#backward-compatibility">Backward Compatibility</a></li>
+<li><a href="#deprecation-policy">Deprecation Policy</a></li>
+<li><a href="#version-lifecycle">Version Lifecycle</a></li>
+<li><a href="#staying-informed">Staying Informed</a></li>
+<li><a href="#migration-guidelines">Migration Guidelines</a></li>
+</ul>
+<h2 id="api-versioning-strategy">API Versioning Strategy</h2>
+<p>The LLM Gateway API uses a date-based versioning scheme combined with semantic versioning principles to manage changes and ensure stability for client applications.</p>
+<h3 id="version-format">Version Format</h3>
+<p>API versions follow this pattern:</p>
+<pre><code>v{YYYY-MM-DD}
+</code></pre>
+<p>Example: <code>v2023-06-01</code></p>
+<h3 id="version-specification">Version Specification</h3>
+<p>You can specify which API version to use in one of three ways:</p>
+<ol>
+<li>
+<p><strong>URL Path</strong> (recommended):
+   <code>https://api.aisera.com/v2023-06-01/tenants/{tenantId}/llm/prompts</code></p>
+</li>
+<li>
+<p><strong>Accept Header</strong>:
+   <code>Accept: application/json; version=2023-06-01</code></p>
+</li>
+<li>
+<p><strong>Custom Header</strong>:
+   <code>X-API-Version: 2023-06-01</code></p>
+</li>
+</ol>
+<p>If no version is specified, the API will use the latest non-preview version.</p>
+<h3 id="preview-versions">Preview Versions</h3>
+<p>Preview versions of the API allow early access to new features and are clearly marked:</p>
+<pre><code>v2023-06-01-preview
+</code></pre>
+<p>Preview versions:
+- May change without notice
+- Do not have backward compatibility guarantees
+- Are not recommended for production use</p>
+<h2 id="backward-compatibility">Backward Compatibility</h2>
+<p>We maintain backward compatibility within each major API version. This means:</p>
+<h3 id="guaranteed-compatible-changes">Guaranteed Compatible Changes</h3>
+<p>The following changes may be made without incrementing the major version:</p>
+<ul>
+<li>Adding new API endpoints</li>
+<li>Adding new optional request parameters</li>
+<li>Adding new properties to response objects</li>
+<li>Adding new enum values</li>
+<li>Improving error messages</li>
+<li>Performance improvements</li>
+</ul>
+<h3 id="breaking-changes">Breaking Changes</h3>
+<p>The following changes are considered breaking and will only occur with a new major version:</p>
+<ul>
+<li>Removing or renaming API endpoints</li>
+<li>Removing or renaming properties in request or response bodies</li>
+<li>Changing the type of a property</li>
+<li>Adding new required request parameters</li>
+<li>Changing the status code for a particular error condition</li>
+<li>Changing the error code for a particular error condition</li>
+</ul>
+<h2 id="deprecation-policy">Deprecation Policy</h2>
+<h3 id="notice-period">Notice Period</h3>
+<p>We provide advance notice before deprecating any API version or feature:</p>
+<ul>
+<li><strong>Major API versions</strong>: Minimum 12 months notice</li>
+<li><strong>Individual endpoints</strong>: Minimum 6 months notice</li>
+<li><strong>Parameters or response fields</strong>: Minimum 3 months notice</li>
+</ul>
+<h3 id="deprecation-notices">Deprecation Notices</h3>
+<p>Deprecation notices are communicated through:</p>
+<ol>
+<li>
+<p><strong>Response Headers</strong>:
+   <code>Deprecation: true
+   Sunset: Sat, 31 Dec 2023 23:59:59 GMT
+   Link: &lt;https://api.aisera.com/v2024-01-01/tenants/{tenantId}/llm/prompts&gt;; rel="successor-version"</code></p>
+</li>
+<li>
+<p><strong>Developer Portal</strong>: All deprecations are documented in the developer portal with migration guides.</p>
+</li>
+<li>
+<p><strong>Email Notifications</strong>: Registered API users receive email notifications for major deprecations.</p>
+</li>
+</ol>
+<h3 id="deprecation-warning-headers">Deprecation Warning Headers</h3>
+<p>When using a deprecated feature, you will receive the following response headers:</p>
+<ul>
+<li><code>Deprecation: true</code> - Indicates the resource is deprecated</li>
+<li><code>Sunset: &lt;date&gt;</code> - The date after which the resource may no longer be available</li>
+<li><code>Link: &lt;uri&gt;; rel="successor-version"</code> - URI of the replacement resource</li>
+</ul>
+<h2 id="version-lifecycle">Version Lifecycle</h2>
+<p>API versions go through the following lifecycle stages:</p>
+<ol>
+<li><strong>Preview</strong>: Early access, may change without notice</li>
+<li><strong>General Availability (GA)</strong>: Production-ready, backward compatibility guaranteed</li>
+<li><strong>Deprecated</strong>: Still available but scheduled for removal</li>
+<li><strong>Sunset</strong>: No longer available</li>
+</ol>
+<h3 id="current-versions">Current Versions</h3>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Status</th>
+<th>Sunset Date</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>v2023-06-01</td>
+<td>GA</td>
+<td>N/A</td>
+<td>Current stable version</td>
+</tr>
+<tr>
+<td>v2022-12-01</td>
+<td>Deprecated</td>
+<td>2024-01-01</td>
+<td>Use v2023-06-01 instead</td>
+</tr>
+<tr>
+<td>v2023-10-01-preview</td>
+<td>Preview</td>
+<td>N/A</td>
+<td>Next version in preview</td>
+</tr>
+</tbody>
+</table>
+<h2 id="staying-informed">Staying Informed</h2>
+<p>Stay up to date with API changes through the following channels:</p>
+<ol>
+<li>
+<p><strong>Change Log</strong>: We maintain a detailed change log at <code>https://api.aisera.com/changelog</code></p>
+</li>
+<li>
+<p><strong>Developer Newsletter</strong>: Subscribe at <code>https://api.aisera.com/subscribe</code></p>
+</li>
+<li>
+<p><strong>API Status Page</strong>: Check service status at <code>https://status.aisera.com</code></p>
+</li>
+<li>
+<p><strong>RSS Feed</strong>: Subscribe to the API changes RSS feed at <code>https://api.aisera.com/changelog.rss</code></p>
+</li>
+</ol>
+<h2 id="migration-guidelines">Migration Guidelines</h2>
+<h3 id="upgrading-between-versions">Upgrading Between Versions</h3>
+<p>Follow these best practices when upgrading to a new API version:</p>
+<ol>
+<li>
+<p><strong>Review the Migration Guide</strong>: Each new API version comes with a comprehensive migration guide outlining all changes.</p>
+</li>
+<li>
+<p><strong>Test in Sandbox</strong>: Before migrating production code, test thoroughly in the sandbox environment.</p>
+</li>
+<li>
+<p><strong>Update API Clients</strong>: If you're using our official client libraries, update to the latest version that supports the new API version.</p>
+</li>
+<li>
+<p><strong>Gradual Rollout</strong>: Consider rolling out the API version update to a small percentage of your users first.</p>
+</li>
+<li>
+<p><strong>Monitor Error Rates</strong>: After upgrading, closely monitor your application's error rates and performance.</p>
+</li>
+</ol>
+<h3 id="automated-compatibility-testing">Automated Compatibility Testing</h3>
+<p>We provide a compatibility testing tool that you can use to check your application against different API versions:</p>
+<pre><code class="language-bash">curl &quot;https://api.aisera.com/compatibility-check&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;current_version&quot;: &quot;v2022-12-01&quot;,
+    &quot;target_version&quot;: &quot;v2023-06-01&quot;,
+    &quot;endpoints&quot;: [
+      &quot;/tenants/{tenantId}/llm/prompts&quot;,
+      &quot;/tenants/{tenantId}/llm/execute&quot;
+    ]
+  }'
+</code></pre>
+<p>This tool will analyze your API usage patterns and identify potential compatibility issues before you migrate.</p>
+<h3 id="version-specific-documentation">Version-Specific Documentation</h3>
+<p>Documentation for all API versions remains available even after a version is deprecated:</p>
+<pre><code>https://api.aisera.com/docs/v2022-12-01
+</code></pre>
+<p>This allows you to reference previous behavior while migrating to newer versions.</p>
+</body>
+</html>

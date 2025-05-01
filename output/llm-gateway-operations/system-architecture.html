@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>system-architecture</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="system-architecture-overview">System Architecture Overview</h1>
+<p>This document provides a high-level overview of the LLM Gateway system architecture from an operational perspective, focusing on deployment components, networking, and infrastructure elements.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#architecture-components">Architecture Components</a></li>
+<li><a href="#deployment-architecture">Deployment Architecture</a></li>
+<li><a href="#networking-architecture">Networking Architecture</a></li>
+<li><a href="#data-flow">Data Flow</a></li>
+<li><a href="#scaling-considerations">Scaling Considerations</a></li>
+<li><a href="#infrastructure-dependencies">Infrastructure Dependencies</a></li>
+</ul>
+<h2 id="architecture-components">Architecture Components</h2>
+<p>The LLM Gateway system consists of several key components, each with specific operational requirements:</p>
+<h3 id="component-diagram">Component Diagram</h3>
+<pre><code class="language-mermaid">graph TD
+    Client[Client Applications] --&gt;|REST/gRPC| LB[Load Balancer]
+    LB --&gt; APIService[API Service]
+
+    subgraph &quot;LLM Gateway Service Cluster&quot;
+        APIService --&gt;|Routing| ExecutionService[Execution Service]
+        APIService --&gt;|Management| PromptService[Prompt Management Service]
+        APIService --&gt;|Analytics| AnalyticsService[Analytics Service]
+
+        ExecutionService --&gt;|Provider Access| ProviderService[Provider Management Service]
+        ExecutionService --&gt;|Caching| CacheService[Cache Service]
+
+        PromptService --&gt; VersionService[Versioning Service]
+    end
+
+    ProviderService --&gt;|External API Calls| ExtProviders[External LLM Providers]
+
+    subgraph &quot;Data Persistence Layer&quot;
+        PromptService --&gt; PromptDB[(Prompt Database)]
+        VersionService --&gt; PromptDB
+        CacheService --&gt; CacheDB[(Cache Database)]
+        AnalyticsService --&gt; MetricsDB[(Metrics Database)]
+    end
+
+    subgraph &quot;Support Services&quot;
+        MonitoringStack[Monitoring Stack]
+        LoggingSystem[Logging System]
+        SecretManager[Secret Manager]
+        AuthService[Auth Service]
+    end
+
+    APIService -.-&gt; MonitoringStack
+    APIService -.-&gt; LoggingSystem
+    ProviderService -.-&gt; SecretManager
+    APIService -.-&gt; AuthService
+</code></pre>
+<h3 id="core-components">Core Components</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Description</th>
+<th>Service Type</th>
+<th>Scaling Pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API Service</td>
+<td>Entry point for all API requests (REST and gRPC)</td>
+<td>Kubernetes Deployment</td>
+<td>Horizontal Pod Autoscaler</td>
+</tr>
+<tr>
+<td>Execution Service</td>
+<td>Handles prompt execution and model interactions</td>
+<td>Kubernetes Deployment</td>
+<td>Horizontal Pod Autoscaler</td>
+</tr>
+<tr>
+<td>Prompt Management Service</td>
+<td>Manages prompt templates and metadata</td>
+<td>Kubernetes Deployment</td>
+<td>Horizontal Pod Autoscaler</td>
+</tr>
+<tr>
+<td>Provider Management Service</td>
+<td>Handles connections to LLM providers</td>
+<td>Kubernetes Deployment</td>
+<td>Horizontal Pod Autoscaler</td>
+</tr>
+<tr>
+<td>Cache Service</td>
+<td>Optimizes response time and reduces provider costs</td>
+<td>Kubernetes Deployment</td>
+<td>Fixed Replica Set</td>
+</tr>
+<tr>
+<td>Analytics Service</td>
+<td>Collects and processes usage and performance data</td>
+<td>Kubernetes Deployment</td>
+<td>Horizontal Pod Autoscaler</td>
+</tr>
+<tr>
+<td>Versioning Service</td>
+<td>Manages prompt template versions</td>
+<td>Kubernetes Deployment</td>
+<td>Fixed Replica Set</td>
+</tr>
+</tbody>
+</table>
+<h3 id="data-persistence">Data Persistence</h3>
+<table>
+<thead>
+<tr>
+<th>Database</th>
+<th>Purpose</th>
+<th>Technology</th>
+<th>Backup Strategy</th>
+<th>Scaling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt Database</td>
+<td>Stores prompts, templates, and metadata</td>
+<td>PostgreSQL</td>
+<td>Daily Snapshots</td>
+<td>Vertical + Read Replicas</td>
+</tr>
+<tr>
+<td>Cache Database</td>
+<td>Stores cached responses</td>
+<td>Redis Cluster</td>
+<td>Persistence</td>
+<td>Horizontal Sharding</td>
+</tr>
+<tr>
+<td>Metrics Database</td>
+<td>Stores time-series metrics and analytics</td>
+<td>Prometheus/TimescaleDB</td>
+<td>Regular Snapshots</td>
+<td>Retention Policy + Sharding</td>
+</tr>
+</tbody>
+</table>
+<h3 id="supporting-systems">Supporting Systems</h3>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Description</th>
+<th>Technology</th>
+<th>Criticality</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Monitoring Stack</td>
+<td>End-to-end system monitoring</td>
+<td>Prometheus, Grafana, Alert Manager</td>
+<td>High</td>
+</tr>
+<tr>
+<td>Logging System</td>
+<td>Centralized logging</td>
+<td>Elasticsearch, Fluentd, Kibana</td>
+<td>High</td>
+</tr>
+<tr>
+<td>Secret Manager</td>
+<td>Secures API keys and credentials</td>
+<td>AWS Secrets Manager / HashiCorp Vault</td>
+<td>Critical</td>
+</tr>
+<tr>
+<td>Auth Service</td>
+<td>Handles authentication and authorization</td>
+<td>OAuth2/OIDC Provider</td>
+<td>Critical</td>
+</tr>
+</tbody>
+</table>
+<h2 id="deployment-architecture">Deployment Architecture</h2>
+<p>The LLM Gateway is deployed on Kubernetes across multiple availability zones within a single region, with the option for multi-region deployment for global customers.</p>
+<h3 id="infrastructure-diagram">Infrastructure Diagram</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;AWS Cloud&quot;
+        subgraph &quot;Multi-AZ Deployment&quot;
+            subgraph &quot;Availability Zone A&quot;
+                EKSA[EKS Node Group A]
+                RDSA[RDS Primary]
+                ElastiCacheA[ElastiCache Node A]
+            end
+
+            subgraph &quot;Availability Zone B&quot;
+                EKSB[EKS Node Group B]
+                RDSB[RDS Standby]
+                ElastiCacheB[ElastiCache Node B]
+            end
+
+            subgraph &quot;Availability Zone C&quot;
+                EKSC[EKS Node Group C]
+                ElastiCacheC[ElastiCache Node C]
+            end
+        end
+
+        ALB[Application Load Balancer]
+        Route53[Route 53 DNS]
+        S3[S3 Backup Bucket]
+        SecretsManager[Secrets Manager]
+
+        Route53 --&gt; ALB
+        ALB --&gt; EKSA
+        ALB --&gt; EKSB
+        ALB --&gt; EKSC
+
+        EKSA -.-&gt; RDSA
+        EKSB -.-&gt; RDSA
+        EKSC -.-&gt; RDSA
+
+        RDSA -.-&gt; RDSB
+
+        EKSA -.-&gt; ElastiCacheA
+        EKSB -.-&gt; ElastiCacheB
+        EKSC -.-&gt; ElastiCacheC
+
+        RDSA -.-&gt; S3
+        RDSB -.-&gt; S3
+
+        EKSA -.-&gt; SecretsManager
+        EKSB -.-&gt; SecretsManager
+        EKSC -.-&gt; SecretsManager
+    end
+
+    User[Users] --&gt; Route53
+    AdminUser[Admins] --&gt; VPN[VPN]
+    VPN --&gt; EKSB
+</code></pre>
+<h3 id="deployment-specifications">Deployment Specifications</h3>
+<ul>
+<li><strong>Kubernetes</strong>: Amazon EKS (Elastic Kubernetes Service)</li>
+<li><strong>Container Registry</strong>: Amazon ECR</li>
+<li><strong>Nodes</strong>: </li>
+<li>Production: Minimum 9 nodes across 3 AZs</li>
+<li>Staging: 6 nodes across 2 AZs</li>
+<li>Development: 3 nodes in single AZ</li>
+<li><strong>Node Types</strong>:</li>
+<li>API/Execution Services: c5.2xlarge</li>
+<li>Support Services: m5.xlarge</li>
+<li>Analytics: r5.xlarge</li>
+</ul>
+<h3 id="regional-deployments">Regional Deployments</h3>
+<p>The LLM Gateway can be deployed in multiple AWS regions for global distribution:</p>
+<ul>
+<li><strong>Primary Region</strong>: US East (N. Virginia)</li>
+<li><strong>Secondary Regions</strong>: EU (Ireland), Asia Pacific (Tokyo)</li>
+<li><strong>DR Region</strong>: US West (Oregon)</li>
+</ul>
+<h2 id="networking-architecture">Networking Architecture</h2>
+<h3 id="network-diagram">Network Diagram</h3>
+<pre><code class="language-mermaid">graph TD
+    Internet((Internet)) --&gt; WAF[AWS WAF]
+    WAF --&gt; ALB[Application Load Balancer]
+
+    subgraph &quot;VPC&quot;
+        subgraph &quot;Public Subnet&quot;
+            ALB
+            Bastion[Bastion Host]
+        end
+
+        subgraph &quot;Private Subnet - App Tier&quot;
+            EKS[EKS Cluster]
+            ALB --&gt; EKS
+        end
+
+        subgraph &quot;Private Subnet - Data Tier&quot;
+            RDS[(RDS Database)]
+            ElastiCache[(ElastiCache)]
+            EKS --&gt; RDS
+            EKS --&gt; ElastiCache
+        end
+
+        NAT[NAT Gateway]
+        EKS --&gt; NAT
+        NAT --&gt; Internet
+
+        VPNGateway[VPN Gateway]
+        Bastion --&gt; EKS
+    end
+
+    subgraph &quot;External Services&quot;
+        LLMProviders[LLM Providers API]
+        Monitoring[Monitoring Services]
+    end
+
+    EKS --&gt; LLMProviders
+    EKS --&gt; Monitoring
+
+    Corp[Corporate Network] --&gt; VPNGateway
+    VPNGateway --&gt; EKS
+</code></pre>
+<h3 id="network-specifications">Network Specifications</h3>
+<ul>
+<li><strong>VPC CIDR</strong>: 10.0.0.0/16</li>
+<li><strong>Public Subnets</strong>: 10.0.0.0/24, 10.0.1.0/24, 10.0.2.0/24</li>
+<li><strong>App Tier Subnets</strong>: 10.0.10.0/24, 10.0.11.0/24, 10.0.12.0/24</li>
+<li><strong>Data Tier Subnets</strong>: 10.0.20.0/24, 10.0.21.0/24, 10.0.22.0/24</li>
+<li><strong>Security Groups</strong>:</li>
+<li>ALB: Ports 80 (redirect to 443), 443</li>
+<li>App Tier: Port 8080 (API), 8081 (gRPC)</li>
+<li>Data Tier: PostgreSQL (5432), Redis (6379)</li>
+<li><strong>Network Access Control Lists</strong> implement additional security layers</li>
+</ul>
+<h2 id="data-flow">Data Flow</h2>
+<p>The following diagram illustrates the data flow through the system for a typical prompt execution request:</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client
+    participant LB as Load Balancer
+    participant API as API Service
+    participant Auth as Auth Service
+    participant Exec as Execution Service
+    participant Cache as Cache Service
+    participant Provider as Provider Service
+    participant DB as Prompt Database
+    participant Redis as Cache Database
+    participant LLM as External LLM API
+
+    Client-&gt;&gt;LB: Execute Prompt Request
+    LB-&gt;&gt;API: Route Request
+    API-&gt;&gt;Auth: Validate Authentication
+    Auth--&gt;&gt;API: Authentication Result
+
+    API-&gt;&gt;Exec: Route to Execution Service
+    Exec-&gt;&gt;DB: Fetch Prompt Template
+    DB--&gt;&gt;Exec: Return Template
+
+    Exec-&gt;&gt;Cache: Check Cache
+
+    alt Cache Hit
+        Cache-&gt;&gt;Redis: Fetch Cached Response
+        Redis--&gt;&gt;Cache: Return Cached Response
+        Cache--&gt;&gt;Exec: Return Response
+    else Cache Miss
+        Exec-&gt;&gt;Provider: Select Provider
+        Provider-&gt;&gt;LLM: Send Request to LLM
+        LLM--&gt;&gt;Provider: Return Response
+        Provider--&gt;&gt;Exec: Return Response
+        Exec-&gt;&gt;Redis: Cache Response
+    end
+
+    Exec--&gt;&gt;API: Return Response
+    API--&gt;&gt;LB: Return Formatted Response
+    LB--&gt;&gt;Client: Deliver Response
+</code></pre>
+<h2 id="scaling-considerations">Scaling Considerations</h2>
+<p>The LLM Gateway is designed to scale horizontally to handle increasing load, with several key scaling considerations:</p>
+<h3 id="scaling-thresholds">Scaling Thresholds</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Scaling Metric</th>
+<th>Threshold</th>
+<th>Scaling Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API Service</td>
+<td>CPU Utilization</td>
+<td>&gt;70%</td>
+<td>Scale Out</td>
+</tr>
+<tr>
+<td>API Service</td>
+<td>Memory Utilization</td>
+<td>&gt;80%</td>
+<td>Scale Out</td>
+</tr>
+<tr>
+<td>Execution Service</td>
+<td>Concurrent Requests</td>
+<td>&gt;1000/node</td>
+<td>Scale Out</td>
+</tr>
+<tr>
+<td>Prompt Service</td>
+<td>Request Latency</td>
+<td>&gt;200ms</td>
+<td>Scale Out</td>
+</tr>
+<tr>
+<td>Cache Service</td>
+<td>Cache Hit Rate</td>
+<td>&lt;70%</td>
+<td>Increase Cache Size</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>CPU Utilization</td>
+<td>&gt;60%</td>
+<td>Increase Instance Size</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>Storage Usage</td>
+<td>&gt;80%</td>
+<td>Increase Storage</td>
+</tr>
+</tbody>
+</table>
+<h3 id="autoscaling-configurations">Autoscaling Configurations</h3>
+<ul>
+<li><strong>Horizontal Pod Autoscaler (HPA)</strong> is configured for all core services</li>
+<li><strong>Node Autoscaler</strong> provisions additional nodes based on cluster utilization</li>
+<li><strong>Database Read Replicas</strong> are added based on read query volume</li>
+<li><strong>Cache Cluster</strong> expands based on memory pressure metrics</li>
+</ul>
+<h2 id="infrastructure-dependencies">Infrastructure Dependencies</h2>
+<p>The LLM Gateway has the following external dependencies:</p>
+<table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>Purpose</th>
+<th>SLA Requirement</th>
+<th>Fallback Strategy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM Providers (OpenAI, Anthropic, etc.)</td>
+<td>Core LLM functionality</td>
+<td>99.9%</td>
+<td>Multi-provider routing</td>
+</tr>
+<tr>
+<td>AWS Services</td>
+<td>Infrastructure</td>
+<td>99.99%</td>
+<td>Multi-AZ/Region</td>
+</tr>
+<tr>
+<td>DNS Providers</td>
+<td>Domain resolution</td>
+<td>100%</td>
+<td>Multiple providers</td>
+</tr>
+<tr>
+<td>Monitoring Services</td>
+<td>System observability</td>
+<td>99.9%</td>
+<td>Local monitoring</td>
+</tr>
+<tr>
+<td>Authentication Provider</td>
+<td>User authentication</td>
+<td>99.99%</td>
+<td>Local cache + degraded mode</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dependency-map">Dependency Map</h3>
+<pre><code class="language-mermaid">graph TD
+    LLMGateway[LLM Gateway]
+
+    LLMGateway --&gt; AWS[AWS Infrastructure]
+    LLMGateway --&gt; LLMProviders[LLM API Providers]
+    LLMGateway --&gt; Auth[Authentication Services]
+    LLMGateway --&gt; Monitoring[Monitoring Services]
+
+    subgraph &quot;AWS Dependencies&quot;
+        AWS --&gt; EC2[EC2/EKS]
+        AWS --&gt; RDS[RDS]
+        AWS --&gt; ElastiCache[ElastiCache]
+        AWS --&gt; S3[S3]
+        AWS --&gt; Route53[Route53]
+        AWS --&gt; SM[Secrets Manager]
+    end
+
+    subgraph &quot;LLM Providers&quot;
+        LLMProviders --&gt; OpenAI[OpenAI API]
+        LLMProviders --&gt; Anthropic[Anthropic API]
+        LLMProviders --&gt; Cohere[Cohere API]
+        LLMProviders --&gt; AzureOpenAI[Azure OpenAI]
+    end
+
+    subgraph &quot;Auth Providers&quot;
+        Auth --&gt; Cognito[AWS Cognito]
+        Auth --&gt; OIDC[OIDC Provider]
+    end
+
+    subgraph &quot;Monitoring Stack&quot;
+        Monitoring --&gt; Prometheus[Prometheus]
+        Monitoring --&gt; Grafana[Grafana]
+        Monitoring --&gt; Datadog[Datadog]
+        Monitoring --&gt; CloudWatch[CloudWatch]
+    end
+
+    style LLMGateway fill:#f9f,stroke:#333,stroke-width:4px
+</code></pre>
+<hr />
+<p><strong>Previous</strong>: <a href="README.html">README</a> | <strong>Next</strong>: <a href="infrastructure-as-code.html">Infrastructure as Code</a></p>
+</body>
+</html>

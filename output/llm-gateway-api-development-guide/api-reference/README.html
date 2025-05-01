@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>README</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="api-reference">API Reference</h1>
+<p>This section provides detailed documentation of all LLM Gateway API endpoints. Each endpoint includes information about the request parameters, response format, and example code snippets.</p>
+<h2 id="api-overview">API Overview</h2>
+<p>The LLM Gateway API is divided into several functional areas:</p>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="prompt-management.html">Prompt Management</a></td>
+<td>Create, read, update, and delete prompts</td>
+</tr>
+<tr>
+<td><a href="prompt-execution.html">Prompt Execution</a></td>
+<td>Execute prompts against LLMs</td>
+</tr>
+<tr>
+<td><a href="llm-registry.html">LLM Registry</a></td>
+<td>Manage LLM provider registrations</td>
+</tr>
+<tr>
+<td><a href="versioning.html">Versioning</a></td>
+<td>Manage prompt versions</td>
+</tr>
+</tbody>
+</table>
+<h2 id="base-urls">Base URLs</h2>
+<p>The LLM Gateway API is accessible at the following base URLs:</p>
+<table>
+<thead>
+<tr>
+<th>Environment</th>
+<th>Base URL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Production</td>
+<td><code>https://api.aisera.com/llm/v1</code></td>
+</tr>
+<tr>
+<td>Staging</td>
+<td><code>https://api-staging.aisera.com/llm/v1</code></td>
+</tr>
+<tr>
+<td>Development</td>
+<td><code>https://api-dev.aisera.com/llm/v1</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="request-format">Request Format</h2>
+<p>All API requests should include the following headers:</p>
+<ul>
+<li><code>Content-Type: application/json</code> for requests with a JSON body</li>
+<li><code>Authorization: Bearer YOUR_TOKEN</code> or <code>X-API-Key: YOUR_API_KEY</code> for authentication</li>
+</ul>
+<h2 id="response-format">Response Format</h2>
+<p>All API responses follow a standard format:</p>
+<ul>
+<li>Successful responses have a 2xx status code and return JSON</li>
+<li>Error responses have a non-2xx status code and return a JSON error object</li>
+</ul>
+<h3 id="success-response-format">Success Response Format</h3>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 200,
+  &quot;data&quot;: {
+    // Response data varies by endpoint
+  }
+}
+</code></pre>
+<h3 id="error-response-format">Error Response Format</h3>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 400,
+  &quot;errorMessage&quot;: &quot;Descriptive error message&quot;,
+  &quot;errorCode&quot;: &quot;ERROR_CODE&quot;
+}
+</code></pre>
+<h2 id="endpoints-by-area">Endpoints by Area</h2>
+<h3 id="prompt-management">Prompt Management</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/prompt_group/list</code></td>
+<td>List all prompt groups</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/prompt_group</code></td>
+<td>Create a new prompt group</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/prompt_group</code></td>
+<td>Get a specific prompt group</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/prompt_group</code></td>
+<td>Update a prompt group</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/prompt_group</code></td>
+<td>Delete a prompt group</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/prompt/list</code></td>
+<td>List all prompts</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts</code></td>
+<td>List prompts for a tenant</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts/{promptId}</code></td>
+<td>Get a specific prompt</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts</code></td>
+<td>Create a new prompt</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts/{promptId}</code></td>
+<td>Update a prompt</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts/{promptId}</code></td>
+<td>Delete a prompt</td>
+</tr>
+</tbody>
+</table>
+<h3 id="prompt-execution">Prompt Execution</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/execution/fetchChatAnswer</code></td>
+<td>Execute a chat-style prompt and get an answer</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/execution/fetchAnswer</code></td>
+<td>Execute a prompt and get an answer</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/execution/inferPrompt</code></td>
+<td>Get prompt details for execution</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts/execute</code></td>
+<td>Execute a prompt directly</td>
+</tr>
+</tbody>
+</table>
+<h3 id="llm-registry">LLM Registry</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts/models</code></td>
+<td>List available LLM models</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/tenants/{tenantId}/llm/prompts/providers</code></td>
+<td>List available LLM providers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="versioning">Versioning</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/v1/tenants/{tenantId}/version/llm-prompts</code></td>
+<td>Create a new prompt version</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/v1/tenants/{tenantId}/version/llm-prompts/{promptId}</code></td>
+<td>Update a prompt version</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/tenants/{tenantId}/version/llm-prompts/new-draft</code></td>
+<td>Create a new draft version</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/v1/tenants/{tenantId}/version/llm-prompts/publish</code></td>
+<td>Publish a draft version</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/v1/tenants/{tenantId}/version/llm-prompts/{promptId}</code></td>
+<td>Delete a prompt version</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/tenants/{tenantId}/version/llm-prompts/unique</code></td>
+<td>List unique prompts</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/v1/tenants/{tenantId}/version/llm-prompts/published</code></td>
+<td>List published prompts</td>
+</tr>
+</tbody>
+</table>
+<h2 id="using-this-reference">Using This Reference</h2>
+<p>Each section contains detailed information about the endpoints in that area. For each endpoint, you'll find:</p>
+<ul>
+<li>URL and HTTP method</li>
+<li>Required permissions</li>
+<li>Request parameters</li>
+<li>Response format</li>
+<li>Example requests and responses in multiple languages</li>
+<li>Error handling information</li>
+</ul>
+<p>Navigate to the specific area to find detailed information about the endpoints you need.</p>
+</body>
+</html>

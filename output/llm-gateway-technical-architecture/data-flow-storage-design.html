@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>data-flow-storage-design</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="data-flow-and-storage-design">Data Flow and Storage Design</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#data-models">Data Models</a></li>
+<li><a href="#core-domain-entities">Core Domain Entities</a></li>
+<li><a href="#requestresponse-objects">Request/Response Objects</a></li>
+<li><a href="#configuration-models">Configuration Models</a></li>
+<li><a href="#storage-architecture">Storage Architecture</a></li>
+<li><a href="#database-schema">Database Schema</a></li>
+<li><a href="#cache-architecture">Cache Architecture</a></li>
+<li><a href="#data-flows">Data Flows</a></li>
+<li><a href="#prompt-execution-flow">Prompt Execution Flow</a></li>
+<li><a href="#prompt-management-flow">Prompt Management Flow</a></li>
+<li><a href="#analytics-collection-flow">Analytics Collection Flow</a></li>
+<li><a href="#data-serialization">Data Serialization</a></li>
+<li><a href="#data-retention-and-lifecycle">Data Retention and Lifecycle</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This document details the data flow and storage architecture of the LLM Gateway, including entity models, database schemas, caching strategies, and the lifecycle of data as it moves through the system. The LLM Gateway handles various types of data including user requests, LLM responses, prompt templates, configuration settings, and analytics information.</p>
+<h2 id="data-models">Data Models</h2>
+<h3 id="core-domain-entities">Core Domain Entities</h3>
+<p>The core domain entities represent the primary data structures that are persisted in the system's storage.</p>
+<pre><code class="language-mermaid">classDiagram
+    class LLMPromptRegistryEntity {
+        &lt;&lt;entity&gt;&gt;
+        +id: String
+        +name: String
+        +description: String
+        +template: String
+        +createdBy: String
+        +createdAt: Timestamp
+        +updatedAt: Timestamp
+        +status: String
+        +tenantId: String
+        +tags: List~String~
+    }
+
+    class LLMPromptRegistryMappingEntity {
+        &lt;&lt;entity&gt;&gt;
+        +id: String
+        +promptId: String
+        +paramName: String
+        +paramType: String
+        +description: String
+        +required: Boolean
+        +defaultValue: String
+    }
+
+    class LLMPromptVersioningEntity {
+        &lt;&lt;entity&gt;&gt;
+        +id: String
+        +promptId: String
+        +version: String
+        +template: String
+        +createdBy: String
+        +createdAt: Timestamp
+        +status: String
+        +comments: String
+    }
+
+    class LLMRegistryEntity {
+        &lt;&lt;entity&gt;&gt;
+        +id: String
+        +name: String
+        +description: String
+        +provider: String
+        +modelId: String
+        +defaultParams: Map~String, Object~
+        +createdAt: Timestamp
+        +updatedAt: Timestamp
+        +status: String
+    }
+
+    LLMPromptRegistryEntity &quot;1&quot; -- &quot;many&quot; LLMPromptRegistryMappingEntity : contains
+    LLMPromptRegistryEntity &quot;1&quot; -- &quot;many&quot; LLMPromptVersioningEntity : has versions
+</code></pre>
+<p><strong>Entity Descriptions:</strong></p>
+<ul>
+<li><code>LLMPromptRegistryEntity</code>: Represents a prompt template with metadata</li>
+<li><code>LLMPromptRegistryMappingEntity</code>: Defines parameters for prompt templates</li>
+<li><code>LLMPromptVersioningEntity</code>: Tracks versions of prompt templates</li>
+<li><code>LLMRegistryEntity</code>: Describes available LLM models and configurations</li>
+</ul>
+<h3 id="requestresponse-objects">Request/Response Objects</h3>
+<p>These data structures represent the request and response objects used in API interactions.</p>
+<pre><code class="language-mermaid">classDiagram
+    class LLMFetchAnswerRequestDTO {
+        &lt;&lt;dto&gt;&gt;
+        +prompt: String
+        +maxTokens: Integer
+        +temperature: Float
+        +provider: String
+        +model: String
+        +options: Map~String, Object~
+    }
+
+    class LLMFetchAnswerResponseDTO {
+        &lt;&lt;dto&gt;&gt;
+        +response: String
+        +provider: String
+        +model: String
+        +usageMetrics: Map~String, Object~
+        +tokenCount: Integer
+        +completionId: String
+    }
+
+    class LLMFetchChatAnswerRequestDTO {
+        &lt;&lt;dto&gt;&gt;
+        +messages: List~ChatMessageDTO~
+        +maxTokens: Integer
+        +temperature: Float
+        +provider: String
+        +model: String
+        +options: Map~String, Object~
+        +functionDefinitions: List~FunctionDefinition~
+    }
+
+    class LLMFetchChatAnswerResponseDTO {
+        &lt;&lt;dto&gt;&gt;
+        +message: ChatMessageDTO
+        +provider: String
+        +model: String
+        +usageMetrics: Map~String, Object~
+        +tokenCount: Integer
+        +completionId: String
+        +functionCall: FunctionCallDTO
+    }
+
+    class ChatMessageDTO {
+        &lt;&lt;dto&gt;&gt;
+        +role: String
+        +content: String
+    }
+
+    class FunctionDefinition {
+        &lt;&lt;dto&gt;&gt;
+        +name: String
+        +description: String
+        +parameters: FunctionParameters
+    }
+
+    class FunctionCallDTO {
+        &lt;&lt;dto&gt;&gt;
+        +name: String
+        +arguments: String
+    }
+
+    LLMFetchChatAnswerRequestDTO --&gt; ChatMessageDTO : contains
+    LLMFetchChatAnswerRequestDTO --&gt; FunctionDefinition : defines
+    LLMFetchChatAnswerResponseDTO --&gt; ChatMessageDTO : returns
+    LLMFetchChatAnswerResponseDTO --&gt; FunctionCallDTO : may include
+    FunctionDefinition --&gt; FunctionParameters : defines
+</code></pre>
+<p><strong>DTO Descriptions:</strong></p>
+<ul>
+<li><code>LLMFetchAnswerRequestDTO</code>: Request for basic text completion</li>
+<li><code>LLMFetchAnswerResponseDTO</code>: Response from text completion</li>
+<li><code>LLMFetchChatAnswerRequestDTO</code>: Request for chat-based completion</li>
+<li><code>LLMFetchChatAnswerResponseDTO</code>: Response from chat-based completion</li>
+<li><code>ChatMessageDTO</code>: Represents a message in a chat conversation</li>
+<li><code>FunctionDefinition</code>: Defines a function that can be called by the LLM</li>
+<li><code>FunctionCallDTO</code>: Represents a function call in an LLM response</li>
+</ul>
+<h3 id="configuration-models">Configuration Models</h3>
+<p>These models represent configuration settings for the system.</p>
+<pre><code class="language-mermaid">classDiagram
+    class LLMCacheTenantConfig {
+        &lt;&lt;config&gt;&gt;
+        +enabled: Boolean
+        +defaultTTL: Duration
+        +maxEntries: Integer
+        +allowedNamespaces: Set~String~
+    }
+
+    class ClientRequestConfigs {
+        &lt;&lt;config&gt;&gt;
+        +timeout: Duration
+        +retryCount: Integer
+        +retryBackoff: Duration
+        +maxConcurrentRequests: Integer
+        +rateLimitPerMinute: Integer
+    }
+</code></pre>
+<p><strong>Configuration Descriptions:</strong></p>
+<ul>
+<li><code>LLMCacheTenantConfig</code>: Tenant-specific cache configuration</li>
+<li><code>ClientRequestConfigs</code>: Configuration for LLM client requests including timeouts and retries</li>
+</ul>
+<h2 id="storage-architecture">Storage Architecture</h2>
+<p>The LLM Gateway uses multiple storage systems for different types of data:</p>
+<ol>
+<li><strong>Relational Database</strong>: For structured data like prompt templates and configurations</li>
+<li><strong>Redis Cache</strong>: For high-speed access to frequently used data and LLM responses</li>
+<li><strong>Time-Series Database</strong>: For metrics and analytics data</li>
+<li><strong>Log Storage</strong>: For audit logs and operational logs</li>
+</ol>
+<h3 id="database-schema">Database Schema</h3>
+<p>The primary database schema includes the following tables:</p>
+<pre><code class="language-mermaid">erDiagram
+    LLM_PROMPT_REGISTRY {
+        varchar id PK
+        varchar name
+        text description
+        text template
+        varchar created_by
+        timestamp created_at
+        timestamp updated_at
+        varchar status
+        varchar tenant_id
+        varchar[] tags
+    }
+
+    LLM_PROMPT_REGISTRY_MAPPING {
+        varchar id PK
+        varchar prompt_id FK
+        varchar param_name
+        varchar param_type
+        text description
+        boolean required
+        text default_value
+    }
+
+    LLM_PROMPT_VERSIONING {
+        varchar id PK
+        varchar prompt_id FK
+        varchar version
+        text template
+        varchar created_by
+        timestamp created_at
+        varchar status
+        text comments
+    }
+
+    LLM_REGISTRY {
+        varchar id PK
+        varchar name
+        text description
+        varchar provider
+        varchar model_id
+        jsonb default_params
+        timestamp created_at
+        timestamp updated_at
+        varchar status
+    }
+
+    TENANT_CONFIG {
+        varchar tenant_id PK
+        jsonb cache_config
+        jsonb client_config
+        jsonb analytics_config
+        timestamp updated_at
+    }
+
+    LLM_PROMPT_REGISTRY ||--o{ LLM_PROMPT_REGISTRY_MAPPING : &quot;has parameters&quot;
+    LLM_PROMPT_REGISTRY ||--o{ LLM_PROMPT_VERSIONING : &quot;has versions&quot;
+</code></pre>
+<p><strong>Table Descriptions:</strong></p>
+<ul>
+<li><code>LLM_PROMPT_REGISTRY</code>: Stores prompt templates and metadata</li>
+<li><code>LLM_PROMPT_REGISTRY_MAPPING</code>: Maps parameters to prompt templates</li>
+<li><code>LLM_PROMPT_VERSIONING</code>: Tracks versions of prompt templates</li>
+<li><code>LLM_REGISTRY</code>: Stores information about available LLM models</li>
+<li><code>TENANT_CONFIG</code>: Stores tenant-specific configuration settings</li>
+</ul>
+<h3 id="cache-architecture">Cache Architecture</h3>
+<p>The LLM Gateway uses a Redis-based cache for various caching needs:</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Redis Cache&quot;
+        Response[&quot;Response Cache&lt;br&gt;(Hash: Request → Response)&quot;]
+        TokenCount[&quot;Token Count Cache&lt;br&gt;(String: Text → Count)&quot;]
+        PromptCache[&quot;Prompt Template Cache&lt;br&gt;(Hash: ID → Template)&quot;]
+        ConfigCache[&quot;Config Cache&lt;br&gt;(Hash: TenantID → Config)&quot;]
+    end
+
+    Client[Client] --&gt; Gateway[LLM Gateway]
+    Gateway --&gt; CacheCheck{Cache Check}
+
+    CacheCheck --&gt;|Hit| Response
+    Response --&gt;|Return| Gateway
+
+    CacheCheck --&gt;|Miss| LLMProvider[LLM Provider]
+    LLMProvider --&gt;|Store| Response
+
+    Gateway --&gt;|Lookup| PromptCache
+    Gateway --&gt;|Lookup| ConfigCache
+    Gateway --&gt;|Count| TokenCount
+</code></pre>
+<p><strong>Cache Structures:</strong></p>
+<ol>
+<li><strong>Response Cache</strong></li>
+<li>Key: Hash of normalized request parameters</li>
+<li>Value: Serialized response object</li>
+<li>TTL: Configurable per tenant and request type</li>
+<li>
+<p>Eviction: LRU when memory limit reached</p>
+</li>
+<li>
+<p><strong>Token Count Cache</strong></p>
+</li>
+<li>Key: Hash of text content</li>
+<li>Value: Token count</li>
+<li>TTL: Long-lived (days)</li>
+<li>
+<p>Purpose: Optimize token counting for repeated content</p>
+</li>
+<li>
+<p><strong>Prompt Template Cache</strong></p>
+</li>
+<li>Key: Prompt template ID</li>
+<li>Value: Compiled template with parameter definitions</li>
+<li>Invalidation: On template updates</li>
+<li>
+<p>Purpose: Speed up prompt rendering</p>
+</li>
+<li>
+<p><strong>Configuration Cache</strong></p>
+</li>
+<li>Key: Tenant ID</li>
+<li>Value: Serialized configuration objects</li>
+<li>Invalidation: On configuration changes</li>
+<li>Purpose: Reduce database load for config lookups</li>
+</ol>
+<h2 id="data-flows">Data Flows</h2>
+<h3 id="prompt-execution-flow">Prompt Execution Flow</h3>
+<p>This flow illustrates how data moves through the system during prompt execution:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Client[Client] --&gt;|1. Submit Request| API[API Layer]
+
+    API --&gt;|2. Authenticate| Auth[Auth Service]
+    Auth --&gt;|Result| API
+
+    API --&gt;|3. Validate| Validator[Request Validator]
+    Validator --&gt;|Result| API
+
+    API --&gt;|4. Get Prompt| PromptMgr[Prompt Manager]
+    PromptMgr --&gt;|4.1 Check Cache| PromptCache[(Prompt Cache)]
+    PromptCache --&gt;|4.2 Return or Load| PromptMgr
+    PromptMgr --&gt;|4.3 Render| API
+
+    API --&gt;|5. Execute| ExecMgr[Execution Manager]
+
+    ExecMgr --&gt;|5.1 Check Cache| ResponseCache[(Response Cache)]
+    ResponseCache --&gt;|5.2 Cache Hit?| ExecMgr
+
+    ExecMgr --&gt;|5.3a Cache Miss| ClientMgr[Client Manager]
+    ClientMgr --&gt;|5.4 Select Provider| Providers[LLM Provider]
+    Providers --&gt;|5.5 Return Response| ClientMgr
+    ClientMgr --&gt;|5.6 Process Response| ExecMgr
+
+    ExecMgr --&gt;|5.7 Store in Cache| ResponseCache
+    ExecMgr --&gt;|5.8 Record Analytics| Analytics[Analytics Service]
+    ExecMgr --&gt;|5.9 Audit| AuditLog[(Audit Log)]
+
+    ExecMgr --&gt;|5.10 Return Response| API
+    API --&gt;|6. Format &amp; Return| Client
+</code></pre>
+<p><strong>Data Flow Description:</strong></p>
+<ol>
+<li>Client submits a request with prompt parameters</li>
+<li>API layer authenticates the request</li>
+<li>Request is validated for correctness</li>
+<li>If prompt ID provided, template is retrieved and rendered</li>
+<li>Execution manager checks cache for identical request</li>
+<li>If cache miss, appropriate client is selected and called</li>
+<li>Response is processed, cached, and analytics are recorded</li>
+<li>Formatted response is returned to client</li>
+</ol>
+<h3 id="prompt-management-flow">Prompt Management Flow</h3>
+<p>This flow illustrates the data flow for prompt template management:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Client[Client] --&gt;|1. Submit Template| API[API Layer]
+
+    API --&gt;|2. Authenticate| Auth[Auth Service]
+    Auth --&gt;|Result| API
+
+    API --&gt;|3. Validate| Validator[Request Validator]
+    Validator --&gt;|Result| API
+
+    API --&gt;|4. Process Request| PromptMgr[Prompt Manager]
+
+    subgraph &quot;Prompt Creation Flow&quot;
+        PromptMgr --&gt;|4.1 Create Template| DB[(Database)]
+        PromptMgr --&gt;|4.2 Extract Params| ParamExtractor[Parameter Extractor]
+        ParamExtractor --&gt;|4.3 Param Definitions| PromptMgr
+        PromptMgr --&gt;|4.4 Store Params| DB
+    end
+
+    subgraph &quot;Version Management Flow&quot;
+        PromptMgr --&gt;|4.5 Create Version| DB
+        PromptMgr --&gt;|4.6 Update Status| DB
+    end
+
+    PromptMgr --&gt;|4.7 Invalidate Cache| PromptCache[(Prompt Cache)]
+    PromptMgr --&gt;|4.8 Audit Change| AuditLog[(Audit Log)]
+
+    PromptMgr --&gt;|4.9 Return Result| API
+    API --&gt;|5. Format &amp; Return| Client
+</code></pre>
+<p><strong>Data Flow Description:</strong></p>
+<ol>
+<li>Client submits a prompt template creation/update request</li>
+<li>API layer authenticates the request</li>
+<li>Template is validated for correctness and syntax</li>
+<li>Prompt manager processes the template</li>
+<li>Parameters are extracted and stored</li>
+<li>Version information is created if applicable</li>
+<li>Cache is invalidated for the affected template</li>
+<li>Audit record is created for the change</li>
+<li>Result is returned to the client</li>
+</ol>
+<h3 id="analytics-collection-flow">Analytics Collection Flow</h3>
+<p>This flow illustrates how analytics data is collected and processed:</p>
+<pre><code class="language-mermaid">flowchart TD
+    ExecMgr[Execution Manager] --&gt;|1. Record Usage| Analytics[Analytics Handler]
+
+    Analytics --&gt;|2.1 Extract Metrics| MetricProcessor[Metric Processor]
+    MetricProcessor --&gt;|2.2 Format Metrics| Analytics
+
+    Analytics --&gt;|3.1 Store Real-time| RTMetrics[(Real-time Metrics)]
+    Analytics --&gt;|3.2 Buffer for Batch| Buffer[Metrics Buffer]
+
+    Buffer --&gt;|4. Batch Process| BatchProcessor[Batch Processor]
+    BatchProcessor --&gt;|5. Store Historical| TSDB[(Time Series DB)]
+
+    Dashboard[Analytics Dashboard] --&gt;|6. Query| TSDB
+    Dashboard --&gt;|7. Query| RTMetrics
+</code></pre>
+<p><strong>Data Flow Description:</strong></p>
+<ol>
+<li>Execution manager records usage after each request</li>
+<li>Analytics handler extracts and formats metrics</li>
+<li>Real-time metrics are stored for immediate access</li>
+<li>Metrics are buffered for batch processing</li>
+<li>Batch processor aggregates and stores historical metrics</li>
+<li>Analytics dashboards query both real-time and historical data</li>
+</ol>
+<h2 id="data-serialization">Data Serialization</h2>
+<p>The LLM Gateway uses the following serialization strategies:</p>
+<ol>
+<li><strong>JSON Serialization</strong></li>
+<li>Used for API requests/responses</li>
+<li>Used for cache storage</li>
+<li>
+<p>Library: Jackson with custom serializers/deserializers</p>
+</li>
+<li>
+<p><strong>Protocol Buffers</strong></p>
+</li>
+<li>Used for gRPC interfaces</li>
+<li>Used for some high-volume internal communication</li>
+<li>
+<p>Provides more compact binary representation</p>
+</li>
+<li>
+<p><strong>Database Mapping</strong></p>
+</li>
+<li>ORM: Hibernate for entity-relational mapping</li>
+<li>Custom converters for complex types</li>
+<li>JSON column types for flexible schema</li>
+</ol>
+<h2 id="data-retention-and-lifecycle">Data Retention and Lifecycle</h2>
+<p>The LLM Gateway implements the following data retention policies:</p>
+<ol>
+<li><strong>Prompt Templates</strong></li>
+<li>Retention: Indefinite (with soft deletion option)</li>
+<li>Versioning: All versions retained by default</li>
+<li>
+<p>Archive Policy: Manual archiving of unused templates</p>
+</li>
+<li>
+<p><strong>Cache Data</strong></p>
+</li>
+<li>LLM Response Cache: TTL-based expiration (minutes to hours)</li>
+<li>Token Count Cache: TTL-based expiration (days)</li>
+<li>
+<p>Eviction: LRU algorithm when memory limits reached</p>
+</li>
+<li>
+<p><strong>Analytics Data</strong></p>
+</li>
+<li>Raw Metrics: 7-30 days (configurable)</li>
+<li>Aggregated Metrics: 1 year+</li>
+<li>
+<p>Rollup Strategy: Hourly → Daily → Monthly aggregation</p>
+</li>
+<li>
+<p><strong>Audit Logs</strong></p>
+</li>
+<li>Security Events: 1 year minimum</li>
+<li>Operational Events: 90 days</li>
+<li>Retention Policy: Configurable per tenant and log type</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="module-level-architecture.html">Module-Level Architecture</a> | <strong>Next</strong>: <a href="runtime-behavior-concurrency.html">Runtime Behavior &amp; Concurrency</a></p>
+</body>
+</html>

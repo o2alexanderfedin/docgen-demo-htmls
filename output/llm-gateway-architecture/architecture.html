@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>architecture</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="llm-gateway-architecture-design-document">LLM Gateway Architecture &amp; Design Document</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#1-introduction">1. Introduction</a></li>
+<li><a href="#11-purpose">1.1 Purpose</a></li>
+<li><a href="#12-scope">1.2 Scope</a></li>
+<li><a href="#13-definitions-acronyms-and-abbreviations">1.3 Definitions, Acronyms, and Abbreviations</a></li>
+<li><a href="#14-references">1.4 References</a></li>
+<li><a href="#2-high-level-system-overview">2. High-Level System Overview</a></li>
+<li><a href="#21-use-case-view-scenarios">2.1 Use Case View (Scenarios)</a></li>
+<li><a href="#22-logical-view-class-diagram">2.2 Logical View (Class Diagram)</a></li>
+<li><a href="#23-development-view-component-diagram">2.3 Development View (Component Diagram)</a></li>
+<li><a href="#24-physical-view-deployment-diagram">2.4 Physical View (Deployment Diagram)</a></li>
+<li><a href="#25-process-view-sequence-diagrams">2.5 Process View (Sequence Diagrams)</a></li>
+<li><a href="#3-module--component-breakdown">3. Module &amp; Component Breakdown</a></li>
+<li><a href="#31-core-modules">3.1 Core Modules</a></li>
+<li><a href="#32-module-responsibilities">3.2 Module Responsibilities</a></li>
+<li><a href="#33-inter-module-communication">3.3 Inter-Module Communication</a></li>
+<li><a href="#4-data-models--schema-designs">4. Data Models &amp; Schema Designs</a></li>
+<li><a href="#41-entity-relationship-diagram">4.1 Entity Relationship Diagram</a></li>
+<li><a href="#42-key-data-structures">4.2 Key Data Structures</a></li>
+<li><a href="#5-api-reference">5. API Reference</a></li>
+<li><a href="#51-rest-api-endpoints">5.1 REST API Endpoints</a></li>
+<li><a href="#52-grpc-services">5.2 gRPC Services</a></li>
+<li><a href="#6-security-considerations">6. Security Considerations</a></li>
+<li><a href="#7-performance-considerations">7. Performance Considerations</a></li>
+<li><a href="#8-dependencies">8. Dependencies</a></li>
+<li><a href="#9-appendix">9. Appendix</a></li>
+</ul>
+<h2 id="1-introduction">1. Introduction</h2>
+<h3 id="11-purpose">1.1 Purpose</h3>
+<p>This document provides a comprehensive technical architecture description of the LLM Gateway system. It includes views from multiple architectural perspectives to provide a holistic understanding of the system structure, behavior, and implementation.</p>
+<h3 id="12-scope">1.2 Scope</h3>
+<p>The LLM Gateway serves as the conduit between various Aisera services hosted inside AWS/Azure clusters and Large Language Models (LLMs). This document covers the architectural design, component breakdown, and data models of the LLM Gateway system.</p>
+<h3 id="13-definitions-acronyms-and-abbreviations">1.3 Definitions, Acronyms, and Abbreviations</h3>
+<ul>
+<li><strong>LLM</strong>: Large Language Model - Neural network trained on vast amounts of text data</li>
+<li><strong>API</strong>: Application Programming Interface</li>
+<li><strong>REST</strong>: Representational State Transfer - Architectural style for distributed systems</li>
+<li><strong>gRPC</strong>: High-performance RPC (Remote Procedure Call) framework</li>
+<li><strong>DTO</strong>: Data Transfer Object</li>
+<li><strong>GPT</strong>: Generative Pre-trained Transformer - Type of LLM developed by OpenAI</li>
+</ul>
+<h3 id="14-references">1.4 References</h3>
+<ul>
+<li><a href="https://github.com/Aisera/llm-gateway" target="_blank" rel="noopener noreferrer">LLM Gateway Repository</a></li>
+</ul>
+<h2 id="2-high-level-system-overview">2. High-Level System Overview</h2>
+<p>The LLM Gateway is designed as a service-oriented application that orchestrates communication between Aisera's internal services and various LLM providers. It follows a modular architecture based on the open-closed principle, allowing for easy integration of new LLM providers.</p>
+<h3 id="21-use-case-view-scenarios">2.1 Use Case View (Scenarios)</h3>
+<p>The following diagram shows the primary actors and key use cases of the LLM Gateway:</p>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph Actors
+        A1[Aisera Services]
+        A2[Data Scientists]
+        A3[Engineers]
+    end
+
+    subgraph LLM Gateway
+        UC1[Prompt Management]
+        UC2[Prompt Execution]
+        UC3[LLM Integration]
+        UC4[Cache Management]
+        UC5[Analytics Collection]
+    end
+
+    A1 --&gt;|Fetch Answer| UC2
+    A1 --&gt;|Fetch Chat Answer| UC2
+    A1 --&gt;|Stream Answers| UC2
+    A2 --&gt;|Create/Edit Prompts| UC1
+    A2 --&gt;|Define Outputs| UC1
+    A3 --&gt;|Add New LLM Integrations| UC3
+    A3 --&gt;|Configure Caching| UC4
+    A3 --&gt;|Monitor Performance| UC5
+
+    UC2 --&gt;|Execute| UC3
+    UC2 --&gt;|Store/Retrieve| UC4
+    UC2 --&gt;|Record Metrics| UC5
+</code></pre>
+<h3 id="22-logical-view-class-diagram">2.2 Logical View (Class Diagram)</h3>
+<p>The following diagram illustrates the core domain classes and their relationships:</p>
+<pre><code class="language-mermaid">classDiagram
+    class ClientManager {
+        &lt;&lt;abstract&gt;&gt;
+        +executeRequest(String tenantId, long botId, String prompt, Map config, LLMPromptRegistryEntity promptEntity, LLMCacheReq cacheReq)
+        +executeChatRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, String userMessage, List functionDefinitions)
+        +streamingAnswerRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, LLMRegistryEntity promptGroup, String userMessage, StreamObserver responseObserver)
+        #extractResponse(String script, String response, List outputDefinitions)
+    }
+
+    class ExecutionManager {
+        &lt;&lt;interface&gt;&gt;
+        +executeFetchRequest(LLMFetchAnswerRequest request)
+        +executeFetchChatRequest(LLMFetchChatAnswerRequest request)
+        +executeStreamingRequest(LLMStreamingAnswerRequest request, StreamObserver responseObserver)
+    }
+
+    class ExecutionManagerImpl {
+        +executeFetchRequest(LLMFetchAnswerRequest request)
+        +executeFetchChatRequest(LLMFetchChatAnswerRequest request)
+        +executeStreamingRequest(LLMStreamingAnswerRequest request, StreamObserver responseObserver)
+    }
+
+    class PromptManager {
+        &lt;&lt;interface&gt;&gt;
+        +getPrompt(String tenantId, String promptName, long botId)
+        +createPrompt(String tenantId, LLMPromptRegistryEntity prompt)
+        +updatePrompt(String tenantId, LLMPromptRegistryEntity prompt)
+        +deletePrompt(String tenantId, String promptName, long botId)
+    }
+
+    class ModuleManager {
+        -static PromptManager promptManager
+        -static ExecutionManager executionManager
+        +static void init()
+        +static PromptManager getPromptManager()
+        +static ExecutionManager getExecutionManager()
+    }
+
+    class JavaMicroservice {
+        -Server gRPCServer
+        -Server restServer
+        -Config config
+        +void start()
+        +void stop()
+        +static void main(String[] args)
+    }
+
+    class ClientRegistry {
+        +static Map~ClientType, ClientManager~ clientManagerHandlers
+        +static ClientManager getClientManager(ClientType type)
+    }
+
+    class GPT4ClientManagerImpl {
+        +executeRequest(String tenantId, long botId, String prompt, Map config, LLMPromptRegistryEntity promptEntity, LLMCacheReq cacheReq)
+        +executeChatRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, String userMessage, List functionDefinitions)
+        +streamingAnswerRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, LLMRegistryEntity promptGroup, String userMessage, StreamObserver responseObserver)
+    }
+
+    class BRLlama2ClientManagerImpl {
+        +executeRequest(String tenantId, long botId, String prompt, Map config, LLMPromptRegistryEntity promptEntity, LLMCacheReq cacheReq)
+        +executeChatRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, String userMessage, List functionDefinitions)
+        +streamingAnswerRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, LLMRegistryEntity promptGroup, String userMessage, StreamObserver responseObserver)
+    }
+
+    class AiseraLLMClientManagerImpl {
+        +executeRequest(String tenantId, long botId, String prompt, Map config, LLMPromptRegistryEntity promptEntity, LLMCacheReq cacheReq)
+        +executeChatRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, String userMessage, List functionDefinitions)
+        +streamingAnswerRequest(String tenantId, long botId, String prompt, List messages, Map config, LLMPromptRegistryEntity promptEntity, LLMRegistryEntity promptGroup, String userMessage, StreamObserver responseObserver)
+    }
+
+    class LLMPromptRegistryEntity {
+        -Long id
+        -String name
+        -String displayName
+        -List~PromptParamDefinition~ inputParams
+        -String template
+        -String userTemplate
+        -List~PromptParamDefinition~ outputParams
+        -Long llmRegistryId
+        -Long botId
+        -Status status
+        -String type
+        -Date createdAt
+        -Date updatedAt
+        -boolean isRegistered
+        -boolean isImported
+        -boolean isDefault
+        -boolean isSystem
+        -String category
+        -String useCase
+        -String script
+        -String description
+        -Map~String, Object~ config
+    }
+
+    class LLMRegistryEntity {
+        -Long id
+        -String name
+        -String displayName
+        -String description
+        -String category
+        -boolean isActive
+        -String endpoint
+        -Map~String, Object~ config
+        -Map~String, Object~ authConfig
+    }
+
+    ExecutionManager &lt;|.. ExecutionManagerImpl
+    ClientManager &lt;|-- GPT4ClientManagerImpl
+    ClientManager &lt;|-- BRLlama2ClientManagerImpl
+    ClientManager &lt;|-- AiseraLLMClientManagerImpl
+    ExecutionManagerImpl --&gt; ClientRegistry
+    ModuleManager --&gt; ExecutionManager
+    ModuleManager --&gt; PromptManager
+    JavaMicroservice --&gt; ModuleManager
+    ClientRegistry --&gt; ClientManager
+    ExecutionManagerImpl --&gt; LLMPromptRegistryEntity
+    ExecutionManagerImpl --&gt; LLMRegistryEntity
+</code></pre>
+<h3 id="23-development-view-component-diagram">2.3 Development View (Component Diagram)</h3>
+<p>The component diagram below shows the main modules of the LLM Gateway and their interfaces:</p>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph LLM Gateway
+        Core[&quot;Core Module&lt;br&gt;(JavaMicroservice, ModuleManager)&quot;]
+        ExecutionMgmt[&quot;Execution Management&lt;br&gt;(ExecutionManager, ExecutionManagerImpl)&quot;]
+        PromptMgmt[&quot;Prompt Management&lt;br&gt;(PromptManager, PromptManagerImpl)&quot;]
+        ClientMgmt[&quot;Client Management&lt;br&gt;(ClientManager, ClientRegistry)&quot;]
+        Cache[&quot;Cache Management&lt;br&gt;(LLMCache)&quot;]
+        RestAPI[&quot;REST APIs&lt;br&gt;(Controllers)&quot;]
+        GrpcSvc[&quot;gRPC Service&quot;]
+        Analytics[&quot;Analytics&lt;br&gt;(MetricUtils, LLMAnalyticsHandler)&quot;]
+
+        subgraph ClientProviders[&quot;LLM Client Providers&quot;]
+            GPT4[&quot;GPT-4 Client&quot;]
+            Llama2[&quot;Bedrock Llama2 Client&quot;]
+            AiseraLLM[&quot;Aisera LLM Client&quot;]
+        end
+    end
+
+    Core --&gt; ExecutionMgmt
+    Core --&gt; PromptMgmt
+    Core --&gt; RestAPI
+    Core --&gt; GrpcSvc
+
+    ExecutionMgmt --&gt; ClientMgmt
+    ExecutionMgmt --&gt; PromptMgmt
+    ExecutionMgmt --&gt; Cache
+    ExecutionMgmt --&gt; Analytics
+
+    ClientMgmt --&gt; ClientProviders
+
+    RestAPI --&gt; ExecutionMgmt
+    RestAPI --&gt; PromptMgmt
+
+    GrpcSvc --&gt; ExecutionMgmt
+    GrpcSvc --&gt; PromptMgmt
+
+    subgraph External
+        DB[(Database)]
+        ExtLLMs[&quot;External LLM Services&lt;br&gt;(GPT-4, Bedrock, etc.)&quot;]
+        AiseraServices[&quot;Aisera Services&quot;]
+    end
+
+    PromptMgmt &lt;--&gt; DB
+    ClientProviders --&gt; ExtLLMs
+    AiseraServices &lt;--&gt; RestAPI
+    AiseraServices &lt;--&gt; GrpcSvc
+    Cache &lt;--&gt; DB
+</code></pre>
+<h3 id="24-physical-view-deployment-diagram">2.4 Physical View (Deployment Diagram)</h3>
+<p>The deployment diagram illustrates how the LLM Gateway components are distributed across the infrastructure:</p>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph Kubernetes Cluster
+        subgraph Pod[&quot;LLM Gateway Pod&quot;]
+            Container[&quot;LLM Gateway Container&quot;]
+        end
+
+        MetricsServer[&quot;Prometheus&lt;br&gt;Metrics Server&quot;]
+        RedisCache[&quot;Redis Cache&quot;]
+    end
+
+    subgraph AWS/Azure
+        RDS[(RDS/SQL&lt;br&gt;Database)]
+        subgraph LLM Services
+            OpenAI[&quot;OpenAI&lt;br&gt;(GPT-4)&quot;]
+            Bedrock[&quot;AWS Bedrock&lt;br&gt;(Llama2)&quot;]
+            CustomLLM[&quot;Aisera LLM&lt;br&gt;Services&quot;]
+        end
+    end
+
+    subgraph Client Services
+        AiseraApps[&quot;Aisera Applications&quot;]
+    end
+
+    Container &lt;--&gt; RDS
+    Container &lt;--&gt; RedisCache
+    Container &lt;--&gt; MetricsServer
+
+    Container &lt;--&gt; OpenAI
+    Container &lt;--&gt; Bedrock
+    Container &lt;--&gt; CustomLLM
+
+    AiseraApps &lt;--&gt; Container
+</code></pre>
+<h3 id="25-process-view-sequence-diagrams">2.5 Process View (Sequence Diagrams)</h3>
+<p>The following sequence diagram illustrates the key interaction flow for a chat completion request:</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client as Aisera Service
+    participant API as REST/gRPC API
+    participant EM as ExecutionManager
+    participant PM as PromptManager
+    participant Cache as LLM Cache
+    participant CR as ClientRegistry
+    participant CM as ClientManager Implementation
+    participant LLM as External LLM Service
+
+    Client-&gt;&gt;API: FetchChatAnswerRequest
+    API-&gt;&gt;EM: executeFetchChatRequest()
+    EM-&gt;&gt;PM: getPromptAndGroup(tenantId, promptName, botId)
+    PM--&gt;&gt;EM: promptEntity, groupEntity
+
+    EM-&gt;&gt;EM: applyPromptParams(prompt, params)
+
+    alt Use Cache Enabled
+        EM-&gt;&gt;Cache: getLLMCacheResponse(key, params)
+        Cache--&gt;&gt;EM: cachedResponse (if exists)
+    end
+
+    alt No Cache Hit
+        EM-&gt;&gt;CR: getClientManager(clientType)
+        CR--&gt;&gt;EM: clientManager
+
+        EM-&gt;&gt;CM: executeChatRequest(tenantId, botId, prompt, messages, config...)
+        CM-&gt;&gt;LLM: HTTP Request to LLM API
+        LLM--&gt;&gt;CM: LLM Response
+        CM--&gt;&gt;EM: responseContent
+
+        alt Cache Enabled
+            EM-&gt;&gt;Cache: putResponseInCache(key, response, params)
+        end
+    end
+
+    EM-&gt;&gt;EM: extractResponse(script, response, outputDefinitions)
+    EM--&gt;&gt;API: LLMFetchChatAnswerResponse
+    API--&gt;&gt;Client: Response with content
+</code></pre>
+<h2 id="3-module-component-breakdown">3. Module &amp; Component Breakdown</h2>
+<h3 id="31-core-modules">3.1 Core Modules</h3>
+<p>The LLM Gateway is organized into the following core modules:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Description</th>
+<th>Key Classes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core</td>
+<td>The main application bootstrap and configuration module</td>
+<td><code>JavaMicroservice</code>, <code>Config</code>, <code>ModuleManager</code></td>
+</tr>
+<tr>
+<td>Execution Management</td>
+<td>Handles the execution of LLM requests and responses</td>
+<td><code>ExecutionManager</code>, <code>ExecutionManagerImpl</code>, <code>ExecutionManagerUtils</code></td>
+</tr>
+<tr>
+<td>Prompt Management</td>
+<td>Manages the prompt registry and prompt operations</td>
+<td><code>PromptManager</code>, <code>PromptManagerImpl</code>, <code>PromptApplier</code></td>
+</tr>
+<tr>
+<td>Client Management</td>
+<td>Manages connections to different LLM providers</td>
+<td><code>ClientManager</code>, <code>ClientRegistry</code>, <code>ClientType</code></td>
+</tr>
+<tr>
+<td>REST API</td>
+<td>RESTful API endpoints for the LLM Gateway</td>
+<td><code>PromptExecutionController</code>, <code>PrompManagementProcessor</code>, <code>PromptStudioManagementController</code></td>
+</tr>
+<tr>
+<td>gRPC Service</td>
+<td>gRPC interface for the LLM Gateway</td>
+<td><code>GrpcService</code></td>
+</tr>
+<tr>
+<td>Cache Management</td>
+<td>Handles caching of LLM responses</td>
+<td><code>LLMCache</code>, <code>LLMCacheReq</code></td>
+</tr>
+<tr>
+<td>Analytics</td>
+<td>Collects metrics and analytics on LLM usage</td>
+<td><code>MetricUtils</code>, <code>LlmAnalyticsHandler</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="32-module-responsibilities">3.2 Module Responsibilities</h3>
+<h4 id="core-module">Core Module</h4>
+<p>The Core module is responsible for:
+- Bootstrapping the application
+- Initializing all other modules
+- Managing configuration
+- Starting and stopping the REST and gRPC servers</p>
+<p>Key components:
+- <strong>JavaMicroservice</strong>: The main entry point for the application, responsible for setting up and starting the REST and gRPC servers.
+- <strong>Config</strong>: Handles application configuration loading and management.
+- <strong>ModuleManager</strong>: Initializes and provides access to all other module managers.</p>
+<h4 id="execution-management-module">Execution Management Module</h4>
+<p>The Execution Management module is responsible for:
+- Processing LLM execution requests (fetch, fetch-chat, streaming)
+- Coordinating between the prompt management and client management modules
+- Handling caching of responses
+- Managing error handling and recovery
+- Collecting execution metrics</p>
+<p>Key components:
+- <strong>ExecutionManager</strong>: Interface defining the contract for execution operations.
+- <strong>ExecutionManagerImpl</strong>: Implementation of the ExecutionManager interface.
+- <strong>ExecutionManagerUtils</strong>: Utility methods for execution management.</p>
+<h4 id="prompt-management-module">Prompt Management Module</h4>
+<p>The Prompt Management module is responsible for:
+- Managing the prompt registry
+- Creating, updating, and deleting prompts
+- Applying input parameters to prompt templates
+- Extracting output parameters from LLM responses</p>
+<p>Key components:
+- <strong>PromptManager</strong>: Interface defining the contract for prompt operations.
+- <strong>PromptManagerImpl</strong>: Implementation of the PromptManager interface.
+- <strong>PromptApplier</strong>: Utility for applying input parameters to prompt templates.
+- <strong>PromptDAO</strong>: Data access object for prompt operations.</p>
+<h4 id="client-management-module">Client Management Module</h4>
+<p>The Client Management module is responsible for:
+- Managing connections to different LLM providers
+- Implementing provider-specific request formats and response handling
+- Handling authentication and authorization with LLM providers
+- Managing retries and error handling</p>
+<p>Key components:
+- <strong>ClientManager</strong>: Abstract class defining the contract for LLM client operations.
+- <strong>ClientRegistry</strong>: Registry of available LLM client implementations.
+- <strong>ClientType</strong>: Enumeration of supported LLM client types.
+- Provider-specific implementations:
+  - <strong>GPT4ClientManagerImpl</strong>: Client manager for OpenAI's GPT-4.
+  - <strong>BRLlama2ClientManagerImpl</strong>: Client manager for AWS Bedrock Llama2.
+  - <strong>AiseraLLMClientManagerImpl</strong>: Client manager for Aisera's internal LLM services.</p>
+<h3 id="33-inter-module-communication">3.3 Inter-Module Communication</h3>
+<p>The LLM Gateway modules communicate with each other through well-defined interfaces:</p>
+<ol>
+<li><strong>Core → Other Modules</strong>:</li>
+<li>The <code>ModuleManager</code> initializes and provides access to all other module managers.</li>
+<li>
+<p>The <code>JavaMicroservice</code> sets up the REST and gRPC servers that use other modules.</p>
+</li>
+<li>
+<p><strong>REST/gRPC API → Execution Management</strong>:</p>
+</li>
+<li>API controllers delegate requests to the <code>ExecutionManager</code>.</li>
+<li>
+<p>The <code>ExecutionManager</code> processes requests and returns responses.</p>
+</li>
+<li>
+<p><strong>Execution Management → Prompt Management</strong>:</p>
+</li>
+<li><code>ExecutionManagerImpl</code> uses <code>PromptManager</code> to retrieve prompt and group information.</li>
+<li>
+<p>It also uses <code>PromptApplier</code> to apply input parameters to prompt templates.</p>
+</li>
+<li>
+<p><strong>Execution Management → Client Management</strong>:</p>
+</li>
+<li><code>ExecutionManagerImpl</code> uses <code>ClientRegistry</code> to get the appropriate <code>ClientManager</code> for a given LLM provider.</li>
+<li>
+<p>It delegates the actual LLM calls to the <code>ClientManager</code> implementation.</p>
+</li>
+<li>
+<p><strong>Execution Management → Cache Management</strong>:</p>
+</li>
+<li><code>ExecutionManagerImpl</code> checks the cache for existing responses.</li>
+<li>
+<p>It stores new responses in the cache when appropriate.</p>
+</li>
+<li>
+<p><strong>Client Management → External LLM Services</strong>:</p>
+</li>
+<li><code>ClientManager</code> implementations make HTTP/API calls to external LLM services.</li>
+<li>They format requests according to provider-specific requirements.</li>
+<li>They parse and normalize responses from the providers.</li>
+</ol>
+<p>Communication Flow Diagram:</p>
+<pre><code class="language-mermaid">flowchart TD
+    REST[REST API] --&gt; EM[ExecutionManager]
+    GRPC[gRPC Service] --&gt; EM
+
+    EM --&gt; PM[PromptManager]
+    EM --&gt; CR[ClientRegistry]
+    EM --&gt; Cache[LLMCache]
+    EM --&gt; Analytics[MetricUtils]
+
+    CR --&gt; CM1[GPT4ClientManager]
+    CR --&gt; CM2[BRLlama2ClientManager]
+    CR --&gt; CM3[AiseraLLMClientManager]
+
+    CM1 --&gt; LLM1[OpenAI GPT-4]
+    CM2 --&gt; LLM2[AWS Bedrock Llama2]
+    CM3 --&gt; LLM3[Aisera LLM]
+
+    PM &lt;--&gt; DB[(Database)]
+    Cache &lt;--&gt; DB
+</code></pre>
+<h2 id="4-data-models-schema-designs">4. Data Models &amp; Schema Designs</h2>
+<p>The LLM Gateway uses a set of well-defined data models to represent the core domain objects and their relationships.</p>
+<h3 id="41-entity-relationship-diagram">4.1 Entity Relationship Diagram</h3>
+<p>The following diagram illustrates the relationships between the primary entities in the LLM Gateway:</p>
+<pre><code class="language-mermaid">erDiagram
+    LLMRegistryEntity ||--o{ LLMPromptRegistryEntity : &quot;contains&quot;
+    LLMPromptRegistryEntity ||--o{ PromptParamDefinition : &quot;has input/output&quot;
+    LLMPromptRegistryEntity ||--o{ LLMPromptRegistryMappingEntity : &quot;maps to&quot;
+    UserEntity ||--o{ LLMPromptRegistryEntity : &quot;creates/updates&quot;
+
+    LLMRegistryEntity {
+        Long id PK
+        String name
+        String displayName
+        String description
+        String category
+        boolean isActive
+        String endpoint
+        Map config
+        Map authConfig
+    }
+
+    LLMPromptRegistryEntity {
+        Long id PK
+        String name
+        String displayName
+        List inputParams
+        String template
+        String userTemplate
+        List outputParams
+        Long llmRegistryId FK
+        Long botId
+        String status
+        String type
+        Date createdAt
+        Date updatedAt
+        boolean isRegistered
+        boolean isImported
+        boolean isDefault
+        boolean isSystem
+        String category
+        String useCase
+        String script
+        String description
+        Map config
+        String reviewStatus
+        String entityGuid
+        Long changeLogId
+        Long createdBy FK
+        Long updatedBy FK
+        String source
+    }
+
+    PromptParamDefinition {
+        String name
+        String type
+        String description
+        boolean required
+        String defaultValue
+        List options
+    }
+
+    UserEntity {
+        Long id PK
+        String username
+        String email
+    }
+
+    LLMPromptRegistryMappingEntity {
+        Long id PK
+        Long promptId FK
+        String entityName
+        String entityId
+    }
+</code></pre>
+<h3 id="42-key-data-structures">4.2 Key Data Structures</h3>
+<h4 id="llmregistryentity">LLMRegistryEntity</h4>
+<p>This entity represents an LLM provider or service and contains configuration for connecting to that service.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Long</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Unique name of the LLM provider</td>
+</tr>
+<tr>
+<td>displayName</td>
+<td>String</td>
+<td>Human-readable name</td>
+</tr>
+<tr>
+<td>description</td>
+<td>String</td>
+<td>Description of the provider</td>
+</tr>
+<tr>
+<td>category</td>
+<td>String</td>
+<td>Category of the provider</td>
+</tr>
+<tr>
+<td>isActive</td>
+<td>boolean</td>
+<td>Whether the provider is active</td>
+</tr>
+<tr>
+<td>endpoint</td>
+<td>String</td>
+<td>API endpoint for the provider</td>
+</tr>
+<tr>
+<td>config</td>
+<td>Map<String, Object></td>
+<td>Configuration for the provider</td>
+</tr>
+<tr>
+<td>authConfig</td>
+<td>Map<String, Object></td>
+<td>Authentication configuration</td>
+</tr>
+</tbody>
+</table>
+<h4 id="llmpromptregistryentity">LLMPromptRegistryEntity</h4>
+<p>This entity represents a prompt template that can be used with an LLM provider.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id</td>
+<td>Long</td>
+<td>Primary key</td>
+</tr>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Unique name of the prompt</td>
+</tr>
+<tr>
+<td>displayName</td>
+<td>String</td>
+<td>Human-readable name</td>
+</tr>
+<tr>
+<td>inputParams</td>
+<td>List<PromptParamDefinition></td>
+<td>Input parameters for the prompt</td>
+</tr>
+<tr>
+<td>template</td>
+<td>String</td>
+<td>The prompt template</td>
+</tr>
+<tr>
+<td>userTemplate</td>
+<td>String</td>
+<td>User-specific template section</td>
+</tr>
+<tr>
+<td>outputParams</td>
+<td>List<PromptParamDefinition></td>
+<td>Output parameters from the prompt</td>
+</tr>
+<tr>
+<td>llmRegistryId</td>
+<td>Long</td>
+<td>Reference to the LLM provider</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>Long</td>
+<td>Associated bot ID</td>
+</tr>
+<tr>
+<td>status</td>
+<td>Status</td>
+<td>Status of the prompt (Active, Inactive, etc.)</td>
+</tr>
+<tr>
+<td>type</td>
+<td>String</td>
+<td>Type of the prompt</td>
+</tr>
+<tr>
+<td>isRegistered</td>
+<td>boolean</td>
+<td>Whether the prompt is registered</td>
+</tr>
+<tr>
+<td>isImported</td>
+<td>boolean</td>
+<td>Whether the prompt is imported</td>
+</tr>
+<tr>
+<td>isDefault</td>
+<td>boolean</td>
+<td>Whether the prompt is a default prompt</td>
+</tr>
+<tr>
+<td>isSystem</td>
+<td>boolean</td>
+<td>Whether the prompt is a system prompt</td>
+</tr>
+<tr>
+<td>category</td>
+<td>String</td>
+<td>Category of the prompt</td>
+</tr>
+<tr>
+<td>useCase</td>
+<td>String</td>
+<td>Use case for the prompt</td>
+</tr>
+<tr>
+<td>script</td>
+<td>String</td>
+<td>JavaScript script for processing outputs</td>
+</tr>
+<tr>
+<td>description</td>
+<td>String</td>
+<td>Description of the prompt</td>
+</tr>
+<tr>
+<td>config</td>
+<td>Map<String, Object></td>
+<td>Configuration for the prompt</td>
+</tr>
+</tbody>
+</table>
+<h4 id="promptparamdefinition">PromptParamDefinition</h4>
+<p>This entity represents a parameter definition for a prompt's inputs or outputs.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Name of the parameter</td>
+</tr>
+<tr>
+<td>type</td>
+<td>String</td>
+<td>Data type of the parameter</td>
+</tr>
+<tr>
+<td>description</td>
+<td>String</td>
+<td>Description of the parameter</td>
+</tr>
+<tr>
+<td>required</td>
+<td>boolean</td>
+<td>Whether the parameter is required</td>
+</tr>
+<tr>
+<td>defaultValue</td>
+<td>String</td>
+<td>Default value for the parameter</td>
+</tr>
+<tr>
+<td>options</td>
+<td>List<String></td>
+<td>Possible values for the parameter</td>
+</tr>
+</tbody>
+</table>
+<h4 id="requestresponse-models">Request/Response Models</h4>
+<h5 id="llmfetchanswerrequestdto">LLMFetchAnswerRequestDTO</h5>
+<p>Request model for fetching an answer from an LLM.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>String</td>
+<td>ID of the tenant making the request</td>
+</tr>
+<tr>
+<td>promptName</td>
+<td>String</td>
+<td>Name of the prompt to use</td>
+</tr>
+<tr>
+<td>requestParams</td>
+<td>List<PromptParamDTO></td>
+<td>Parameters for the prompt</td>
+</tr>
+<tr>
+<td>config</td>
+<td>Map<String, Object></td>
+<td>Configuration overrides</td>
+</tr>
+<tr>
+<td>isDebug</td>
+<td>boolean</td>
+<td>Whether to include debug information</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>long</td>
+<td>ID of the bot making the request</td>
+</tr>
+<tr>
+<td>useCache</td>
+<td>boolean</td>
+<td>Whether to use caching</td>
+</tr>
+</tbody>
+</table>
+<h5 id="llmfetchchatanswerrequestdto">LLMFetchChatAnswerRequestDTO</h5>
+<p>Request model for fetching a chat-style answer from an LLM.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>String</td>
+<td>ID of the tenant making the request</td>
+</tr>
+<tr>
+<td>promptName</td>
+<td>String</td>
+<td>Name of the prompt to use</td>
+</tr>
+<tr>
+<td>requestParams</td>
+<td>List<PromptParamDTO></td>
+<td>Parameters for the prompt</td>
+</tr>
+<tr>
+<td>messages</td>
+<td>List<ChatMessageDTO></td>
+<td>Chat history messages</td>
+</tr>
+<tr>
+<td>config</td>
+<td>Map<String, Object></td>
+<td>Configuration overrides</td>
+</tr>
+<tr>
+<td>isDebug</td>
+<td>boolean</td>
+<td>Whether to include debug information</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>long</td>
+<td>ID of the bot making the request</td>
+</tr>
+<tr>
+<td>functionDefinitions</td>
+<td>List<FunctionDefinitionDTO></td>
+<td>Function calling definitions</td>
+</tr>
+<tr>
+<td>useCache</td>
+<td>boolean</td>
+<td>Whether to use caching</td>
+</tr>
+</tbody>
+</table>
+<h5 id="chatmessagedto">ChatMessageDTO</h5>
+<p>Model representing a message in a chat conversation.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>role</td>
+<td>String</td>
+<td>Role of the message sender (system, user, assistant)</td>
+</tr>
+<tr>
+<td>content</td>
+<td>String</td>
+<td>Content of the message</td>
+</tr>
+<tr>
+<td>contentType</td>
+<td>ContentType</td>
+<td>Type of content (TEXT, IMAGE, FUNCTION_CALL)</td>
+</tr>
+<tr>
+<td>function_call</td>
+<td>FunctionCallDTO</td>
+<td>Function call information</td>
+</tr>
+<tr>
+<td>tool_calls</td>
+<td>List<ToolCallDTO></td>
+<td>Tool call information</td>
+</tr>
+</tbody>
+</table>
+<h3 id="43-database-schema">4.3 Database Schema</h3>
+<p>The LLM Gateway uses the following primary database tables:</p>
+<ol>
+<li><strong>llm_registry</strong> - Stores information about LLM providers</li>
+<li><strong>llm_prompt_registry</strong> - Stores prompt templates and their configurations</li>
+<li><strong>llm_prompt_registry_mapping</strong> - Maps prompts to external entities</li>
+</ol>
+<p>Table Schema for llm_prompt_registry:</p>
+<pre><code class="language-sql">CREATE TABLE llm_prompt_registry (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255),
+    input_vars JSON,
+    template TEXT,
+    user_template TEXT,
+    output_vars JSON,
+    llm_registry_id BIGINT NOT NULL,
+    bot_id BIGINT,
+    status VARCHAR(50),
+    type VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_registered BOOLEAN NOT NULL DEFAULT FALSE,
+    is_imported BOOLEAN NOT NULL DEFAULT FALSE,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    is_system BOOLEAN NOT NULL DEFAULT FALSE,
+    category VARCHAR(100),
+    use_case VARCHAR(255),
+    script TEXT,
+    description TEXT,
+    config JSON,
+    review_status VARCHAR(50),
+    entity_guid VARCHAR(255),
+    change_log_id BIGINT,
+    created_by BIGINT,
+    updated_by BIGINT,
+    source VARCHAR(100),
+    FOREIGN KEY (llm_registry_id) REFERENCES llm_registry(id),
+    FOREIGN KEY (created_by) REFERENCES user(id),
+    FOREIGN KEY (updated_by) REFERENCES user(id)
+);
+</code></pre>
+<p>Table Schema for llm_registry:</p>
+<pre><code class="language-sql">CREATE TABLE llm_registry (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255),
+    description TEXT,
+    category VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    endpoint VARCHAR(255),
+    config JSON,
+    auth_config JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+</code></pre>
+<h2 id="5-api-reference">5. API Reference</h2>
+<p>The LLM Gateway provides both REST and gRPC interfaces for interacting with LLM services.</p>
+<h3 id="51-rest-api-endpoints">5.1 REST API Endpoints</h3>
+<p>The following REST endpoints are exposed by the LLM Gateway:</p>
+<h4 id="prompt-execution">Prompt Execution</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/prompt/fetch</code></td>
+<td>Execute a prompt and get an answer</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/prompt/fetchChat</code></td>
+<td>Execute a chat-style prompt and get an answer</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/prompt/stream</code></td>
+<td>Stream a response from an LLM</td>
+</tr>
+</tbody>
+</table>
+<p>Example fetch request:</p>
+<pre><code class="language-json">{
+  &quot;tenantId&quot;: &quot;1000&quot;,
+  &quot;promptName&quot;: &quot;example-prompt&quot;,
+  &quot;requestParams&quot;: [
+    {
+      &quot;name&quot;: &quot;query&quot;,
+      &quot;value&quot;: &quot;What is the capital of France?&quot;
+    }
+  ],
+  &quot;config&quot;: {
+    &quot;temperature&quot;: 0.7,
+    &quot;maxTokens&quot;: 500
+  },
+  &quot;botId&quot;: 123,
+  &quot;useCache&quot;: true
+}
+</code></pre>
+<p>Example response:</p>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 200,
+  &quot;responseParams&quot;: [
+    {
+      &quot;name&quot;: &quot;answer&quot;,
+      &quot;value&quot;: &quot;The capital of France is Paris.&quot;
+    }
+  ]
+}
+</code></pre>
+<h4 id="prompt-management">Prompt Management</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/prompt/{promptName}</code></td>
+<td>Get a prompt by name</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/prompt</code></td>
+<td>Create a new prompt</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/v1/prompt/{promptName}</code></td>
+<td>Update an existing prompt</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/v1/prompt/{promptName}</code></td>
+<td>Delete a prompt</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/prompt/list</code></td>
+<td>List all prompts</td>
+</tr>
+</tbody>
+</table>
+<h4 id="llm-registry-management">LLM Registry Management</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/llm/{llmName}</code></td>
+<td>Get an LLM registry entry by name</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/v1/llm</code></td>
+<td>Create a new LLM registry entry</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td><code>/api/v1/llm/{llmName}</code></td>
+<td>Update an existing LLM registry entry</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/v1/llm/{llmName}</code></td>
+<td>Delete an LLM registry entry</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/v1/llm/list</code></td>
+<td>List all LLM registry entries</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-grpc-services">5.2 gRPC Services</h3>
+<p>The LLM Gateway also exposes a gRPC service defined by the following protobuf:</p>
+<pre><code class="language-protobuf">syntax = &quot;proto3&quot;;
+
+package aisera.service.llm;
+
+import &quot;google/protobuf/any.proto&quot;;
+
+service LLMService {
+  rpc FetchAnswer(LLMFetchAnswerRequest) returns (LLMFetchAnswerResponse);
+  rpc FetchChatAnswer(LLMFetchChatAnswerRequest) returns (LLMFetchChatAnswerResponse);
+  rpc StreamingAnswer(LLMStreamingAnswerRequest) returns (stream LLMStreamingAnswerResponse);
+}
+
+message LLMFetchAnswerRequest {
+  string tenant_id = 1;
+  string prompt_name = 2;
+  repeated PromptParam request_params = 3;
+  map&lt;string, google.protobuf.Any&gt; config = 4;
+  bool is_debug = 5;
+  int64 bot_id = 6;
+  string prompt_group_name = 7;
+  bool use_cache = 8;
+  bool detect_prompt_injection = 9;
+}
+
+message LLMFetchAnswerResponse {
+  int32 status_code = 1;
+  string error_message = 2;
+  repeated PromptParam response_params = 3;
+  repeated LLMDebugInfo llm_debug_infos = 4;
+}
+
+message LLMFetchChatAnswerRequest {
+  string tenant_id = 1;
+  string prompt_name = 2;
+  repeated PromptParam request_params = 3;
+  repeated ChatMessage messages = 4;
+  map&lt;string, google.protobuf.Any&gt; config = 5;
+  bool is_debug = 6;
+  int64 bot_id = 7;
+  repeated FunctionDefinition function_definitions = 8;
+  string prompt_group_name = 9;
+  bool use_cache = 10;
+  bool detect_prompt_injection = 11;
+}
+
+message LLMFetchChatAnswerResponse {
+  int32 status_code = 1;
+  string error_message = 2;
+  string error_code = 3;
+  string message = 4;
+  repeated PromptParam response_params = 5;
+  repeated LLMDebugInfo llm_debug_infos = 6;
+}
+
+// Other message definitions omitted for brevity
+</code></pre>
+<h2 id="6-security-considerations">6. Security Considerations</h2>
+<p>The LLM Gateway implements several security measures to protect against common vulnerabilities and ensure secure communication with LLM providers:</p>
+<h3 id="authentication-and-authorization">Authentication and Authorization</h3>
+<ol>
+<li><strong>API Authentication</strong>: All REST and gRPC APIs require authentication using API keys or JWT tokens.</li>
+<li><strong>LLM Provider Authentication</strong>: Secure storage and handling of API keys and credentials for LLM providers.</li>
+<li><strong>Tenant Isolation</strong>: Strong tenant isolation to ensure that one tenant cannot access another tenant's prompts or data.</li>
+</ol>
+<h3 id="data-protection">Data Protection</h3>
+<ol>
+<li><strong>Input Validation</strong>: Thorough validation of all input parameters to prevent injection attacks.</li>
+<li><strong>Prompt Injection Detection</strong>: Built-in detection for prompt injection attacks to prevent manipulation of LLM behavior.</li>
+<li><strong>Output Sanitization</strong>: Sanitization of LLM outputs to prevent XSS and other injection attacks in client applications.</li>
+</ol>
+<h3 id="network-security">Network Security</h3>
+<ol>
+<li><strong>TLS Encryption</strong>: All communication with LLM providers uses TLS encryption.</li>
+<li><strong>Virtual Private Cloud</strong>: Deployment within a VPC to limit network access.</li>
+<li><strong>API Rate Limiting</strong>: Rate limiting to prevent abuse and DoS attacks.</li>
+</ol>
+<h3 id="audit-and-monitoring">Audit and Monitoring</h3>
+<ol>
+<li><strong>Audit Logging</strong>: Comprehensive logging of all API requests and responses.</li>
+<li><strong>Metrics Collection</strong>: Collection of metrics for anomaly detection and security monitoring.</li>
+<li><strong>Alerting</strong>: Automated alerts for suspicious activity or security violations.</li>
+</ol>
+<h2 id="7-performance-considerations">7. Performance Considerations</h2>
+<p>The LLM Gateway is designed for high performance and scalability:</p>
+<h3 id="caching">Caching</h3>
+<ol>
+<li><strong>Response Caching</strong>: Caching of LLM responses to reduce duplicate requests and improve latency.</li>
+<li><strong>Cache Invalidation</strong>: Smart cache invalidation strategy based on prompt updates and configuration changes.</li>
+<li><strong>Distributed Caching</strong>: Support for distributed cache implementations (Redis) for high availability.</li>
+</ol>
+<h3 id="concurrency">Concurrency</h3>
+<ol>
+<li><strong>Thread Pooling</strong>: Configurable thread pools for handling concurrent requests.</li>
+<li><strong>Asynchronous Processing</strong>: Non-blocking I/O for communication with LLM providers.</li>
+<li><strong>Connection Pooling</strong>: Reuse of connections to LLM providers to reduce connection overhead.</li>
+</ol>
+<h3 id="scaling">Scaling</h3>
+<ol>
+<li><strong>Horizontal Scaling</strong>: The LLM Gateway can be scaled horizontally by deploying multiple instances.</li>
+<li><strong>Load Balancing</strong>: Support for load balancing across multiple instances.</li>
+<li><strong>Containerization</strong>: Docker container support for easy deployment and scaling.</li>
+</ol>
+<h2 id="8-dependencies">8. Dependencies</h2>
+<p>The LLM Gateway has the following key dependencies:</p>
+<h3 id="external-libraries">External Libraries</h3>
+<table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>Version</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Spring Boot</td>
+<td>2.6.x</td>
+<td>Application framework</td>
+</tr>
+<tr>
+<td>Hibernate</td>
+<td>5.6.x</td>
+<td>ORM for database access</td>
+</tr>
+<tr>
+<td>gRPC</td>
+<td>1.45.x</td>
+<td>gRPC implementation</td>
+</tr>
+<tr>
+<td>Jetty</td>
+<td>9.4.x</td>
+<td>Embedded web server</td>
+</tr>
+<tr>
+<td>Micrometer</td>
+<td>1.9.x</td>
+<td>Metrics collection</td>
+</tr>
+<tr>
+<td>Logback</td>
+<td>1.2.x</td>
+<td>Logging framework</td>
+</tr>
+<tr>
+<td>Jackson</td>
+<td>2.13.x</td>
+<td>JSON processing</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>6.2.x</td>
+<td>Distributed cache</td>
+</tr>
+<tr>
+<td>Langchain4j</td>
+<td>0.17.x</td>
+<td>LLM utilities</td>
+</tr>
+</tbody>
+</table>
+<h3 id="external-services">External Services</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OpenAI GPT</td>
+<td>External LLM provider for GPT models</td>
+</tr>
+<tr>
+<td>AWS Bedrock</td>
+<td>External LLM provider for Llama2 models</td>
+</tr>
+<tr>
+<td>Aisera LLM</td>
+<td>Internal LLM provider</td>
+</tr>
+<tr>
+<td>MySQL/MariaDB</td>
+<td>Database for storing prompts and configuration</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>Distributed cache for response caching</td>
+</tr>
+<tr>
+<td>Prometheus</td>
+<td>Metrics collection and monitoring</td>
+</tr>
+</tbody>
+</table>
+<h2 id="9-appendix">9. Appendix</h2>
+<h3 id="a-glossary">A. Glossary</h3>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM</td>
+<td>Large Language Model</td>
+</tr>
+<tr>
+<td>Prompt</td>
+<td>Template text used to generate responses from an LLM</td>
+</tr>
+<tr>
+<td>Prompt Registry</td>
+<td>Database of prompts and their configurations</td>
+</tr>
+<tr>
+<td>LLM Registry</td>
+<td>Database of LLM providers and their configurations</td>
+</tr>
+<tr>
+<td>Tenant</td>
+<td>A customer or organizational unit with isolated data</td>
+</tr>
+<tr>
+<td>Bot</td>
+<td>An AI assistant instance</td>
+</tr>
+</tbody>
+</table>
+<h3 id="b-error-codes">B. Error Codes</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>400</td>
+<td>Bad Request - Invalid input parameters</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized - Authentication required</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden - Insufficient permissions</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found - Prompt or LLM provider not found</td>
+</tr>
+<tr>
+<td>429</td>
+<td>Too Many Requests - Rate limit exceeded</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Internal Server Error - Server-side error</td>
+</tr>
+<tr>
+<td>503</td>
+<td>Service Unavailable - LLM provider temporarily unavailable</td>
+</tr>
+</tbody>
+</table>
+<h3 id="c-configuration-properties">C. Configuration Properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>aisera.rest.webserver.port</td>
+<td>REST server port</td>
+<td>8300</td>
+</tr>
+<tr>
+<td>aisera.grpc.port</td>
+<td>gRPC server port</td>
+<td>9090</td>
+</tr>
+<tr>
+<td>aisera.sql.host</td>
+<td>Database host</td>
+<td>localhost</td>
+</tr>
+<tr>
+<td>aisera.sql.port</td>
+<td>Database port</td>
+<td>3306</td>
+</tr>
+<tr>
+<td>aisera.cache.enabled</td>
+<td>Enable response caching</td>
+<td>true</td>
+</tr>
+<tr>
+<td>aisera.metrics.enabled</td>
+<td>Enable metrics collection</td>
+<td>true</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

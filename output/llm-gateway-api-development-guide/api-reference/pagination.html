@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>pagination</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="pagination-filtering-and-sorting">Pagination, Filtering, and Sorting</h1>
+<p>This guide explains how to work with large collections of data in the LLM Gateway API, covering pagination mechanisms, filtering options, and sorting capabilities.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#pagination">Pagination</a></li>
+<li><a href="#filtering">Filtering</a></li>
+<li><a href="#sorting">Sorting</a></li>
+<li><a href="#examples">Examples</a></li>
+</ul>
+<h2 id="pagination">Pagination</h2>
+<p>All endpoints that return collections of resources support pagination to limit the number of items returned in a single response and to navigate through large result sets efficiently.</p>
+<h3 id="pagination-parameters">Pagination Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>page</td>
+<td>integer</td>
+<td>1</td>
+<td>The page number to retrieve</td>
+</tr>
+<tr>
+<td>limit</td>
+<td>integer</td>
+<td>20</td>
+<td>The number of items per page (maximum 100)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pagination-response">Pagination Response</h3>
+<p>Paginated responses include a <code>pagination</code> object containing metadata about the result set:</p>
+<pre><code class="language-json">{
+  &quot;items&quot;: [...],
+  &quot;pagination&quot;: {
+    &quot;total&quot;: 45,     // Total number of items available
+    &quot;limit&quot;: 20,     // Number of items per page
+    &quot;page&quot;: 1,       // Current page number
+    &quot;pages&quot;: 3       // Total number of pages
+  }
+}
+</code></pre>
+<h3 id="pagination-headers">Pagination Headers</h3>
+<p>In addition to the response body, the following pagination headers are included:</p>
+<table>
+<thead>
+<tr>
+<th>Header</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>X-Total-Count</td>
+<td>The total number of items available</td>
+</tr>
+<tr>
+<td>X-Page-Count</td>
+<td>The total number of pages available</td>
+</tr>
+<tr>
+<td>X-Page</td>
+<td>The current page number</td>
+</tr>
+<tr>
+<td>X-Limit</td>
+<td>The number of items per page</td>
+</tr>
+</tbody>
+</table>
+<h2 id="filtering">Filtering</h2>
+<p>Most collection endpoints support filtering to narrow down the results based on specific criteria.</p>
+<h3 id="common-filter-parameters">Common Filter Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>status</td>
+<td>string</td>
+<td>Filter by resource status</td>
+<td><code>status=published</code></td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Filter by resource name (substring match)</td>
+<td><code>name=customer</code></td>
+</tr>
+<tr>
+<td>created_after</td>
+<td>ISO date</td>
+<td>Filter by creation date</td>
+<td><code>created_after=2023-01-01T00:00:00Z</code></td>
+</tr>
+<tr>
+<td>created_before</td>
+<td>ISO date</td>
+<td>Filter by creation date</td>
+<td><code>created_before=2023-12-31T23:59:59Z</code></td>
+</tr>
+<tr>
+<td>model</td>
+<td>string</td>
+<td>Filter by LLM model</td>
+<td><code>model=gpt-4</code></td>
+</tr>
+<tr>
+<td>provider</td>
+<td>string</td>
+<td>Filter by LLM provider</td>
+<td><code>provider=openai</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="filter-operators">Filter Operators</h3>
+<p>The API supports several operators for more complex filtering:</p>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>eq</td>
+<td>Equals</td>
+<td><code>status.eq=published</code></td>
+</tr>
+<tr>
+<td>ne</td>
+<td>Not equals</td>
+<td><code>status.ne=draft</code></td>
+</tr>
+<tr>
+<td>gt</td>
+<td>Greater than</td>
+<td><code>version.gt=3</code></td>
+</tr>
+<tr>
+<td>gte</td>
+<td>Greater than or equal</td>
+<td><code>version.gte=3</code></td>
+</tr>
+<tr>
+<td>lt</td>
+<td>Less than</td>
+<td><code>version.lt=10</code></td>
+</tr>
+<tr>
+<td>lte</td>
+<td>Less than or equal</td>
+<td><code>version.lte=10</code></td>
+</tr>
+<tr>
+<td>in</td>
+<td>In a list</td>
+<td><code>status.in=published,archived</code></td>
+</tr>
+<tr>
+<td>like</td>
+<td>Pattern matching</td>
+<td><code>name.like=%customer%</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="combining-filters">Combining Filters</h3>
+<p>Multiple filters can be combined to create advanced queries. All applied filters are combined with a logical AND operation.</p>
+<h2 id="sorting">Sorting</h2>
+<p>Collection endpoints support sorting to order the results based on specific fields.</p>
+<h3 id="sort-parameters">Sort Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sort</td>
+<td>string</td>
+<td>Field to sort by</td>
+<td><code>sort=createdAt</code></td>
+</tr>
+<tr>
+<td>order</td>
+<td>string</td>
+<td>Sort order (asc or desc)</td>
+<td><code>order=desc</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="multiple-sort-fields">Multiple Sort Fields</h3>
+<p>To sort by multiple fields, specify them as comma-separated values:</p>
+<pre><code>sort=status,createdAt&amp;order=asc,desc
+</code></pre>
+<p>This sorts first by status (ascending) and then by createdAt (descending).</p>
+<h2 id="examples">Examples</h2>
+<h3 id="basic-pagination">Basic Pagination</h3>
+<p>Retrieve the second page of prompts with 10 items per page:</p>
+<pre><code class="language-bash">curl &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts?page=2&amp;limit=10&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h3 id="filtering-by-status-and-name">Filtering by Status and Name</h3>
+<p>Retrieve all published prompts containing "customer" in their name:</p>
+<pre><code class="language-bash">curl &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts?status=published&amp;name=customer&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h3 id="advanced-filtering">Advanced Filtering</h3>
+<p>Retrieve prompts created between January and June 2023, with version greater than or equal to 2:</p>
+<pre><code class="language-bash">curl &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts?created_after=2023-01-01T00:00:00Z&amp;created_before=2023-06-30T23:59:59Z&amp;version.gte=2&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h3 id="sorting_1">Sorting</h3>
+<p>Retrieve prompts sorted by creation date in descending order (newest first):</p>
+<pre><code class="language-bash">curl &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts?sort=createdAt&amp;order=desc&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h3 id="combined-example">Combined Example</h3>
+<p>Retrieve the first page of 20 published prompts, sorted by name in ascending order:</p>
+<pre><code class="language-bash">curl &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts?status=published&amp;sort=name&amp;order=asc&amp;page=1&amp;limit=20&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h3 id="python-example">Python Example</h3>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com&quot;
+tenant_id = &quot;9000&quot;
+
+# Get the second page of recently created prompts
+params = {
+    &quot;page&quot;: 2,
+    &quot;limit&quot;: 15,
+    &quot;sort&quot;: &quot;createdAt&quot;,
+    &quot;order&quot;: &quot;desc&quot;,
+    &quot;status&quot;: &quot;published&quot;
+}
+
+response = requests.get(
+    f&quot;{base_url}/v1/tenants/{tenant_id}/llm/prompts&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    },
+    params=params
+)
+
+data = response.json()
+print(f&quot;Retrieved {len(data['items'])} items&quot;)
+print(f&quot;Page {data['pagination']['page']} of {data['pagination']['pages']}&quot;)
+print(f&quot;Total items: {data['pagination']['total']}&quot;)
+
+# Process the items
+for item in data['items']:
+    print(f&quot;Prompt: {item['name']} (ID: {item['id']})&quot;)
+</code></pre>
+<h3 id="javascriptnodejs-example">JavaScript/Node.js Example</h3>
+<pre><code class="language-javascript">const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com';
+const tenantId = '9000';
+
+// Get prompts filtered by name and creation date
+async function getFilteredPrompts() {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/v1/tenants/${tenantId}/llm/prompts`,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        },
+        params: {
+          'name.like': '%customer%',
+          'created_after': '2023-01-01T00:00:00Z',
+          'sort': 'name',
+          'order': 'asc',
+          'limit': 50
+        }
+      }
+    );
+
+    const { items, pagination } = response.data;
+    console.log(`Retrieved ${items.length} items`);
+    console.log(`Page ${pagination.page} of ${pagination.pages}`);
+    console.log(`Total items: ${pagination.total}`);
+
+    // Process the items
+    items.forEach(item =&gt; {
+      console.log(`Prompt: ${item.name} (ID: ${item.id})`);
+    });
+
+    // Check if there are more pages
+    if (pagination.page &lt; pagination.pages) {
+      console.log('More pages available. Increase the page parameter to retrieve more items.');
+    }
+  } catch (error) {
+    console.error('Error retrieving prompts:', error.message);
+  }
+}
+
+getFilteredPrompts();
+</code></pre>
+</body>
+</html>

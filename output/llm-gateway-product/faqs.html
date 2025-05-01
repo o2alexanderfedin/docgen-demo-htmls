@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>faqs</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="faqs-known-limitations">FAQs &amp; Known Limitations</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#general-questions">General Questions</a></li>
+<li><a href="#implementation--integration">Implementation &amp; Integration</a></li>
+<li><a href="#security--compliance">Security &amp; Compliance</a></li>
+<li><a href="#performance--scalability">Performance &amp; Scalability</a></li>
+<li><a href="#cost--licensing">Cost &amp; Licensing</a></li>
+<li><a href="#known-limitations">Known Limitations</a></li>
+<li><a href="#roadmap--future-plans">Roadmap &amp; Future Plans</a></li>
+</ul>
+<p>This document addresses frequently asked questions about the LLM Gateway and details current known limitations of the product.</p>
+<h2 id="general-questions">General Questions</h2>
+<h3 id="what-is-the-llm-gateway">What is the LLM Gateway?</h3>
+<p>The LLM Gateway is a centralized platform that provides a unified interface to multiple Large Language Model (LLM) providers. It standardizes access to LLMs while adding enterprise-grade features like prompt management, security controls, cost optimization, and comprehensive analytics.</p>
+<h3 id="which-llm-providers-does-the-gateway-support">Which LLM providers does the Gateway support?</h3>
+<p>The Gateway currently supports the following LLM providers:</p>
+<ul>
+<li>OpenAI (GPT-3.5, GPT-4)</li>
+<li>Anthropic (Claude series)</li>
+<li>Cohere (Command, Embed)</li>
+<li>Meta (Llama 2, Llama 3)</li>
+<li>Mistral AI (Mistral models)</li>
+<li>AI21 (Jurassic models)</li>
+<li>Google (Gemini models)</li>
+<li>Azure OpenAI Service</li>
+<li>AWS Bedrock models</li>
+<li>Open source models (via custom deployment)</li>
+</ul>
+<p>Additional providers are added regularly based on market adoption and customer requests.</p>
+<h3 id="how-does-the-gateway-differ-from-directly-using-llm-provider-apis">How does the Gateway differ from directly using LLM provider APIs?</h3>
+<p>While direct API integration is possible, the Gateway provides several advantages:</p>
+<ol>
+<li><strong>Unified API</strong>: Consistent interface regardless of underlying model</li>
+<li><strong>Prompt Management</strong>: Version control, reuse, and collaboration for prompts</li>
+<li><strong>Governance</strong>: Access controls, content filtering, and usage policies</li>
+<li><strong>Cost Optimization</strong>: Caching, routing, and usage analytics</li>
+<li><strong>Provider Flexibility</strong>: Easy switching between providers without code changes</li>
+<li><strong>Enterprise Integration</strong>: Security, monitoring, and compliance features</li>
+</ol>
+<h3 id="can-we-continue-using-our-existing-llm-provider-accounts">Can we continue using our existing LLM provider accounts?</h3>
+<p>Yes. The LLM Gateway can be configured to use your existing accounts and API keys with various providers. This allows you to maintain your current billing relationships while gaining the benefits of centralized management and control.</p>
+<h3 id="is-the-gateway-appropriate-for-both-small-teams-and-large-enterprises">Is the Gateway appropriate for both small teams and large enterprises?</h3>
+<p>Yes. The Gateway is designed to scale from small teams to large enterprises:</p>
+<ul>
+<li><strong>Startups/Small Teams</strong>: Simplified API, reduced development time, future-proofing</li>
+<li><strong>Mid-size Organizations</strong>: Standardization, cost control, governance</li>
+<li><strong>Large Enterprises</strong>: Enterprise security, compliance, multi-team collaboration, global scaling</li>
+</ul>
+<h2 id="implementation-integration">Implementation &amp; Integration</h2>
+<h3 id="how-is-the-llm-gateway-deployed">How is the LLM Gateway deployed?</h3>
+<p>The Gateway supports multiple deployment options:</p>
+<ol>
+<li><strong>Cloud-Hosted SaaS</strong>: Fully managed service with minimal setup</li>
+<li><strong>Self-Hosted Cloud</strong>: Deployment in your AWS, Azure, or GCP environment</li>
+<li><strong>On-Premises</strong>: Installation in your data center</li>
+<li><strong>Hybrid</strong>: Combination of cloud and on-premises components</li>
+</ol>
+<p>Deployment typically takes 1-4 weeks depending on complexity and integration requirements.</p>
+<h3 id="what-are-the-technical-requirements-for-deployment">What are the technical requirements for deployment?</h3>
+<p>For cloud-hosted deployments, there are no specific technical requirements beyond standard network connectivity.</p>
+<p>For self-hosted deployments:
+- Kubernetes cluster (v1.24+)
+- Container registry access
+- Database services (PostgreSQL 13+)
+- Cache services (Redis 6+)
+- Load balancing and ingress capability
+- Monitoring infrastructure (optional)</p>
+<p>Detailed requirements vary based on expected load and specific features used.</p>
+<h3 id="how-does-the-gateway-integrate-with-existing-applications">How does the Gateway integrate with existing applications?</h3>
+<p>The Gateway provides multiple integration options:</p>
+<ol>
+<li><strong>REST API</strong>: Standard HTTP endpoints with comprehensive documentation</li>
+<li><strong>gRPC API</strong>: High-performance binary protocol</li>
+<li><strong>Client SDKs</strong>: Libraries for Python, JavaScript, Java, and more</li>
+<li><strong>Webhooks</strong>: Event notifications for asynchronous workflows</li>
+</ol>
+<p>Most applications can integrate via the REST API or appropriate SDK without significant changes to existing architecture.</p>
+<h3 id="can-we-migrate-existing-llm-integrations-incrementally">Can we migrate existing LLM integrations incrementally?</h3>
+<p>Yes. The Gateway is designed to support incremental migration:</p>
+<ol>
+<li>Start with a single application or team</li>
+<li>Maintain existing direct integrations in parallel</li>
+<li>Gradually migrate applications to the Gateway</li>
+<li>Eventually decommission direct integrations</li>
+</ol>
+<p>This approach minimizes risk and allows teams to adapt at their own pace.</p>
+<h3 id="how-long-does-a-typical-implementation-take">How long does a typical implementation take?</h3>
+<p>Implementation timelines vary based on scope and complexity:</p>
+<ul>
+<li><strong>Basic Setup</strong>: 1-2 weeks for initial deployment and configuration</li>
+<li><strong>Limited Integration</strong>: 2-4 weeks for integrating a few key applications</li>
+<li><strong>Enterprise Deployment</strong>: 1-3 months for full enterprise implementation with custom integrations</li>
+<li><strong>Global Rollout</strong>: 3-6 months for comprehensive deployment across multiple regions/divisions</li>
+</ul>
+<h2 id="security-compliance">Security &amp; Compliance</h2>
+<h3 id="how-does-the-gateway-handle-sensitive-data">How does the Gateway handle sensitive data?</h3>
+<p>The Gateway implements multiple data protection measures:</p>
+<ol>
+<li><strong>Encryption</strong>: All data is encrypted in transit and at rest</li>
+<li><strong>Data Minimization</strong>: Options to filter or mask sensitive data</li>
+<li><strong>Retention Controls</strong>: Configurable data retention policies</li>
+<li><strong>Access Controls</strong>: Fine-grained permissions for data access</li>
+<li><strong>Audit Logging</strong>: Comprehensive tracking of all data access</li>
+</ol>
+<p>Additionally, with self-hosted deployments, data remains within your environment.</p>
+<h3 id="what-compliance-standards-does-the-gateway-support">What compliance standards does the Gateway support?</h3>
+<p>The Gateway is designed to help organizations meet various compliance requirements:</p>
+<ul>
+<li><strong>SOC 2 Type II</strong>: Audited control framework</li>
+<li><strong>GDPR</strong>: Data privacy capabilities</li>
+<li><strong>HIPAA</strong>: Healthcare data protection features</li>
+<li><strong>CCPA/CPRA</strong>: California privacy requirements</li>
+<li><strong>ISO 27001</strong>: Information security management</li>
+<li><strong>FedRAMP</strong>: In progress for government deployments</li>
+</ul>
+<p>Implementation teams will work with your compliance stakeholders to configure the Gateway appropriately for your specific requirements.</p>
+<h3 id="how-are-api-keys-and-credentials-managed">How are API keys and credentials managed?</h3>
+<p>Credentials for LLM providers are handled securely:</p>
+<ol>
+<li><strong>Secure Storage</strong>: Encrypted storage using industry best practices</li>
+<li><strong>Access Limitation</strong>: Restricted access to credential information</li>
+<li><strong>Rotation Support</strong>: Automated credential rotation capabilities</li>
+<li><strong>Audit Trail</strong>: Logging of all credential access and changes</li>
+<li><strong>Secrets Management</strong>: Integration with enterprise secrets management systems</li>
+</ol>
+<h3 id="can-the-gateway-be-used-in-high-security-environments">Can the Gateway be used in high-security environments?</h3>
+<p>Yes. The Gateway includes features specifically designed for high-security environments:</p>
+<ul>
+<li><strong>Zero Trust Architecture</strong>: Trust nothing, verify everything approach</li>
+<li><strong>Air-Gapped Deployment</strong>: Support for disconnected environments</li>
+<li><strong>RBAC/ABAC</strong>: Sophisticated access control models</li>
+<li><strong>HSM Integration</strong>: Hardware security module support</li>
+<li><strong>Enhanced Auditing</strong>: Detailed activity logging and monitoring</li>
+<li><strong>FedRAMP</strong>: Working toward certification for government use</li>
+</ul>
+<h3 id="how-does-the-gateway-ensure-appropriate-content-filtering">How does the Gateway ensure appropriate content filtering?</h3>
+<p>The Gateway provides multi-layered content controls:</p>
+<ol>
+<li><strong>Input Filtering</strong>: Screening of prompts against policy guidelines</li>
+<li><strong>Output Filtering</strong>: Review of responses for inappropriate content</li>
+<li><strong>Custom Policies</strong>: Organization-specific content policies</li>
+<li><strong>Category Blocking</strong>: Specific content categories can be blocked</li>
+<li><strong>Human Review</strong>: Optional workflows for human approval</li>
+<li><strong>Audit Trail</strong>: Complete logging of filtering decisions</li>
+</ol>
+<h2 id="performance-scalability">Performance &amp; Scalability</h2>
+<h3 id="how-does-the-gateway-handle-high-volumes-of-requests">How does the Gateway handle high volumes of requests?</h3>
+<p>The Gateway is designed for high-performance operation:</p>
+<ol>
+<li><strong>Horizontal Scaling</strong>: Add instances to handle increased load</li>
+<li><strong>Load Balancing</strong>: Distribute requests across available resources</li>
+<li><strong>Queue Management</strong>: Handle traffic spikes with intelligent queuing</li>
+<li><strong>Auto-Scaling</strong>: Automatically adjust capacity based on demand</li>
+<li><strong>Global Distribution</strong>: Deploy across multiple regions for localized performance</li>
+</ol>
+<p>Benchmarks show the Gateway can handle millions of requests per day with proper scaling.</p>
+<h3 id="what-performance-impact-does-the-gateway-introduce">What performance impact does the Gateway introduce?</h3>
+<p>The Gateway is optimized to minimize overhead:</p>
+<ul>
+<li><strong>Typical Latency Overhead</strong>: 10-50ms per request (excluding provider time)</li>
+<li><strong>Caching Benefit</strong>: 100-500ms saved per cacheable request</li>
+<li><strong>Optimized Connections</strong>: Connection pooling reduces provider connection time</li>
+<li><strong>Local Deployment Option</strong>: Reduced network latency through regional deployment</li>
+</ul>
+<p>For most applications, the performance benefits (caching, connection management) outweigh the minimal overhead.</p>
+<h3 id="how-does-caching-work-and-what-improvements-does-it-provide">How does caching work and what improvements does it provide?</h3>
+<p>The Gateway implements an intelligent caching system:</p>
+<ol>
+<li><strong>Deterministic Caching</strong>: Identical requests return cached results</li>
+<li><strong>Configurable TTL</strong>: Adjustable cache lifetime by use case</li>
+<li><strong>Cache Analytics</strong>: Visibility into hit rates and performance gains</li>
+<li><strong>Distributed Cache</strong>: Scalable performance across Gateway instances</li>
+<li><strong>Selective Caching</strong>: Configure which requests should be cached</li>
+</ol>
+<p>Typical customers see:
+- 20-40% overall cache hit rates
+- 30-50% reduction in average response time
+- 25-45% reduction in LLM API costs</p>
+<h3 id="can-the-gateway-handle-streaming-responses">Can the Gateway handle streaming responses?</h3>
+<p>Yes. The Gateway fully supports streaming responses from supported providers:</p>
+<ol>
+<li><strong>Stream Processing</strong>: Efficient handling of token-by-token responses</li>
+<li><strong>Minimal Latency</strong>: Low overhead for streaming operations</li>
+<li><strong>Client Support</strong>: SDKs include streaming-specific functionality</li>
+<li><strong>Reliability Features</strong>: Handling of stream interruptions</li>
+<li><strong>Monitoring</strong>: Stream-specific performance metrics</li>
+</ol>
+<h3 id="what-are-the-scaling-limits-of-the-gateway">What are the scaling limits of the Gateway?</h3>
+<p>The Gateway is designed for enterprise-scale deployment:</p>
+<ul>
+<li><strong>Request Volume</strong>: Millions of requests per day with appropriate scaling</li>
+<li><strong>Concurrent Users</strong>: Thousands of simultaneous users</li>
+<li><strong>Prompt Templates</strong>: Tens of thousands of managed templates</li>
+<li><strong>Tenants/Projects</strong>: Hundreds of isolated tenants or projects</li>
+<li><strong>Geographic Distribution</strong>: Global deployment across multiple regions</li>
+</ul>
+<p>Specific scaling metrics depend on deployment architecture and resources allocated.</p>
+<h2 id="cost-licensing">Cost &amp; Licensing</h2>
+<h3 id="how-is-the-gateway-licensed">How is the Gateway licensed?</h3>
+<p>The Gateway offers flexible licensing options:</p>
+<ol>
+<li><strong>Usage-Based</strong>: Priced based on request volume</li>
+<li><strong>Subscription</strong>: Fixed monthly or annual fee based on capacity</li>
+<li><strong>Tiered Plans</strong>: Different feature sets at various price points</li>
+<li><strong>Enterprise Agreements</strong>: Custom pricing for large deployments</li>
+</ol>
+<p>Please contact sales for specific pricing information for your use case.</p>
+<h3 id="does-the-gateway-help-reduce-llm-provider-costs">Does the Gateway help reduce LLM provider costs?</h3>
+<p>Yes. Customers typically see significant cost reductions:</p>
+<ol>
+<li><strong>Caching</strong>: 20-40% reduction through response reuse</li>
+<li><strong>Smart Routing</strong>: 10-25% savings by directing to appropriate models</li>
+<li><strong>Prompt Optimization</strong>: 15-30% reduction through token efficiency</li>
+<li><strong>Usage Controls</strong>: Prevent unexpected cost spikes through quotas</li>
+<li><strong>Cost Analytics</strong>: Identify optimization opportunities</li>
+</ol>
+<p>Most organizations achieve 30-50% overall cost reduction compared to direct provider integration.</p>
+<h3 id="whats-included-in-the-standard-support-package">What's included in the standard support package?</h3>
+<p>Standard support includes:</p>
+<ul>
+<li>Business hours technical support</li>
+<li>Email and ticket-based assistance</li>
+<li>Documentation and knowledge base access</li>
+<li>Regular maintenance updates</li>
+<li>Community forum access</li>
+</ul>
+<p>Premium and enterprise support packages offer additional services:</p>
+<ul>
+<li>24/7 support availability</li>
+<li>Faster response times</li>
+<li>Named support contacts</li>
+<li>Implementation assistance</li>
+<li>Architectural reviews</li>
+<li>Custom feature development</li>
+</ul>
+<h3 id="are-professional-services-available-for-implementation">Are professional services available for implementation?</h3>
+<p>Yes. We offer several professional services options:</p>
+<ol>
+<li><strong>Implementation Services</strong>: Assistance with deployment and configuration</li>
+<li><strong>Integration Services</strong>: Help connecting with existing systems</li>
+<li><strong>Migration Services</strong>: Support for migrating from direct LLM integrations</li>
+<li><strong>Training</strong>: Custom training for developers and administrators</li>
+<li><strong>Optimization Services</strong>: Performance and cost optimization consulting</li>
+</ol>
+<p>Services can be engaged on a project or retainer basis.</p>
+<h2 id="known-limitations">Known Limitations</h2>
+<p>The LLM Gateway is continuously evolving, but there are some current limitations to be aware of:</p>
+<h3 id="technical-limitations">Technical Limitations</h3>
+<ol>
+<li><strong>Provider-Specific Features</strong>: Some provider-specific features may not be accessible through the unified API</li>
+<li>
+<p>Workaround: Use provider-specific endpoints when needed</p>
+</li>
+<li>
+<p><strong>Custom Models</strong>: Limited support for highly customized or fine-tuned models</p>
+</li>
+<li>
+<p>Roadmap: Enhanced support planned for Q1 2024</p>
+</li>
+<li>
+<p><strong>Local Models</strong>: On-device models require additional components and configuration</p>
+</li>
+<li>
+<p>Workaround: Use the Edge Deployment Kit (beta)</p>
+</li>
+<li>
+<p><strong>Multimodal Limitations</strong>: Support for image and audio inputs is in beta</p>
+</li>
+<li>
+<p>Roadmap: Full multimodal support planned for Q2 2024</p>
+</li>
+<li>
+<p><strong>Real-time Collaboration</strong>: Limited real-time collaboration features for prompt development</p>
+</li>
+<li>Roadmap: Enhanced collaboration features planned for Q3 2024</li>
+</ol>
+<h3 id="integration-limitations">Integration Limitations</h3>
+<ol>
+<li><strong>Legacy System Integration</strong>: Challenges with older systems lacking modern API support</li>
+<li>
+<p>Workaround: Custom adapters available through professional services</p>
+</li>
+<li>
+<p><strong>Complex Authentication Schemes</strong>: Limited support for certain complex authentication methods</p>
+</li>
+<li>
+<p>Roadmap: Enhanced authentication support in Q1 2024</p>
+</li>
+<li>
+<p><strong>Offline Operation</strong>: Limited capabilities when operating fully disconnected</p>
+</li>
+<li>
+<p>Roadmap: Enhanced offline mode planned for Q4 2023</p>
+</li>
+<li>
+<p><strong>Custom Workflows</strong>: Limited workflow automation for specialized processes</p>
+</li>
+<li>
+<p>Workaround: Use webhooks and external workflow tools</p>
+</li>
+<li>
+<p><strong>Embedding Models</strong>: Beta support for embedding and vector operations</p>
+</li>
+<li>Roadmap: Full embedding support in Q1 2024</li>
+</ol>
+<h3 id="enterprise-limitations">Enterprise Limitations</h3>
+<ol>
+<li><strong>Compliance Certifications</strong>: Some industry-specific certifications still in progress</li>
+<li>
+<p>Status: FedRAMP certification expected Q2 2024</p>
+</li>
+<li>
+<p><strong>Global Data Residency</strong>: Limited regions for SaaS deployment</p>
+</li>
+<li>
+<p>Roadmap: Additional regions planned throughout 2024</p>
+</li>
+<li>
+<p><strong>Custom SLAs</strong>: Limited ability to provide custom service level agreements</p>
+</li>
+<li>
+<p>Workaround: Enterprise agreements available for specific requirements</p>
+</li>
+<li>
+<p><strong>Hybrid Cloud Complexity</strong>: Complex setup for certain hybrid deployments</p>
+</li>
+<li>
+<p>Workaround: Professional services available to assist</p>
+</li>
+<li>
+<p><strong>Advanced Analytics</strong>: Limited predictive and prescriptive analytics</p>
+</li>
+<li>Roadmap: Enhanced analytics suite planned for Q2 2024</li>
+</ol>
+<h2 id="roadmap-future-plans">Roadmap &amp; Future Plans</h2>
+<p>For information about upcoming features and planned improvements, please refer to the <a href="release-roadmap.html">Release Roadmap</a> document. Key areas of future development include:</p>
+<ol>
+<li><strong>Agent Framework</strong>: Advanced capabilities for autonomous LLM agents</li>
+<li><strong>Fine-Tuning Management</strong>: Streamlined management of custom model training</li>
+<li><strong>Advanced Optimization</strong>: Intelligent prompt and response optimization</li>
+<li><strong>Multimodal Expansion</strong>: Full support for text, image, audio, and video</li>
+<li><strong>Enterprise Integrations</strong>: Enhanced connectivity with business systems</li>
+<li><strong>Edge Computing</strong>: Improved support for on-device and edge deployment</li>
+<li><strong>Specialized Solutions</strong>: Industry-specific and function-specific solutions</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="business-impact.html">Business Impact</a> | <strong>Home</strong>: <a href="README.html">Documentation Home</a></p>
+</body>
+</html>

@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>prompt-execution</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="prompt-execution-api">Prompt Execution API</h1>
+<p>The Prompt Execution API allows you to execute prompts against LLM providers.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#execute-chat-prompt">Execute Chat Prompt</a></li>
+<li><a href="#execute-prompt">Execute Prompt</a></li>
+<li><a href="#infer-prompt">Infer Prompt</a></li>
+<li><a href="#execute-direct-prompt">Execute Direct Prompt</a></li>
+<li><a href="#stream-response">Stream Response</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The Prompt Execution API supports several modes of interaction with LLMs:</p>
+<ul>
+<li><strong>Chat Completion</strong>: For conversational interactions with the LLM</li>
+<li><strong>Text Completion</strong>: For traditional prompt-based interactions</li>
+<li><strong>Streaming</strong>: For real-time responses from the LLM</li>
+<li><strong>Direct Execution</strong>: For executing prompts directly without pre-registration</li>
+</ul>
+<h2 id="execute-chat-prompt">Execute Chat Prompt</h2>
+<p>Executes a chat-style prompt against the specified LLM provider.</p>
+<h3 id="endpoint">Endpoint</h3>
+<pre><code>POST /llm/v1/execution/fetchChatAnswer
+</code></pre>
+<h3 id="permission">Permission</h3>
+<p><code>llm:execute</code></p>
+<h3 id="request-parameters">Request Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptName</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt to execute</td>
+</tr>
+<tr>
+<td>requestParams</td>
+<td>array</td>
+<td>No</td>
+<td>Array of parameters to apply to the prompt</td>
+</tr>
+<tr>
+<td>messages</td>
+<td>array</td>
+<td>No</td>
+<td>Array of chat messages for conversation context</td>
+</tr>
+<tr>
+<td>config</td>
+<td>object</td>
+<td>No</td>
+<td>Configuration overrides for this request</td>
+</tr>
+<tr>
+<td>isDebug</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to include debug information in the response</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>number</td>
+<td>No</td>
+<td>The ID of the bot (if applicable)</td>
+</tr>
+<tr>
+<td>useCache</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to use cached responses if available</td>
+</tr>
+<tr>
+<td>enableFunctionCalling</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to enable function calling capabilities</td>
+</tr>
+<tr>
+<td>functionDefinitions</td>
+<td>array</td>
+<td>No</td>
+<td>Array of function definitions for function calling</td>
+</tr>
+</tbody>
+</table>
+<h4 id="requestparams-object">requestParams Object</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the parameter</td>
+</tr>
+<tr>
+<td>value</td>
+<td>any</td>
+<td>Yes</td>
+<td>The value of the parameter</td>
+</tr>
+</tbody>
+</table>
+<h4 id="messages-object">messages Object</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>role</td>
+<td>string</td>
+<td>Yes</td>
+<td>The role of the message sender (system, user, assistant)</td>
+</tr>
+<tr>
+<td>content</td>
+<td>string</td>
+<td>Yes</td>
+<td>The content of the message</td>
+</tr>
+<tr>
+<td>contentType</td>
+<td>string</td>
+<td>No</td>
+<td>The type of content (TEXT, IMAGE, FUNCTION_CALL)</td>
+</tr>
+<tr>
+<td>function_call</td>
+<td>object</td>
+<td>No</td>
+<td>Function call information (if applicable)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="config-object">config Object</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>temperature</td>
+<td>number</td>
+<td>No</td>
+<td>Sampling temperature (0-1)</td>
+</tr>
+<tr>
+<td>maxTokens</td>
+<td>number</td>
+<td>No</td>
+<td>Maximum tokens to generate</td>
+</tr>
+<tr>
+<td>stopSequences</td>
+<td>array</td>
+<td>No</td>
+<td>Array of stop sequences</td>
+</tr>
+<tr>
+<td>topP</td>
+<td>number</td>
+<td>No</td>
+<td>Top-p sampling value</td>
+</tr>
+<tr>
+<td>topK</td>
+<td>number</td>
+<td>No</td>
+<td>Top-k sampling value</td>
+</tr>
+<tr>
+<td>presencePenalty</td>
+<td>number</td>
+<td>No</td>
+<td>Presence penalty</td>
+</tr>
+<tr>
+<td>frequencyPenalty</td>
+<td>number</td>
+<td>No</td>
+<td>Frequency penalty</td>
+</tr>
+<tr>
+<td>provider</td>
+<td>string</td>
+<td>No</td>
+<td>Override the LLM provider</td>
+</tr>
+<tr>
+<td>model</td>
+<td>string</td>
+<td>No</td>
+<td>Override the model to use</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters">Response Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>statusCode</td>
+<td>number</td>
+<td>HTTP status code</td>
+</tr>
+<tr>
+<td>message</td>
+<td>string</td>
+<td>The generated response message</td>
+</tr>
+<tr>
+<td>responseParams</td>
+<td>object</td>
+<td>Output parameters extracted from the response</td>
+</tr>
+<tr>
+<td>errorMessage</td>
+<td>string</td>
+<td>Error message (if applicable)</td>
+</tr>
+<tr>
+<td>errorCode</td>
+<td>string</td>
+<td>Error code (if applicable)</td>
+</tr>
+<tr>
+<td>llmDebugInfos</td>
+<td>array</td>
+<td>Debug information (if isDebug=true)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example">Example</h3>
+<h4 id="request">Request</h4>
+<pre><code class="language-bash">curl -X POST https://api.aisera.com/llm/v1/execution/fetchChatAnswer \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;tenantId&quot;: &quot;9000&quot;,
+    &quot;promptName&quot;: &quot;customer-support-qa&quot;,
+    &quot;requestParams&quot;: [
+      {
+        &quot;name&quot;: &quot;query&quot;,
+        &quot;value&quot;: &quot;How do I reset my password?&quot;
+      }
+    ],
+    &quot;messages&quot;: [
+      {
+        &quot;role&quot;: &quot;system&quot;,
+        &quot;content&quot;: &quot;You are a helpful customer support assistant.&quot;
+      },
+      {
+        &quot;role&quot;: &quot;user&quot;,
+        &quot;content&quot;: &quot;How do I reset my password?&quot;
+      }
+    ],
+    &quot;config&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;maxTokens&quot;: 500
+    },
+    &quot;botId&quot;: 123,
+    &quot;useCache&quot;: true
+  }'
+</code></pre>
+<h4 id="python-example">Python Example</h4>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com/llm/v1&quot;
+
+payload = {
+    &quot;tenantId&quot;: &quot;9000&quot;,
+    &quot;promptName&quot;: &quot;customer-support-qa&quot;,
+    &quot;requestParams&quot;: [
+        {
+            &quot;name&quot;: &quot;query&quot;,
+            &quot;value&quot;: &quot;How do I reset my password?&quot;
+        }
+    ],
+    &quot;messages&quot;: [
+        {
+            &quot;role&quot;: &quot;system&quot;,
+            &quot;content&quot;: &quot;You are a helpful customer support assistant.&quot;
+        },
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: &quot;How do I reset my password?&quot;
+        }
+    ],
+    &quot;config&quot;: {
+        &quot;temperature&quot;: 0.7,
+        &quot;maxTokens&quot;: 500
+    },
+    &quot;botId&quot;: 123,
+    &quot;useCache&quot;: True
+}
+
+response = requests.post(
+    f&quot;{base_url}/execution/fetchChatAnswer&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,
+        &quot;Content-Type&quot;: &quot;application/json&quot;
+    },
+    json=payload
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h4 id="javascriptnodejs-example">JavaScript/Node.js Example</h4>
+<pre><code class="language-javascript">const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com/llm/v1';
+
+async function executeChatPrompt() {
+  try {
+    const payload = {
+      tenantId: '9000',
+      promptName: 'customer-support-qa',
+      requestParams: [
+        {
+          name: 'query',
+          value: 'How do I reset my password?'
+        }
+      ],
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful customer support assistant.'
+        },
+        {
+          role: 'user',
+          content: 'How do I reset my password?'
+        }
+      ],
+      config: {
+        temperature: 0.7,
+        maxTokens: 500
+      },
+      botId: 123,
+      useCache: true
+    };
+
+    const response = await axios.post(
+      `${baseUrl}/execution/fetchChatAnswer`,
+      payload,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log(`Status: ${response.status}`);
+    console.log(`Response: ${JSON.stringify(response.data)}`);
+  } catch (error) {
+    console.error('Error executing chat prompt:', error.message);
+  }
+}
+
+executeChatPrompt();
+</code></pre>
+<h4 id="response">Response</h4>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 200,
+  &quot;message&quot;: &quot;To reset your password, follow these steps:\n\n1. Go to the login page\n2. Click on 'Forgot Password' link\n3. Enter your email address\n4. Check your email for a password reset link\n5. Click the link and follow the instructions to create a new password\n\nIf you don't receive the email within a few minutes, check your spam folder or contact our support team for further assistance.&quot;,
+  &quot;responseParams&quot;: {
+    &quot;answer&quot;: &quot;To reset your password, follow these steps:\n\n1. Go to the login page\n2. Click on 'Forgot Password' link\n3. Enter your email address\n4. Check your email for a password reset link\n5. Click the link and follow the instructions to create a new password\n\nIf you don't receive the email within a few minutes, check your spam folder or contact our support team for further assistance.&quot;,
+    &quot;category&quot;: &quot;password-reset&quot;
+  }
+}
+</code></pre>
+<h3 id="error-response">Error Response</h3>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 404,
+  &quot;errorMessage&quot;: &quot;Prompt 'customer-support-qa' not found in tenant '9000' for bot '123'&quot;,
+  &quot;errorCode&quot;: &quot;PROMPT_NOT_FOUND&quot;
+}
+</code></pre>
+<h2 id="execute-prompt">Execute Prompt</h2>
+<p>Executes a non-conversational prompt against the specified LLM provider.</p>
+<h3 id="endpoint_1">Endpoint</h3>
+<pre><code>POST /llm/v1/execution/fetchAnswer
+</code></pre>
+<h3 id="permission_1">Permission</h3>
+<p><code>llm:execute</code></p>
+<h3 id="request-parameters_1">Request Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptName</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt to execute</td>
+</tr>
+<tr>
+<td>requestParams</td>
+<td>array</td>
+<td>No</td>
+<td>Array of parameters to apply to the prompt</td>
+</tr>
+<tr>
+<td>config</td>
+<td>object</td>
+<td>No</td>
+<td>Configuration overrides for this request</td>
+</tr>
+<tr>
+<td>isDebug</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to include debug information in the response</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>number</td>
+<td>No</td>
+<td>The ID of the bot (if applicable)</td>
+</tr>
+<tr>
+<td>useCache</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to use cached responses if available</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_1">Response Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>statusCode</td>
+<td>number</td>
+<td>HTTP status code</td>
+</tr>
+<tr>
+<td>responseParams</td>
+<td>array</td>
+<td>Output parameters extracted from the response</td>
+</tr>
+<tr>
+<td>errorMessage</td>
+<td>string</td>
+<td>Error message (if applicable)</td>
+</tr>
+<tr>
+<td>llmDebugInfos</td>
+<td>array</td>
+<td>Debug information (if isDebug=true)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example_1">Example</h3>
+<h4 id="request_1">Request</h4>
+<pre><code class="language-bash">curl -X POST https://api.aisera.com/llm/v1/execution/fetchAnswer \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;tenantId&quot;: &quot;9000&quot;,
+    &quot;promptName&quot;: &quot;text-summarization&quot;,
+    &quot;requestParams&quot;: [
+      {
+        &quot;name&quot;: &quot;text&quot;,
+        &quot;value&quot;: &quot;The quick brown fox jumps over the lazy dog. It was a bright and sunny day in the forest. The animals were all going about their business.&quot;
+      }
+    ],
+    &quot;config&quot;: {
+      &quot;temperature&quot;: 0.3,
+      &quot;maxTokens&quot;: 100
+    },
+    &quot;botId&quot;: 123,
+    &quot;useCache&quot;: true
+  }'
+</code></pre>
+<h4 id="python-example_1">Python Example</h4>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com/llm/v1&quot;
+
+payload = {
+    &quot;tenantId&quot;: &quot;9000&quot;,
+    &quot;promptName&quot;: &quot;text-summarization&quot;,
+    &quot;requestParams&quot;: [
+        {
+            &quot;name&quot;: &quot;text&quot;,
+            &quot;value&quot;: &quot;The quick brown fox jumps over the lazy dog. It was a bright and sunny day in the forest. The animals were all going about their business.&quot;
+        }
+    ],
+    &quot;config&quot;: {
+        &quot;temperature&quot;: 0.3,
+        &quot;maxTokens&quot;: 100
+    },
+    &quot;botId&quot;: 123,
+    &quot;useCache&quot;: True
+}
+
+response = requests.post(
+    f&quot;{base_url}/execution/fetchAnswer&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,
+        &quot;Content-Type&quot;: &quot;application/json&quot;
+    },
+    json=payload
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h4 id="response_1">Response</h4>
+<pre><code class="language-json">{
+  &quot;statusCode&quot;: 200,
+  &quot;responseParams&quot;: [
+    {
+      &quot;name&quot;: &quot;summary&quot;,
+      &quot;value&quot;: &quot;A fox jumps over a dog on a sunny day in the forest while animals are active.&quot;
+    }
+  ]
+}
+</code></pre>
+<h2 id="infer-prompt">Infer Prompt</h2>
+<p>Retrieves information about a prompt for execution.</p>
+<h3 id="endpoint_2">Endpoint</h3>
+<pre><code>POST /llm/v1/execution/inferPrompt
+</code></pre>
+<h3 id="permission_2">Permission</h3>
+<p><code>llm:read</code></p>
+<h3 id="request-parameters_2">Request Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptName</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>number</td>
+<td>No</td>
+<td>The ID of the bot (if applicable)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_2">Response Parameters</h3>
+<p>Returns the prompt and prompt group information.</p>
+<h3 id="example_2">Example</h3>
+<h4 id="request_2">Request</h4>
+<pre><code class="language-bash">curl -X POST https://api.aisera.com/llm/v1/execution/inferPrompt?tenantId=9000&amp;promptName=customer-support-qa&amp;botId=123 \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h4 id="response_2">Response</h4>
+<pre><code class="language-json">{
+  &quot;prompt&quot;: {
+    &quot;id&quot;: 456,
+    &quot;name&quot;: &quot;customer-support-qa&quot;,
+    &quot;displayName&quot;: &quot;Customer Support Q&amp;A&quot;,
+    &quot;template&quot;: &quot;You are a helpful customer support assistant. Answer the following question:\n\n{{query}}&quot;,
+    &quot;userTemplate&quot;: &quot;{{query}}&quot;,
+    &quot;inputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;query&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true,
+        &quot;description&quot;: &quot;The user's question&quot;
+      }
+    ],
+    &quot;outputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;answer&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The answer to the question&quot;
+      },
+      {
+        &quot;name&quot;: &quot;category&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The category of the question&quot;
+      }
+    ],
+    &quot;llmRegistryId&quot;: 789,
+    &quot;botId&quot;: 123
+  },
+  &quot;promptGroup&quot;: {
+    &quot;id&quot;: 789,
+    &quot;name&quot;: &quot;gpt-4&quot;,
+    &quot;displayName&quot;: &quot;GPT-4&quot;,
+    &quot;description&quot;: &quot;OpenAI's GPT-4 model&quot;,
+    &quot;endpoint&quot;: &quot;https://api.openai.com/v1/chat/completions&quot;,
+    &quot;config&quot;: {
+      &quot;provider&quot;: &quot;openai&quot;,
+      &quot;model&quot;: &quot;gpt-4&quot;
+    }
+  },
+  &quot;tenantUtilized&quot;: &quot;9000&quot;
+}
+</code></pre>
+<h2 id="execute-direct-prompt">Execute Direct Prompt</h2>
+<p>Executes a prompt directly without requiring pre-registration.</p>
+<h3 id="endpoint_3">Endpoint</h3>
+<pre><code>POST /v1/tenants/{tenantId}/llm/prompts/execute
+</code></pre>
+<h3 id="permission_3">Permission</h3>
+<p><code>llm:execute</code></p>
+<h3 id="path-parameters">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+</tbody>
+</table>
+<h3 id="request-parameters_3">Request Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>modelId</td>
+<td>number</td>
+<td>Yes</td>
+<td>The ID of the LLM model to use</td>
+</tr>
+<tr>
+<td>promptText</td>
+<td>string</td>
+<td>Yes</td>
+<td>The prompt text to execute</td>
+</tr>
+<tr>
+<td>inputs</td>
+<td>object</td>
+<td>No</td>
+<td>Input values for variables in the prompt</td>
+</tr>
+<tr>
+<td>config</td>
+<td>object</td>
+<td>No</td>
+<td>Configuration overrides for this request</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_3">Response Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>output</td>
+<td>string</td>
+<td>The generated response</td>
+</tr>
+<tr>
+<td>status</td>
+<td>string</td>
+<td>Status of the execution</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example_3">Example</h3>
+<h4 id="request_3">Request</h4>
+<pre><code class="language-bash">curl -X POST https://api.aisera.com/v1/tenants/9000/llm/prompts/execute \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;modelId&quot;: 789,
+    &quot;promptText&quot;: &quot;Summarize the following text in one sentence: {{text}}&quot;,
+    &quot;inputs&quot;: {
+      &quot;text&quot;: &quot;The quick brown fox jumps over the lazy dog. It was a bright and sunny day in the forest. The animals were all going about their business.&quot;
+    },
+    &quot;config&quot;: {
+      &quot;temperature&quot;: 0.3,
+      &quot;maxTokens&quot;: 100
+    }
+  }'
+</code></pre>
+<h4 id="response_3">Response</h4>
+<pre><code class="language-json">{
+  &quot;output&quot;: &quot;A fox jumps over a dog on a sunny day in the forest while animals are active.&quot;,
+  &quot;status&quot;: &quot;success&quot;
+}
+</code></pre>
+<h2 id="stream-response">Stream Response</h2>
+<p>Streams the response from the LLM in real-time.</p>
+<h3 id="endpoint_4">Endpoint</h3>
+<pre><code>POST /llm/v1/execution/stream
+</code></pre>
+<h3 id="permission_4">Permission</h3>
+<p><code>llm:execute</code></p>
+<h3 id="request-parameters_4">Request Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptName</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt to execute</td>
+</tr>
+<tr>
+<td>requestParams</td>
+<td>array</td>
+<td>No</td>
+<td>Array of parameters to apply to the prompt</td>
+</tr>
+<tr>
+<td>messages</td>
+<td>array</td>
+<td>No</td>
+<td>Array of chat messages for conversation context</td>
+</tr>
+<tr>
+<td>config</td>
+<td>object</td>
+<td>No</td>
+<td>Configuration overrides for this request</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>number</td>
+<td>No</td>
+<td>The ID of the bot (if applicable)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response_4">Response</h3>
+<p>The server sends a stream of Server-Sent Events (SSE), each containing a chunk of the response.</p>
+<h3 id="example_4">Example</h3>
+<h4 id="request_4">Request</h4>
+<pre><code class="language-bash">curl -X POST https://api.aisera.com/llm/v1/execution/stream \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;tenantId&quot;: &quot;9000&quot;,
+    &quot;promptName&quot;: &quot;customer-support-qa&quot;,
+    &quot;requestParams&quot;: [
+      {
+        &quot;name&quot;: &quot;query&quot;,
+        &quot;value&quot;: &quot;How do I reset my password?&quot;
+      }
+    ],
+    &quot;messages&quot;: [
+      {
+        &quot;role&quot;: &quot;system&quot;,
+        &quot;content&quot;: &quot;You are a helpful customer support assistant.&quot;
+      },
+      {
+        &quot;role&quot;: &quot;user&quot;,
+        &quot;content&quot;: &quot;How do I reset my password?&quot;
+      }
+    ],
+    &quot;config&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;maxTokens&quot;: 500
+    },
+    &quot;botId&quot;: 123
+  }'
+</code></pre>
+<h4 id="python-example_2">Python Example</h4>
+<pre><code class="language-python">import requests
+import sseclient
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com/llm/v1&quot;
+
+payload = {
+    &quot;tenantId&quot;: &quot;9000&quot;,
+    &quot;promptName&quot;: &quot;customer-support-qa&quot;,
+    &quot;requestParams&quot;: [
+        {
+            &quot;name&quot;: &quot;query&quot;,
+            &quot;value&quot;: &quot;How do I reset my password?&quot;
+        }
+    ],
+    &quot;messages&quot;: [
+        {
+            &quot;role&quot;: &quot;system&quot;,
+            &quot;content&quot;: &quot;You are a helpful customer support assistant.&quot;
+        },
+        {
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: &quot;How do I reset my password?&quot;
+        }
+    ],
+    &quot;config&quot;: {
+        &quot;temperature&quot;: 0.7,
+        &quot;maxTokens&quot;: 500
+    },
+    &quot;botId&quot;: 123
+}
+
+response = requests.post(
+    f&quot;{base_url}/execution/stream&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,
+        &quot;Content-Type&quot;: &quot;application/json&quot;,
+        &quot;Accept&quot;: &quot;text/event-stream&quot;
+    },
+    json=payload,
+    stream=True
+)
+
+client = sseclient.SSEClient(response)
+for event in client.events():
+    print(f&quot;Received: {event.data}&quot;)
+</code></pre>
+<h4 id="javascriptnodejs-example_1">JavaScript/Node.js Example</h4>
+<pre><code class="language-javascript">const EventSource = require('eventsource');
+const fetch = require('node-fetch');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com/llm/v1';
+
+async function streamResponse() {
+  try {
+    const payload = {
+      tenantId: '9000',
+      promptName: 'customer-support-qa',
+      requestParams: [
+        {
+          name: 'query',
+          value: 'How do I reset my password?'
+        }
+      ],
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful customer support assistant.'
+        },
+        {
+          role: 'user',
+          content: 'How do I reset my password?'
+        }
+      ],
+      config: {
+        temperature: 0.7,
+        maxTokens: 500
+      },
+      botId: 123
+    };
+
+    const response = await fetch(`${baseUrl}/execution/stream`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // Get the response URL for EventSource
+    const streamUrl = response.url;
+
+    const eventSource = new EventSource(streamUrl, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
+
+    eventSource.onmessage = (event) =&gt; {
+      console.log(`Received: ${event.data}`);
+
+      // Check if this is the last message
+      const data = JSON.parse(event.data);
+      if (data.is_done) {
+        eventSource.close();
+      }
+    };
+
+    eventSource.onerror = (error) =&gt; {
+      console.error('EventSource error:', error);
+      eventSource.close();
+    };
+  } catch (error) {
+    console.error('Error setting up stream:', error.message);
+  }
+}
+
+streamResponse();
+</code></pre>
+<h4 id="response-stream-sse">Response Stream (SSE)</h4>
+<pre><code>data: {&quot;content&quot;:&quot;To reset your &quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;password, follow &quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;these steps:&quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;\n\n1. Go to the login page&quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;\n2. Click on 'Forgot Password' link&quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;\n3. Enter your email address&quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;\n4. Check your email for a password reset link&quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;\n5. Click the link and follow the instructions to create a new password&quot;, &quot;is_done&quot;: false}
+
+data: {&quot;content&quot;:&quot;\n\nIf you don't receive the email within a few minutes, check your spam folder or contact our support team for further assistance.&quot;, &quot;is_done&quot;: true}
+</code></pre>
+</body>
+</html>

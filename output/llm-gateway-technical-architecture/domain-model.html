@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>domain-model</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="domain-model-and-business-logic">Domain Model and Business Logic</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#core-domain-concepts">Core Domain Concepts</a></li>
+<li><a href="#domain-model">Domain Model</a></li>
+<li><a href="#llm-domain">LLM Domain</a></li>
+<li><a href="#prompt-domain">Prompt Domain</a></li>
+<li><a href="#execution-domain">Execution Domain</a></li>
+<li><a href="#analytics-domain">Analytics Domain</a></li>
+<li><a href="#service-layer">Service Layer</a></li>
+<li><a href="#service-interactions">Service Interactions</a></li>
+<li><a href="#business-logic">Business Logic</a></li>
+<li><a href="#prompt-management">Prompt Management</a></li>
+<li><a href="#execution-logic">Execution Logic</a></li>
+<li><a href="#provider-selection">Provider Selection</a></li>
+<li><a href="#caching-strategy">Caching Strategy</a></li>
+<li><a href="#cross-cutting-concerns">Cross-Cutting Concerns</a></li>
+<li><a href="#multi-tenancy">Multi-Tenancy</a></li>
+<li><a href="#authorization-and-access-control">Authorization and Access Control</a></li>
+<li><a href="#auditing-and-compliance">Auditing and Compliance</a></li>
+<li><a href="#domain-events">Domain Events</a></li>
+<li><a href="#business-rules">Business Rules</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This document describes the domain model and business logic of the LLM Gateway. It explains the core domain concepts, entities, relationships, and the services that implement the business logic. The domain model provides a conceptual framework for understanding the system, while the business logic describes how these concepts interact to fulfill the system's requirements.</p>
+<h2 id="core-domain-concepts">Core Domain Concepts</h2>
+<p>The LLM Gateway's domain centers around several core concepts:</p>
+<ol>
+<li><strong>LLM Provider</strong>: An external service that provides large language model capabilities</li>
+<li><strong>Prompt</strong>: A template with variables that is rendered and sent to an LLM</li>
+<li><strong>Execution</strong>: The process of sending a prompt to an LLM and receiving a response</li>
+<li><strong>Cache</strong>: Storage for LLM responses to improve performance and reduce costs</li>
+<li><strong>Tenant</strong>: An organization or logical grouping of users and resources</li>
+<li><strong>Metrics</strong>: Usage and performance data for analysis and billing</li>
+</ol>
+<p>These concepts form the foundation of the domain model and drive the system's architecture.</p>
+<h2 id="domain-model">Domain Model</h2>
+<h3 id="llm-domain">LLM Domain</h3>
+<p>The LLM domain encompasses the entities related to LLM providers and their capabilities:</p>
+<pre><code class="language-mermaid">classDiagram
+    class LLMProvider {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String name
+        +String description
+        +ProviderType type
+        +List~ModelDefinition~ models
+        +Map~String, Object~ defaultParameters
+        +boolean supportsStreaming
+        +boolean supportsChat
+        +boolean supportsVision
+        +int maxContextLength
+    }
+
+    class ModelDefinition {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String name
+        +String version
+        +Map~String, Object~ capabilities
+        +Map~String, Object~ limits
+        +Map~String, Object~ pricing
+    }
+
+    class ProviderType {
+        &lt;&lt;enumeration&gt;&gt;
+        OPENAI
+        ANTHROPIC
+        BEDROCK
+        AZURE_OPENAI
+        CUSTOM
+    }
+
+    class ProviderCredentials {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +ProviderType type
+        +String tenantId
+        +Map~String, String~ credentials
+        +boolean active
+    }
+
+    class ProviderConfig {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +ProviderType type
+        +String tenantId
+        +Map~String, Object~ configuration
+        +int priority
+        +boolean active
+    }
+
+    LLMProvider &quot;1&quot; -- &quot;many&quot; ModelDefinition : offers
+    LLMProvider -- ProviderType : is of type
+    ProviderType -- ProviderCredentials : requires
+    ProviderType -- ProviderConfig : configured by
+</code></pre>
+<p><strong>Domain Logic:</strong></p>
+<ul>
+<li><code>LLMProvider</code> entities represent available language model providers</li>
+<li>Each provider offers multiple <code>ModelDefinition</code> entities with specific capabilities</li>
+<li><code>ProviderCredentials</code> store authentication information for providers</li>
+<li><code>ProviderConfig</code> contains tenant-specific configuration for providers</li>
+</ul>
+<h3 id="prompt-domain">Prompt Domain</h3>
+<p>The Prompt domain encompasses the entities related to prompt templates and their parameters:</p>
+<pre><code class="language-mermaid">classDiagram
+    class PromptTemplate {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String name
+        +String description
+        +String template
+        +String tenantId
+        +List~PromptParameter~ parameters
+        +String createdBy
+        +Date createdAt
+        +Date updatedAt
+        +PromptStatus status
+        +List~String~ tags
+    }
+
+    class PromptParameter {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String name
+        +String description
+        +ParameterType type
+        +boolean required
+        +Object defaultValue
+        +Map~String, Object~ constraints
+    }
+
+    class PromptVersion {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String promptId
+        +String version
+        +String template
+        +List~PromptParameter~ parameters
+        +String createdBy
+        +Date createdAt
+        +PromptStatus status
+        +String comments
+    }
+
+    class ParameterType {
+        &lt;&lt;enumeration&gt;&gt;
+        STRING
+        NUMBER
+        BOOLEAN
+        ARRAY
+        OBJECT
+        FUNCTION
+    }
+
+    class PromptStatus {
+        &lt;&lt;enumeration&gt;&gt;
+        DRAFT
+        PUBLISHED
+        ARCHIVED
+        DEPRECATED
+    }
+
+    PromptTemplate &quot;1&quot; -- &quot;many&quot; PromptParameter : defines
+    PromptTemplate &quot;1&quot; -- &quot;many&quot; PromptVersion : has
+    PromptParameter -- ParameterType : is of type
+    PromptTemplate -- PromptStatus : has status
+    PromptVersion -- PromptStatus : has status
+</code></pre>
+<p><strong>Domain Logic:</strong></p>
+<ul>
+<li><code>PromptTemplate</code> entities represent prompt templates with variables</li>
+<li>Each template defines <code>PromptParameter</code> entities that specify expected inputs</li>
+<li><code>PromptVersion</code> entities track changes to templates over time</li>
+<li>Templates can be in different states represented by <code>PromptStatus</code></li>
+</ul>
+<h3 id="execution-domain">Execution Domain</h3>
+<p>The Execution domain encompasses the entities related to executing prompts and handling responses:</p>
+<pre><code class="language-mermaid">classDiagram
+    class LLMRequest {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String tenantId
+        +RequestType type
+        +Optional~String~ promptId
+        +Map~String, Object~ parameters
+        +String providerType
+        +String modelId
+        +Map~String, Object~ providerOptions
+        +ExecutionOptions options
+        +Date timestamp
+    }
+
+    class LLMResponse {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String requestId
+        +String content
+        +String providerType
+        +String modelId
+        +Map~String, Object~ usageMetrics
+        +ResponseStatus status
+        +Date timestamp
+        +Optional~FunctionCall~ functionCall
+    }
+
+    class ExecutionOptions {
+        &lt;&lt;value object&gt;&gt;
+        +int maxTokens
+        +float temperature
+        +boolean stream
+        +int timeout
+        +boolean cache
+        +int cacheTTL
+    }
+
+    class RequestType {
+        &lt;&lt;enumeration&gt;&gt;
+        TEXT_COMPLETION
+        CHAT_COMPLETION
+    }
+
+    class ResponseStatus {
+        &lt;&lt;enumeration&gt;&gt;
+        SUCCESS
+        ERROR
+        TIMEOUT
+        CANCELLED
+    }
+
+    class FunctionCall {
+        &lt;&lt;entity&gt;&gt;
+        +String name
+        +String arguments
+    }
+
+    class ExecutionContext {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +LLMRequest request
+        +Optional~LLMResponse~ response
+        +String tenantId
+        +String userId
+        +Map~String, Object~ metadata
+        +Date startTime
+        +Optional~Date~ endTime
+        +ExecutionStatus status
+    }
+
+    class ExecutionStatus {
+        &lt;&lt;enumeration&gt;&gt;
+        PENDING
+        EXECUTING
+        COMPLETED
+        FAILED
+        CANCELLED
+    }
+
+    LLMRequest -- RequestType : is of type
+    LLMRequest -- ExecutionOptions : configured by
+    LLMResponse -- ResponseStatus : has status
+    LLMResponse -- FunctionCall : may include
+    ExecutionContext -- LLMRequest : contains
+    ExecutionContext -- LLMResponse : contains
+    ExecutionContext -- ExecutionStatus : has status
+</code></pre>
+<p><strong>Domain Logic:</strong></p>
+<ul>
+<li><code>LLMRequest</code> entities represent requests to LLM providers</li>
+<li><code>LLMResponse</code> entities represent responses from LLM providers</li>
+<li><code>ExecutionContext</code> entities track the lifecycle of request execution</li>
+<li><code>ExecutionOptions</code> define how requests should be processed</li>
+</ul>
+<h3 id="analytics-domain">Analytics Domain</h3>
+<p>The Analytics domain encompasses the entities related to usage metrics and analysis:</p>
+<pre><code class="language-mermaid">classDiagram
+    class UsageRecord {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String tenantId
+        +String userId
+        +String requestId
+        +UsageType type
+        +String providerType
+        +String modelId
+        +long tokenCount
+        +Map~String, Object~ metrics
+        +double cost
+        +Date timestamp
+    }
+
+    class UsageType {
+        &lt;&lt;enumeration&gt;&gt;
+        PROMPT
+        COMPLETION
+        EMBEDDING
+        FUNCTION_CALL
+    }
+
+    class UsageAggregate {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String tenantId
+        +AggregationPeriod period
+        +Date startTime
+        +Date endTime
+        +Map~String, Object~ usageByProvider
+        +Map~String, Object~ usageByModel
+        +Map~String, Object~ usageByType
+        +long totalTokens
+        +double totalCost
+    }
+
+    class AggregationPeriod {
+        &lt;&lt;enumeration&gt;&gt;
+        HOURLY
+        DAILY
+        WEEKLY
+        MONTHLY
+    }
+
+    class UsageLimit {
+        &lt;&lt;entity&gt;&gt;
+        +String id
+        +String tenantId
+        +LimitType type
+        +String resourceId
+        +long limit
+        +LimitPeriod period
+        +LimitAction action
+    }
+
+    class LimitType {
+        &lt;&lt;enumeration&gt;&gt;
+        TOKEN_COUNT
+        REQUEST_COUNT
+        COST
+    }
+
+    class LimitPeriod {
+        &lt;&lt;enumeration&gt;&gt;
+        DAILY
+        WEEKLY
+        MONTHLY
+    }
+
+    class LimitAction {
+        &lt;&lt;enumeration&gt;&gt;
+        ALERT
+        THROTTLE
+        BLOCK
+    }
+
+    UsageRecord -- UsageType : is of type
+    UsageAggregate -- AggregationPeriod : for period
+    UsageLimit -- LimitType : restricts
+    UsageLimit -- LimitPeriod : over period
+    UsageLimit -- LimitAction : triggers
+</code></pre>
+<p><strong>Domain Logic:</strong></p>
+<ul>
+<li><code>UsageRecord</code> entities capture detailed usage information for each request</li>
+<li><code>UsageAggregate</code> entities store aggregated usage statistics for reporting</li>
+<li><code>UsageLimit</code> entities define usage constraints for tenants</li>
+</ul>
+<h2 id="service-layer">Service Layer</h2>
+<p>The Service Layer implements the business logic that operates on the domain model. The key services are:</p>
+<pre><code class="language-mermaid">classDiagram
+    class PromptManager {
+        &lt;&lt;service&gt;&gt;
+        +getPrompt(id, version) PromptTemplate
+        +listPrompts(filter) List~PromptTemplate~
+        +createPrompt(template) PromptTemplate
+        +updatePrompt(id, template) PromptTemplate
+        +publishPrompt(id) PromptVersion
+        +archivePrompt(id) void
+        +renderPrompt(id, params) String
+    }
+
+    class ExecutionManager {
+        &lt;&lt;service&gt;&gt;
+        +execute(request) LLMResponse
+        +streamExecute(request, handler) void
+        +getExecutionContext(id) ExecutionContext
+        +cancelExecution(id) boolean
+    }
+
+    class ProviderManager {
+        &lt;&lt;service&gt;&gt;
+        +getProvider(type) LLMProvider
+        +listProviders() List~LLMProvider~
+        +getProviderConfig(type, tenantId) ProviderConfig
+        +updateProviderConfig(config) void
+        +getCredentials(type, tenantId) ProviderCredentials
+        +updateCredentials(credentials) void
+    }
+
+    class CacheManager {
+        &lt;&lt;service&gt;&gt;
+        +getCachedResponse(request) Optional~LLMResponse~
+        +cacheResponse(request, response) void
+        +invalidateCache(filter) void
+        +getCacheStats() Map~String, Object~
+    }
+
+    class AnalyticsManager {
+        &lt;&lt;service&gt;&gt;
+        +recordUsage(record) void
+        +getUsage(tenantId, filter) List~UsageRecord~
+        +getAggregates(tenantId, period) UsageAggregate
+        +checkLimit(tenantId, type) LimitStatus
+    }
+
+    class TenantManager {
+        &lt;&lt;service&gt;&gt;
+        +getTenantConfig(id) TenantConfig
+        +updateTenantConfig(config) void
+        +listTenants() List~TenantConfig~
+        +validateTenant(id) boolean
+    }
+
+    PromptManager -- TenantManager : uses
+    ExecutionManager -- PromptManager : uses
+    ExecutionManager -- ProviderManager : uses
+    ExecutionManager -- CacheManager : uses
+    ExecutionManager -- AnalyticsManager : uses
+    ExecutionManager -- TenantManager : uses
+    ProviderManager -- TenantManager : uses
+    CacheManager -- TenantManager : uses
+    AnalyticsManager -- TenantManager : uses
+</code></pre>
+<h3 id="service-interactions">Service Interactions</h3>
+<p>The services interact to implement the system's business logic:</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client
+    participant ExecMgr as ExecutionManager
+    participant PromptMgr as PromptManager
+    participant ProviderMgr as ProviderManager
+    participant CacheMgr as CacheManager
+    participant AnalyticsMgr as AnalyticsManager
+    participant TenantMgr as TenantManager
+
+    Client-&gt;&gt;ExecMgr: execute(request)
+
+    ExecMgr-&gt;&gt;TenantMgr: validateTenant(tenantId)
+    TenantMgr--&gt;&gt;ExecMgr: valid
+
+    ExecMgr-&gt;&gt;PromptMgr: renderPrompt(promptId, params)
+    PromptMgr--&gt;&gt;ExecMgr: renderedPrompt
+
+    ExecMgr-&gt;&gt;CacheMgr: getCachedResponse(request)
+
+    alt Cache Hit
+        CacheMgr--&gt;&gt;ExecMgr: cachedResponse
+    else Cache Miss
+        CacheMgr--&gt;&gt;ExecMgr: empty
+
+        ExecMgr-&gt;&gt;ProviderMgr: getProvider(type)
+        ProviderMgr--&gt;&gt;ExecMgr: provider
+
+        ExecMgr-&gt;&gt;ProviderMgr: getCredentials(type, tenantId)
+        ProviderMgr--&gt;&gt;ExecMgr: credentials
+
+        ExecMgr-&gt;&gt;ExecMgr: callProvider(provider, credentials, request)
+
+        ExecMgr-&gt;&gt;CacheMgr: cacheResponse(request, response)
+    end
+
+    ExecMgr-&gt;&gt;AnalyticsMgr: recordUsage(usageRecord)
+
+    ExecMgr--&gt;&gt;Client: response
+</code></pre>
+<h2 id="business-logic">Business Logic</h2>
+<h3 id="prompt-management">Prompt Management</h3>
+<p>The prompt management logic handles the lifecycle of prompt templates:</p>
+<pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; Draft
+
+    state Draft {
+        [*] --&gt; Editing
+        Editing --&gt; Validating : Save Draft
+        Validating --&gt; SaveDraft : Valid
+        Validating --&gt; Editing : Invalid
+        SaveDraft --&gt; Editing : Continue Editing
+        SaveDraft --&gt; [*] : Complete Draft
+    }
+
+    Draft --&gt; Publishing : Publish
+
+    state Publishing {
+        [*] --&gt; Validating2
+        Validating2 --&gt; CreateVersion : Valid
+        Validating2 --&gt; [*] : Invalid
+        CreateVersion --&gt; UpdateStatus
+        UpdateStatus --&gt; [*]
+    }
+
+    Publishing --&gt; Published : Success
+    Publishing --&gt; Draft : Failure
+
+    Published --&gt; Draft : Create New Draft
+    Published --&gt; Archiving : Archive
+
+    state Archiving {
+        [*] --&gt; UpdateStatus2
+        UpdateStatus2 --&gt; [*]
+    }
+
+    Archiving --&gt; Archived
+
+    Archived --&gt; [*]
+</code></pre>
+<p><strong>Key Business Rules:</strong></p>
+<ol>
+<li>Prompt templates must have unique names within a tenant</li>
+<li>Published templates cannot be modified directly - a new draft must be created</li>
+<li>Templates must be syntactically valid before publishing</li>
+<li>Template parameters must have defined types and validation rules</li>
+<li>Draft templates can be modified by their creator or administrators</li>
+<li>Published templates can be used by any authorized user within the tenant</li>
+</ol>
+<h3 id="execution-logic">Execution Logic</h3>
+<p>The execution logic handles the processing of LLM requests:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Start([Start]) --&gt; Validate{Validate\nRequest}
+
+    Validate --&gt;|Invalid| Error1[Return Error]
+    Validate --&gt;|Valid| Prompt{Prompt ID\nProvided?}
+
+    Prompt --&gt;|Yes| RenderPrompt[Render Prompt Template]
+    Prompt --&gt;|No| CheckCache[Check Response Cache]
+
+    RenderPrompt --&gt; CheckCache
+
+    CheckCache --&gt; CacheResult{Cache\nHit?}
+
+    CacheResult --&gt;|Yes| ReturnCached[Return Cached Response]
+
+    CacheResult --&gt;|No| SelectProvider[Select Provider]
+
+    SelectProvider --&gt; Provider{Provider\nAvailable?}
+
+    Provider --&gt;|No| Error2[Return Error]
+
+    Provider --&gt;|Yes| CheckLimit[Check Usage Limits]
+
+    CheckLimit --&gt; LimitResult{Limit\nExceeded?}
+
+    LimitResult --&gt;|Yes| Error3[Return Error]
+
+    LimitResult --&gt;|No| Stream{Streaming\nRequest?}
+
+    Stream --&gt;|Yes| StreamExecution[Stream Execution]
+    Stream --&gt;|No| SyncExecution[Synchronous Execution]
+
+    StreamExecution --&gt; RecordUsageStream[Record Usage]
+    SyncExecution --&gt; Cache[Cache Response]
+
+    Cache --&gt; RecordUsage[Record Usage]
+
+    RecordUsage --&gt; ReturnResponse[Return Response]
+    RecordUsageStream --&gt; End([End])
+
+    ReturnCached --&gt; End
+    ReturnResponse --&gt; End
+    Error1 --&gt; End
+    Error2 --&gt; End
+    Error3 --&gt; End
+</code></pre>
+<p><strong>Key Business Rules:</strong></p>
+<ol>
+<li>Requests must be validated before execution</li>
+<li>Tenant must be authenticated and authorized</li>
+<li>If a prompt ID is provided, the template must be rendered</li>
+<li>Cache should be checked before calling external providers</li>
+<li>Provider selection follows priority and capability rules</li>
+<li>Usage limits must be enforced before execution</li>
+<li>Responses should be cached according to caching policy</li>
+<li>Usage must be recorded for analytics and billing</li>
+</ol>
+<h3 id="provider-selection">Provider Selection</h3>
+<p>The provider selection logic determines which LLM provider to use for a request:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Start([Start]) --&gt; ExplicitProvider{Request\nSpecifies\nProvider?}
+
+    ExplicitProvider --&gt;|Yes| ValidateProvider{Provider\nValid?}
+    ExplicitProvider --&gt;|No| TenantDefault{Tenant\nDefault\nDefined?}
+
+    ValidateProvider --&gt;|Yes| CheckCapability{Provider\nSupports\nCapabilities?}
+    ValidateProvider --&gt;|No| Error1[Return Error]
+
+    TenantDefault --&gt;|Yes| UseDefault[Use Tenant Default]
+    TenantDefault --&gt;|No| SelectByCapability[Select Provider by Capability]
+
+    UseDefault --&gt; CheckCapability
+    SelectByCapability --&gt; CheckCapability
+
+    CheckCapability --&gt;|Yes| CheckAvailability{Provider\nAvailable?}
+    CheckCapability --&gt;|No| FallbackProvider{Fallback\nDefined?}
+
+    FallbackProvider --&gt;|Yes| UseFallback[Use Fallback Provider]
+    FallbackProvider --&gt;|No| Error2[Return Error]
+
+    UseFallback --&gt; CheckAvailability
+
+    CheckAvailability --&gt;|Yes| GetCredentials[Get Provider Credentials]
+    CheckAvailability --&gt;|No| Error3[Return Error]
+
+    GetCredentials --&gt; CreateClient[Create Provider Client]
+
+    CreateClient --&gt; End([End])
+
+    Error1 --&gt; End
+    Error2 --&gt; End
+    Error3 --&gt; End
+</code></pre>
+<p><strong>Key Business Rules:</strong></p>
+<ol>
+<li>If the request explicitly specifies a provider, use it if valid</li>
+<li>If no provider is specified, use tenant default if defined</li>
+<li>Otherwise, select a provider based on required capabilities</li>
+<li>Verify that the selected provider supports the required capabilities</li>
+<li>Fall back to an alternative provider if defined and primary is unavailable</li>
+<li>Provider must be available (not in failure state or circuit-broken)</li>
+<li>Provider credentials must be available for the tenant</li>
+</ol>
+<h3 id="caching-strategy">Caching Strategy</h3>
+<p>The caching strategy determines if and how responses are cached:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Start([Start]) --&gt; CachingEnabled{Caching\nEnabled?}
+
+    CachingEnabled --&gt;|Yes| RequestCacheable{Request\nCacheable?}
+    CachingEnabled --&gt;|No| SkipCache[Skip Cache]
+
+    RequestCacheable --&gt;|Yes| GenerateCacheKey[Generate Cache Key]
+    RequestCacheable --&gt;|No| SkipCache
+
+    GenerateCacheKey --&gt; CheckCache{Cache\nEntry\nExists?}
+
+    CheckCache --&gt;|Yes| ValidateEntry{Entry\nValid?}
+    CheckCache --&gt;|No| SkipCache
+
+    ValidateEntry --&gt;|Yes| ReturnCached[Return Cached Response]
+    ValidateEntry --&gt;|No| InvalidateEntry[Invalidate Entry]
+
+    InvalidateEntry --&gt; SkipCache
+
+    SkipCache --&gt; ExecuteRequest[Execute Request]
+
+    ExecuteRequest --&gt; ResponseCacheable{Response\nCacheable?}
+
+    ResponseCacheable --&gt;|Yes| CacheTTL{Cache\nTTL\nDefined?}
+    ResponseCacheable --&gt;|No| SkipCaching[Skip Caching]
+
+    CacheTTL --&gt;|Yes| UseDefined[Use Defined TTL]
+    CacheTTL --&gt;|No| UseDefault[Use Default TTL]
+
+    UseDefined --&gt; StoreCache[Store in Cache]
+    UseDefault --&gt; StoreCache
+
+    StoreCache --&gt; End([End])
+    ReturnCached --&gt; End
+    SkipCaching --&gt; End
+</code></pre>
+<p><strong>Key Business Rules:</strong></p>
+<ol>
+<li>Caching must be enabled at system and tenant level</li>
+<li>Request must be cacheable (deterministic, idempotent)</li>
+<li>Cache key must uniquely identify the request</li>
+<li>Cached entries must be validated before use</li>
+<li>Invalid entries must be invalidated</li>
+<li>Response must be cacheable (success, complete)</li>
+<li>Cache TTL should respect request or default settings</li>
+<li>Cache should respect tenant-specific storage limits</li>
+</ol>
+<h2 id="cross-cutting-concerns">Cross-Cutting Concerns</h2>
+<h3 id="multi-tenancy">Multi-Tenancy</h3>
+<p>The LLM Gateway implements a multi-tenant architecture:</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Tenant A&quot;
+        ConfigA[Configuration]
+        PromptsA[Prompt Templates]
+        CredentialsA[Provider Credentials]
+        UsageA[Usage Metrics]
+    end
+
+    subgraph &quot;Tenant B&quot;
+        ConfigB[Configuration]
+        PromptsB[Prompt Templates]
+        CredentialsB[Provider Credentials]
+        UsageB[Usage Metrics]
+    end
+
+    subgraph &quot;Tenant C&quot;
+        ConfigC[Configuration]
+        PromptsC[Prompt Templates]
+        CredentialsC[Provider Credentials]
+        UsageC[Usage Metrics]
+    end
+
+    Gateway[LLM Gateway] --&gt; TenantResolver[Tenant Resolver]
+
+    TenantResolver --&gt; ConfigA
+    TenantResolver --&gt; ConfigB
+    TenantResolver --&gt; ConfigC
+
+    ConfigA --&gt; IsolationA[Tenant Isolation]
+    ConfigB --&gt; IsolationB[Tenant Isolation]
+    ConfigC --&gt; IsolationC[Tenant Isolation]
+
+    IsolationA --&gt; ResourcesA[Resource Allocation]
+    IsolationB --&gt; ResourcesB[Resource Allocation]
+    IsolationC --&gt; ResourcesC[Resource Allocation]
+</code></pre>
+<p><strong>Multi-Tenancy Implementation:</strong></p>
+<ol>
+<li>Tenant identification through API key, JWT, or request parameter</li>
+<li>Tenant-specific configuration for providers, caching, limits</li>
+<li>Data isolation at database and cache level</li>
+<li>Resource allocation and throttling per tenant</li>
+<li>Usage tracking and billing per tenant</li>
+</ol>
+<h3 id="authorization-and-access-control">Authorization and Access Control</h3>
+<p>The LLM Gateway implements a role-based access control system:</p>
+<pre><code class="language-mermaid">graph TD
+    User[User] --&gt; Authentication[Authentication]
+
+    Authentication --&gt; Identity[Identity Provider]
+
+    Identity --&gt; TenantContext[Tenant Context]
+
+    TenantContext --&gt; RoleAssignment[Role Assignment]
+
+    RoleAssignment --&gt; Roles[Roles]
+
+    Roles --&gt; Permissions[Permissions]
+
+    Permissions --&gt; Resources[Resources]
+
+    Resources --&gt; PromptTemplates[Prompt Templates]
+    Resources --&gt; Providers[LLM Providers]
+    Resources --&gt; Configuration[System Configuration]
+    Resources --&gt; Analytics[Analytics Data]
+</code></pre>
+<p><strong>Access Control Implementation:</strong></p>
+<ol>
+<li>User authentication through identity provider</li>
+<li>Tenant context establishment</li>
+<li>Role assignment based on tenant and user</li>
+<li>Permission checking for operations</li>
+<li>Resource-level access control</li>
+</ol>
+<h3 id="auditing-and-compliance">Auditing and Compliance</h3>
+<p>The LLM Gateway implements comprehensive auditing for compliance:</p>
+<pre><code class="language-mermaid">graph TD
+    Actions[System Actions] --&gt; AuditCapture[Audit Capture]
+
+    AuditCapture --&gt; AuditEvents[Audit Events]
+
+    AuditEvents --&gt; Storage[Audit Storage]
+
+    Storage --&gt; Retention[Retention Policy]
+
+    Storage --&gt; AccessControl[Access Control]
+
+    Storage --&gt; Reporting[Compliance Reporting]
+
+    Storage --&gt; Alerting[Security Alerting]
+</code></pre>
+<p><strong>Auditing Implementation:</strong></p>
+<ol>
+<li>Capture of all significant system actions</li>
+<li>Standardized audit event format</li>
+<li>Secure, tamper-evident storage</li>
+<li>Configurable retention policies</li>
+<li>Access control for audit data</li>
+<li>Compliance reporting and alerting</li>
+</ol>
+<h2 id="domain-events">Domain Events</h2>
+<p>The LLM Gateway uses domain events to communicate between components:</p>
+<pre><code class="language-mermaid">classDiagram
+    class DomainEvent {
+        &lt;&lt;interface&gt;&gt;
+        +String getEventId()
+        +String getTenantId()
+        +String getUserId()
+        +Date getTimestamp()
+        +Map~String, Object~ getMetadata()
+    }
+
+    class PromptCreatedEvent {
+        &lt;&lt;event&gt;&gt;
+        +String promptId
+        +String name
+        +String createdBy
+    }
+
+    class PromptPublishedEvent {
+        &lt;&lt;event&gt;&gt;
+        +String promptId
+        +String version
+        +String publishedBy
+    }
+
+    class ProviderFailureEvent {
+        &lt;&lt;event&gt;&gt;
+        +String providerType
+        +String errorType
+        +String errorMessage
+    }
+
+    class UsageLimitReachedEvent {
+        &lt;&lt;event&gt;&gt;
+        +String tenantId
+        +String limitType
+        +long currentUsage
+        +long limitValue
+    }
+
+    DomainEvent &lt;|-- PromptCreatedEvent
+    DomainEvent &lt;|-- PromptPublishedEvent
+    DomainEvent &lt;|-- ProviderFailureEvent
+    DomainEvent &lt;|-- UsageLimitReachedEvent
+</code></pre>
+<p><strong>Event Handling:</strong></p>
+<ol>
+<li>Events are published to an event bus</li>
+<li>Components subscribe to relevant events</li>
+<li>Events are processed asynchronously</li>
+<li>Events can trigger system actions or notifications</li>
+<li>Events are recorded for audit purposes</li>
+</ol>
+<h2 id="business-rules">Business Rules</h2>
+<p>The LLM Gateway implements the following key business rules:</p>
+<ol>
+<li><strong>Tenant Isolation</strong></li>
+<li>Data from one tenant must never be accessible to another tenant</li>
+<li>Resources must be allocated and tracked per tenant</li>
+<li>
+<p>Configuration must be tenant-specific</p>
+</li>
+<li>
+<p><strong>Provider Management</strong></p>
+</li>
+<li>Provider credentials must be securely stored</li>
+<li>Provider failures must be handled gracefully</li>
+<li>
+<p>Provider selection must follow defined priority and capability rules</p>
+</li>
+<li>
+<p><strong>Prompt Governance</strong></p>
+</li>
+<li>Prompt templates must follow a version-controlled lifecycle</li>
+<li>Published prompts must be immutable</li>
+<li>
+<p>Prompt usage must be tracked for audit and analytics</p>
+</li>
+<li>
+<p><strong>Usage Control</strong></p>
+</li>
+<li>Usage limits must be enforced at tenant and user level</li>
+<li>Usage must be tracked accurately for billing and analytics</li>
+<li>
+<p>Rate limiting must prevent abuse and ensure fair resource allocation</p>
+</li>
+<li>
+<p><strong>Security and Compliance</strong></p>
+</li>
+<li>All actions must be authenticated and authorized</li>
+<li>Sensitive operations must be audited</li>
+<li>Compliance requirements must be configurable per tenant</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="extension-points.html">Extension Points and Plug-In Strategy</a> | <strong>Next</strong>: <a href="deployment-scaling.html">Deployment and Scaling Architecture</a></p>
+</body>
+</html>

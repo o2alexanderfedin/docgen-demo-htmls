@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>deployment-scaling</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="deployment-and-scaling-architecture">Deployment and Scaling Architecture</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#deployment-models">Deployment Models</a></li>
+<li><a href="#saas-deployment">SaaS Deployment</a></li>
+<li><a href="#dedicated-cloud-deployment">Dedicated Cloud Deployment</a></li>
+<li><a href="#on-premises-deployment">On-Premises Deployment</a></li>
+<li><a href="#hybrid-deployment">Hybrid Deployment</a></li>
+<li><a href="#air-gapped-deployment">Air-Gapped Deployment</a></li>
+<li><a href="#container-architecture">Container Architecture</a></li>
+<li><a href="#container-structure">Container Structure</a></li>
+<li><a href="#image-layers">Image Layers</a></li>
+<li><a href="#resource-requirements">Resource Requirements</a></li>
+<li><a href="#kubernetes-deployment">Kubernetes Deployment</a></li>
+<li><a href="#pod-specifications">Pod Specifications</a></li>
+<li><a href="#service-configuration">Service Configuration</a></li>
+<li><a href="#stateful-components">Stateful Components</a></li>
+<li><a href="#configmaps-and-secrets">ConfigMaps and Secrets</a></li>
+<li><a href="#scaling-strategy">Scaling Strategy</a></li>
+<li><a href="#horizontal-scaling">Horizontal Scaling</a></li>
+<li><a href="#vertical-scaling">Vertical Scaling</a></li>
+<li><a href="#auto-scaling-configuration">Auto-Scaling Configuration</a></li>
+<li><a href="#high-availability-setup">High Availability Setup</a></li>
+<li><a href="#redundancy-patterns">Redundancy Patterns</a></li>
+<li><a href="#failure-recovery">Failure Recovery</a></li>
+<li><a href="#network-architecture">Network Architecture</a></li>
+<li><a href="#service-mesh">Service Mesh</a></li>
+<li><a href="#load-balancing">Load Balancing</a></li>
+<li><a href="#traffic-management">Traffic Management</a></li>
+<li><a href="#storage-architecture">Storage Architecture</a></li>
+<li><a href="#database-options">Database Options</a></li>
+<li><a href="#cache-infrastructure">Cache Infrastructure</a></li>
+<li><a href="#persistent-volume-management">Persistent Volume Management</a></li>
+<li><a href="#infrastructure-as-code">Infrastructure as Code</a></li>
+<li><a href="#terraform-modules">Terraform Modules</a></li>
+<li><a href="#helm-charts">Helm Charts</a></li>
+<li><a href="#deployment-pipeline">Deployment Pipeline</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This document describes the deployment and scaling architecture of the LLM Gateway, including different deployment models, container architecture, Kubernetes configuration, scaling strategies, high availability setup, and infrastructure as code approaches. The LLM Gateway is designed to be highly scalable, resilient, and deployable in various environments from cloud to on-premises.</p>
+<h2 id="deployment-models">Deployment Models</h2>
+<p>The LLM Gateway supports multiple deployment models to accommodate different security, compliance, and operational requirements.</p>
+<h3 id="saas-deployment">SaaS Deployment</h3>
+<p>The SaaS deployment model provides a fully managed, multi-tenant service:</p>
+<pre><code class="language-mermaid">graph TD
+    Internet[Client Traffic] --&gt; |HTTPS| WAF[Web Application Firewall]
+    WAF --&gt; |HTTPS| LB[Load Balancer]
+    LB --&gt; |HTTP| GW[API Gateway]
+
+    subgraph &quot;Multi-Tenant SaaS Environment&quot;
+        GW --&gt; |HTTP| AuthSvc[Authentication Service]
+        GW --&gt; |HTTP| LLMSvc[LLM Gateway Service]
+
+        LLMSvc --&gt; |JDBC| DB[(Multi-Tenant Database)]
+        LLMSvc --&gt; |Redis Protocol| Cache[(Redis Cache Cluster)]
+        LLMSvc --&gt; |HTTPS| LLMProviders[LLM Provider APIs]
+
+        AuthSvc --&gt; |OIDC| IdP[Identity Provider]
+
+        MetricsSvc[Metrics Service] --&gt; LLMSvc
+        LoggingSvc[Logging Service] --&gt; LLMSvc
+
+        AdminSvc[Admin Service] --&gt; LLMSvc
+        AdminSvc --&gt; DB
+    end
+
+    OpsDashboard[Operations Dashboard] --&gt; MetricsSvc
+    OpsDashboard --&gt; LoggingSvc
+</code></pre>
+<p><strong>Key Characteristics:</strong></p>
+<ul>
+<li>Multi-tenant architecture with logical tenant isolation</li>
+<li>Fully managed by the service provider</li>
+<li>Automatic scaling based on demand</li>
+<li>Shared infrastructure with tenant isolation</li>
+<li>Standard SLAs with tiered support levels</li>
+<li>Global availability through multiple regions</li>
+</ul>
+<h3 id="dedicated-cloud-deployment">Dedicated Cloud Deployment</h3>
+<p>The dedicated cloud deployment provides a single-tenant instance in the cloud:</p>
+<pre><code class="language-mermaid">graph TD
+    Internet[Client Traffic] --&gt; |HTTPS| WAF[Web Application Firewall]
+    WAF --&gt; |HTTPS| LB[Load Balancer]
+    LB --&gt; |HTTP| GW[API Gateway]
+
+    subgraph &quot;Customer VPC/VNET&quot;
+        GW --&gt; |HTTP| AuthSvc[Authentication Service]
+        GW --&gt; |HTTP| LLMSvc[LLM Gateway Service]
+
+        LLMSvc --&gt; |JDBC| DB[(Dedicated Database)]
+        LLMSvc --&gt; |Redis Protocol| Cache[(Dedicated Cache)]
+        LLMSvc --&gt; |HTTPS| LLMProviders[LLM Provider APIs]
+
+        AuthSvc --&gt; |OIDC| IdP[Customer IdP]
+
+        MetricsSvc[Metrics Service] --&gt; LLMSvc
+        LoggingSvc[Logging Service] --&gt; LLMSvc
+    end
+
+    CustomerInteg[Customer Systems] --&gt; |Internal Network| LLMSvc
+    CustomerDashboard[Customer Dashboard] --&gt; MetricsSvc
+    CustomerDashboard --&gt; LoggingSvc
+</code></pre>
+<p><strong>Key Characteristics:</strong></p>
+<ul>
+<li>Single-tenant architecture with physical isolation</li>
+<li>Deployed in customer's cloud environment</li>
+<li>Customer-controlled scaling and resource allocation</li>
+<li>Integration with customer's identity provider</li>
+<li>Customer-specific customizations</li>
+<li>Supports customer-specific compliance requirements</li>
+</ul>
+<h3 id="on-premises-deployment">On-Premises Deployment</h3>
+<p>The on-premises deployment provides a self-hosted solution in the customer's data center:</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Customer Data Center&quot;
+        InternalTraffic[Internal Traffic] --&gt; |HTTPS| FW[Firewall]
+        FW --&gt; |HTTPS| InternalLB[Internal Load Balancer]
+        InternalLB --&gt; |HTTP| LLMSvc[LLM Gateway Service]
+
+        LLMSvc --&gt; |JDBC| DB[(Customer Database)]
+        LLMSvc --&gt; |Redis Protocol| Cache[(Customer Cache)]
+
+        LLMSvc --&gt; |HTTPS/Proxy| InternetProxy[Internet Proxy]
+        InternetProxy --&gt; |HTTPS| LLMProviders[LLM Provider APIs]
+
+        LLMSvc --&gt; |LDAP/OIDC| CustomerIdP[Customer Identity Provider]
+
+        LLMSvc --&gt; |Log Output| LogInfra[Customer Logging Infrastructure]
+        LLMSvc --&gt; |Metrics| MonInfra[Customer Monitoring Infrastructure]
+    end
+
+    CustomerApps[Customer Applications] --&gt; |Internal Network| LLMSvc
+</code></pre>
+<p><strong>Key Characteristics:</strong></p>
+<ul>
+<li>Self-hosted in customer's data center</li>
+<li>Fully integrated with customer's infrastructure</li>
+<li>Customer-managed scaling and resource allocation</li>
+<li>Air-gap option for high-security environments</li>
+<li>Support for offline LLMs</li>
+<li>Custom network and security configurations</li>
+</ul>
+<h3 id="hybrid-deployment">Hybrid Deployment</h3>
+<p>The hybrid deployment combines cloud and on-premises components:</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Customer Data Center&quot;
+        InternalTraffic[Internal Traffic] --&gt; |HTTPS| FW[Firewall]
+        FW --&gt; |HTTPS| InternalLB[Internal Load Balancer]
+        InternalLB --&gt; |HTTP| OnPremLLMSvc[On-Prem LLM Gateway]
+
+        OnPremLLMSvc --&gt; |JDBC| OnPremDB[(On-Prem Database)]
+        OnPremLLMSvc --&gt; |Redis Protocol| OnPremCache[(On-Prem Cache)]
+        OnPremLLMSvc --&gt; |HTTPS| OnPremLLM[On-Prem LLM]
+
+        OnPremLLMSvc --&gt; |Log Output| LogInfra[Logging Infrastructure]
+        OnPremLLMSvc --&gt; |Metrics| MonInfra[Monitoring Infrastructure]
+    end
+
+    subgraph &quot;Cloud Environment&quot;
+        OnPremLLMSvc --&gt; |HTTPS| CloudLLMSvc[Cloud LLM Gateway]
+
+        CloudLLMSvc --&gt; |JDBC| CloudDB[(Cloud Database)]
+        CloudLLMSvc --&gt; |Redis Protocol| CloudCache[(Cloud Cache)]
+        CloudLLMSvc --&gt; |HTTPS| CloudLLM[Cloud LLM Providers]
+    end
+
+    CustomerApps[Customer Applications] --&gt; |Internal Network| OnPremLLMSvc
+</code></pre>
+<p><strong>Key Characteristics:</strong></p>
+<ul>
+<li>Sensitive operations in customer data center</li>
+<li>Cloud-based model access for advanced capabilities</li>
+<li>Policy-based routing of requests</li>
+<li>Synchronized configuration across environments</li>
+<li>Fallback capabilities for resilience</li>
+<li>Unified management plane</li>
+</ul>
+<h3 id="air-gapped-deployment">Air-Gapped Deployment</h3>
+<p>The air-gapped deployment provides a completely isolated solution:</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Air-Gapped Environment&quot;
+        InternalTraffic[Internal Traffic] --&gt; |HTTPS| SecurityGW[Security Gateway]
+        SecurityGW --&gt; |HTTPS| InternalLB[Internal Load Balancer]
+        InternalLB --&gt; |HTTP| LLMSvc[LLM Gateway Service]
+
+        LLMSvc --&gt; |JDBC| DB[(Isolated Database)]
+        LLMSvc --&gt; |Redis Protocol| Cache[(Isolated Cache)]
+        LLMSvc --&gt; |API| LocalLLM[Local LLM Deployment]
+
+        LLMSvc --&gt; |LDAP/OIDC| LocalIdP[Local Identity Provider]
+
+        LLMSvc --&gt; |Log Output| LogInfra[Isolated Logging]
+        LLMSvc --&gt; |Metrics| MonInfra[Isolated Monitoring]
+
+        ModelUpdates[Model Updates] --&gt; |Manual Process| DataDiode[Data Diode]
+        DataDiode --&gt; |One-Way Transfer| LocalLLM
+    end
+</code></pre>
+<p><strong>Key Characteristics:</strong></p>
+<ul>
+<li>No external network connections</li>
+<li>Self-contained LLM deployment</li>
+<li>Manual updates through secure channels</li>
+<li>Complete isolation from external networks</li>
+<li>Specialized security controls</li>
+<li>Support for classified environments</li>
+</ul>
+<h2 id="container-architecture">Container Architecture</h2>
+<p>The LLM Gateway is containerized using Docker for consistent deployment across environments.</p>
+<h3 id="container-structure">Container Structure</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;LLM Gateway Container Architecture&quot;
+        API[API Layer] --&gt; Core[Core Services]
+        Admin[Admin UI] --&gt; Core
+
+        Core --&gt; Providers[Provider Clients]
+        Core --&gt; CacheImpl[Cache Implementation]
+        Core --&gt; Analytics[Analytics Engine]
+
+        Providers --&gt; ProviderSDKs[Provider SDKs]
+
+        Core --&gt; DBLib[Database Libraries]
+        Core --&gt; CacheLib[Cache Libraries]
+
+        ConfigFiles[Configuration Files] --&gt; Core
+    end
+
+    Sidecar1[Logging Sidecar] -.-&gt; Core
+    Sidecar2[Metrics Sidecar] -.-&gt; Core
+    Sidecar3[Tracing Sidecar] -.-&gt; Core
+</code></pre>
+<h3 id="image-layers">Image Layers</h3>
+<p>The container images use a layered approach for efficiency:</p>
+<pre><code class="language-mermaid">graph TD
+    BaseOS[Base OS Layer&lt;br&gt;Alpine Linux] --&gt; JavaRuntime[Java Runtime&lt;br&gt;JRE 17]
+
+    JavaRuntime --&gt; Dependencies[Dependencies Layer&lt;br&gt;Libraries and SDKs]
+
+    Dependencies --&gt; Application[Application Layer&lt;br&gt;LLM Gateway Code]
+
+    Application --&gt; Config[Configuration Layer&lt;br&gt;Default Settings]
+</code></pre>
+<p><strong>Layer Details:</strong></p>
+<ol>
+<li><strong>Base OS Layer</strong>: Alpine Linux for minimal footprint (120MB)</li>
+<li><strong>Java Runtime</strong>: OpenJDK JRE 17 optimized for containers (180MB)</li>
+<li><strong>Dependencies</strong>: Third-party libraries and SDKs (200MB)</li>
+<li><strong>Application</strong>: LLM Gateway application code (50MB)</li>
+<li><strong>Configuration</strong>: Default configuration files (5MB)</li>
+</ol>
+<p>Total image size: Approximately 555MB</p>
+<h3 id="resource-requirements">Resource Requirements</h3>
+<p>Resource requirements vary by deployment size:</p>
+<table>
+<thead>
+<tr>
+<th>Deployment Size</th>
+<th>CPU</th>
+<th>Memory</th>
+<th>Disk</th>
+<th>Network</th>
+<th>Instances</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Small (100 req/min)</td>
+<td>2 cores</td>
+<td>4GB</td>
+<td>20GB</td>
+<td>100Mbps</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Medium (500 req/min)</td>
+<td>4 cores</td>
+<td>8GB</td>
+<td>40GB</td>
+<td>500Mbps</td>
+<td>3-5</td>
+</tr>
+<tr>
+<td>Large (2000 req/min)</td>
+<td>8 cores</td>
+<td>16GB</td>
+<td>80GB</td>
+<td>1Gbps</td>
+<td>5-10</td>
+</tr>
+<tr>
+<td>Enterprise (5000+ req/min)</td>
+<td>16 cores</td>
+<td>32GB</td>
+<td>160GB</td>
+<td>10Gbps</td>
+<td>10+</td>
+</tr>
+</tbody>
+</table>
+<h2 id="kubernetes-deployment">Kubernetes Deployment</h2>
+<p>The LLM Gateway is designed for deployment on Kubernetes.</p>
+<h3 id="pod-specifications">Pod Specifications</h3>
+<pre><code class="language-yaml"># Example pod specification
+apiVersion: v1
+kind: Pod
+metadata:
+  name: llm-gateway
+  labels:
+    app: llm-gateway
+    component: api
+spec:
+  containers:
+  - name: llm-gateway
+    image: llm-gateway:1.0.0
+    ports:
+    - containerPort: 8080
+    resources:
+      requests:
+        memory: &quot;4Gi&quot;
+        cpu: &quot;2&quot;
+      limits:
+        memory: &quot;8Gi&quot;
+        cpu: &quot;4&quot;
+    env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: &quot;production&quot;
+    - name: DB_HOST
+      valueFrom:
+        configMapKeyRef:
+          name: llm-gateway-config
+          key: db.host
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: llm-gateway-secrets
+          key: db.password
+    volumeMounts:
+    - name: config-volume
+      mountPath: /app/config
+    - name: logs-volume
+      mountPath: /app/logs
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8080
+      initialDelaySeconds: 60
+      periodSeconds: 15
+  volumes:
+  - name: config-volume
+    configMap:
+      name: llm-gateway-config
+  - name: logs-volume
+    emptyDir: {}
+</code></pre>
+<h3 id="service-configuration">Service Configuration</h3>
+<pre><code class="language-mermaid">graph TD
+    Ingress[Ingress Controller] --&gt; |HTTP/HTTPS| Service[LLM Gateway Service]
+
+    Service --&gt; Pod1[LLM Gateway Pod 1]
+    Service --&gt; Pod2[LLM Gateway Pod 2]
+    Service --&gt; Pod3[LLM Gateway Pod 3]
+
+    Pod1 --&gt; |JDBC| DBService[Database Service]
+    Pod2 --&gt; |JDBC| DBService
+    Pod3 --&gt; |JDBC| DBService
+
+    Pod1 --&gt; |Redis Protocol| CacheService[Cache Service]
+    Pod2 --&gt; |Redis Protocol| CacheService
+    Pod3 --&gt; |Redis Protocol| CacheService
+
+    DBService --&gt; DBStatefulSet[Database StatefulSet]
+    CacheService --&gt; CacheStatefulSet[Cache StatefulSet]
+</code></pre>
+<h3 id="stateful-components">Stateful Components</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;StatefulSet: Database&quot;
+        DBPod1[Database Pod 1&lt;br&gt;Primary] --&gt; |Replication| DBPod2[Database Pod 2&lt;br&gt;Replica]
+        DBPod1 --&gt; |Replication| DBPod3[Database Pod 3&lt;br&gt;Replica]
+
+        DBPod1 --&gt; DBStorage1[Persistent Volume 1]
+        DBPod2 --&gt; DBStorage2[Persistent Volume 2]
+        DBPod3 --&gt; DBStorage3[Persistent Volume 3]
+    end
+
+    subgraph &quot;StatefulSet: Cache&quot;
+        CachePod1[Cache Pod 1&lt;br&gt;Master] --&gt; |Replication| CachePod2[Cache Pod 2&lt;br&gt;Replica]
+        CachePod1 --&gt; |Replication| CachePod3[Cache Pod 3&lt;br&gt;Replica]
+
+        CachePod1 --&gt; CacheStorage1[Persistent Volume 1]
+        CachePod2 --&gt; CacheStorage2[Persistent Volume 2]
+        CachePod3 --&gt; CacheStorage3[Persistent Volume 3]
+    end
+</code></pre>
+<h3 id="configmaps-and-secrets">ConfigMaps and Secrets</h3>
+<pre><code class="language-mermaid">graph TD
+    ConfigMap[ConfigMap:&lt;br&gt;llm-gateway-config] --&gt; |Mount| Pods[LLM Gateway Pods]
+
+    subgraph &quot;ConfigMap Contents&quot;
+        AppConfig[Application Configuration]
+        ProviderConfig[Provider Configuration]
+        LoggingConfig[Logging Configuration]
+        MetricsConfig[Metrics Configuration]
+    end
+
+    Secret[Secret:&lt;br&gt;llm-gateway-secrets] --&gt; |Mount| Pods
+
+    subgraph &quot;Secret Contents&quot;
+        DBCreds[Database Credentials]
+        APICreds[API Credentials]
+        TLSCerts[TLS Certificates]
+        EncryptionKeys[Encryption Keys]
+    end
+</code></pre>
+<h2 id="scaling-strategy">Scaling Strategy</h2>
+<h3 id="horizontal-scaling">Horizontal Scaling</h3>
+<pre><code class="language-mermaid">graph TD
+    HPA[Horizontal Pod Autoscaler] --&gt; |Scales| Deployment[LLM Gateway Deployment]
+
+    Metrics[Metrics Server] --&gt; |Provides Metrics| HPA
+
+    Deployment --&gt; |Creates| Pod1[Pod 1]
+    Deployment --&gt; |Creates| Pod2[Pod 2]
+    Deployment --&gt; |Creates| Pod3[Pod 3]
+    Deployment --&gt; |Creates| PodN[Pod N]
+
+    subgraph &quot;Scaling Metrics&quot;
+        CPU[CPU Utilization]
+        Memory[Memory Utilization]
+        RequestRate[Request Rate]
+        ResponseTime[Response Time]
+        QueueLength[Queue Length]
+    end
+
+    CPU --&gt; Metrics
+    Memory --&gt; Metrics
+    RequestRate --&gt; Metrics
+    ResponseTime --&gt; Metrics
+    QueueLength --&gt; Metrics
+</code></pre>
+<p><strong>Horizontal Scaling Configuration:</strong></p>
+<pre><code class="language-yaml"># Example HPA configuration
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: llm-gateway-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: llm-gateway
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 75
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: 100
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 60
+</code></pre>
+<h3 id="vertical-scaling">Vertical Scaling</h3>
+<pre><code class="language-mermaid">graph TD
+    VPA[Vertical Pod Autoscaler] --&gt; |Recommends| Pod[LLM Gateway Pod]
+
+    subgraph &quot;Resource Adjustment&quot;
+        CPU[CPU Allocation]
+        Memory[Memory Allocation]
+        JVMHeap[JVM Heap Size]
+        ThreadPool[Thread Pool Size]
+        ConnectionPool[Connection Pool Size]
+    end
+
+    VPA --&gt; CPU
+    VPA --&gt; Memory
+    CPU --&gt; JVMHeap
+    Memory --&gt; ThreadPool
+    Memory --&gt; ConnectionPool
+</code></pre>
+<p><strong>Vertical Scaling Configuration:</strong></p>
+<pre><code class="language-yaml"># Example VPA configuration
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: llm-gateway-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: llm-gateway
+  updatePolicy:
+    updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+    - containerName: '*'
+      minAllowed:
+        cpu: 1
+        memory: 2Gi
+      maxAllowed:
+        cpu: 8
+        memory: 16Gi
+</code></pre>
+<h3 id="auto-scaling-configuration">Auto-Scaling Configuration</h3>
+<p>The LLM Gateway implements a multi-dimensional scaling strategy:</p>
+<pre><code class="language-mermaid">graph TD
+    Load[Incoming Load] --&gt; LoadAnalyzer[Load Analyzer]
+
+    LoadAnalyzer --&gt; HorizontalScaler[Horizontal Scaler]
+    LoadAnalyzer --&gt; VerticalScaler[Vertical Scaler]
+    LoadAnalyzer --&gt; CacheScaler[Cache Scaler]
+    LoadAnalyzer --&gt; DBScaler[Database Scaler]
+
+    HorizontalScaler --&gt; Pods[LLM Gateway Pods]
+    VerticalScaler --&gt; Resources[Pod Resources]
+    CacheScaler --&gt; CacheNodes[Cache Nodes]
+    DBScaler --&gt; DBNodes[Database Nodes]
+
+    subgraph &quot;Scaling Policies&quot;
+        TimeOfDay[Time-of-Day Patterns]
+        UsagePatterns[Historical Patterns]
+        SLOTargets[SLO Targets]
+        CostConstraints[Cost Constraints]
+    end
+
+    TimeOfDay --&gt; LoadAnalyzer
+    UsagePatterns --&gt; LoadAnalyzer
+    SLOTargets --&gt; LoadAnalyzer
+    CostConstraints --&gt; LoadAnalyzer
+</code></pre>
+<p><strong>Scaling Rules:</strong></p>
+<ol>
+<li><strong>Predictive Scaling</strong>: Scale based on historical patterns</li>
+<li><strong>Reactive Scaling</strong>: Respond to unexpected load changes</li>
+<li><strong>Cost-Based Scaling</strong>: Balance performance and cost</li>
+<li><strong>SLO-Based Scaling</strong>: Maintain service level objectives</li>
+<li><strong>Cache Adjustment</strong>: Scale cache size based on hit ratio</li>
+<li><strong>Database Scaling</strong>: Adjust database resources based on query performance</li>
+</ol>
+<h2 id="high-availability-setup">High Availability Setup</h2>
+<h3 id="redundancy-patterns">Redundancy Patterns</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Region A - Primary&quot;
+        IngressA[Ingress A] --&gt; ServiceA[Service A]
+
+        ServiceA --&gt; PodA1[Pod A1]
+        ServiceA --&gt; PodA2[Pod A2]
+        ServiceA --&gt; PodA3[Pod A3]
+
+        PodA1 --&gt; DBPrimaryA[DB Primary A]
+        PodA2 --&gt; DBPrimaryA
+        PodA3 --&gt; DBPrimaryA
+
+        DBPrimaryA --&gt; |Replication| DBReplicaA[DB Replica A]
+    end
+
+    subgraph &quot;Region B - Secondary&quot;
+        IngressB[Ingress B] --&gt; ServiceB[Service B]
+
+        ServiceB --&gt; PodB1[Pod B1]
+        ServiceB --&gt; PodB2[Pod B2]
+        ServiceB --&gt; PodB3[Pod B3]
+
+        PodB1 --&gt; DBPrimaryB[DB Primary B]
+        PodB2 --&gt; DBPrimaryB
+        PodB3 --&gt; DBPrimaryB
+
+        DBPrimaryB --&gt; |Replication| DBReplicaB[DB Replica B]
+    end
+
+    GlobalLB[Global Load Balancer] --&gt; IngressA
+    GlobalLB --&gt; IngressB
+
+    DBPrimaryA --&gt; |Cross-Region Replication| DBPrimaryB
+</code></pre>
+<h3 id="failure-recovery">Failure Recovery</h3>
+<pre><code class="language-mermaid">flowchart TD
+    Normal[Normal Operation] --&gt; |Failure Detected| FailureDetection[Failure Detection]
+
+    FailureDetection --&gt; |Pod Failure| PodRecovery[Pod Recovery]
+    FailureDetection --&gt; |Node Failure| NodeRecovery[Node Recovery]
+    FailureDetection --&gt; |Region Failure| RegionFailover[Region Failover]
+
+    PodRecovery --&gt; |Restart Pod| NewPod[New Pod]
+    NewPod --&gt; |Health Check| HealthCheck[Health Check]
+    HealthCheck --&gt; |Healthy| ServiceResume[Service Resumption]
+    HealthCheck --&gt; |Unhealthy| PodRecovery
+
+    NodeRecovery --&gt; |Reschedule Pods| NewNode[New Node]
+    NewNode --&gt; |Pod Initialization| NewPod
+
+    RegionFailover --&gt; |Promote Secondary| PromoteSecondary[Promote Secondary Region]
+    PromoteSecondary --&gt; |Update DNS| DNSUpdate[DNS Update]
+    PromoteSecondary --&gt; |Update Database| DBFailover[Database Failover]
+    DNSUpdate --&gt; RoutingUpdate[Traffic Routing Update]
+    DBFailover --&gt; RoutingUpdate
+    RoutingUpdate --&gt; ServiceResume
+</code></pre>
+<p><strong>Recovery Time Objectives:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Failure Type</th>
+<th>Recovery Time Objective</th>
+<th>Recovery Process</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pod Failure</td>
+<td>&lt; 30 seconds</td>
+<td>Kubernetes automatically restarts the pod</td>
+</tr>
+<tr>
+<td>Node Failure</td>
+<td>&lt; 2 minutes</td>
+<td>Kubernetes reschedules pods on healthy nodes</td>
+</tr>
+<tr>
+<td>Zone Failure</td>
+<td>&lt; 5 minutes</td>
+<td>Multi-zone deployment ensures service continuity</td>
+</tr>
+<tr>
+<td>Region Failure</td>
+<td>&lt; 15 minutes</td>
+<td>Manual or automated region failover process</td>
+</tr>
+<tr>
+<td>Database Failure</td>
+<td>&lt; 3 minutes</td>
+<td>Automatic promotion of replica to primary</td>
+</tr>
+<tr>
+<td>Cache Failure</td>
+<td>&lt; 1 minute</td>
+<td>Automatic failover to replica cache</td>
+</tr>
+</tbody>
+</table>
+<h2 id="network-architecture">Network Architecture</h2>
+<h3 id="service-mesh">Service Mesh</h3>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;Service Mesh&quot;
+        Gateway[API Gateway] --&gt; |HTTP| LLMService[LLM Gateway Service]
+        LLMService --&gt; |gRPC| AuthService[Auth Service]
+        LLMService --&gt; |HTTP| CacheService[Cache Service]
+        LLMService --&gt; |HTTP| MetricsService[Metrics Service]
+
+        subgraph &quot;Sidecar Proxies&quot;
+            LLMProxy[LLM Gateway Proxy] --- LLMService
+            AuthProxy[Auth Proxy] --- AuthService
+            CacheProxy[Cache Proxy] --- CacheService
+            MetricsProxy[Metrics Proxy] --- MetricsService
+        end
+
+        LLMProxy ---|mTLS| AuthProxy
+        LLMProxy ---|mTLS| CacheProxy
+        LLMProxy ---|mTLS| MetricsProxy
+
+        MeshControl[Mesh Control Plane] --&gt; LLMProxy
+        MeshControl --&gt; AuthProxy
+        MeshControl --&gt; CacheProxy
+        MeshControl --&gt; MetricsProxy
+    end
+
+    Gateway --&gt; |External Traffic| ExternalLB[External Load Balancer]
+    ExternalLB --&gt; Internet[Internet]
+</code></pre>
+<p><strong>Service Mesh Features:</strong></p>
+<ol>
+<li><strong>mTLS</strong>: Mutual TLS authentication between services</li>
+<li><strong>Traffic Management</strong>: Advanced routing and load balancing</li>
+<li><strong>Observability</strong>: Distributed tracing and metrics</li>
+<li><strong>Resilience</strong>: Circuit breaking and fault injection</li>
+<li><strong>Security</strong>: Access control and encryption</li>
+</ol>
+<h3 id="load-balancing">Load Balancing</h3>
+<pre><code class="language-mermaid">graph TD
+    Internet[Internet] --&gt; |HTTPS| GlobalLB[Global Load Balancer]
+
+    GlobalLB --&gt; |HTTPS| RegionALB[Region A Load Balancer]
+    GlobalLB --&gt; |HTTPS| RegionBLB[Region B Load Balancer]
+
+    RegionALB --&gt; |HTTP| IngressA[Ingress Controller A]
+    RegionBLB --&gt; |HTTP| IngressB[Ingress Controller B]
+
+    IngressA --&gt; |HTTP| ServiceA[LLM Gateway Service A]
+    IngressB --&gt; |HTTP| ServiceB[LLM Gateway Service B]
+
+    ServiceA --&gt; |Round Robin| PodA1[Pod A1]
+    ServiceA --&gt; |Round Robin| PodA2[Pod A2]
+    ServiceA --&gt; |Round Robin| PodA3[Pod A3]
+
+    ServiceB --&gt; |Round Robin| PodB1[Pod B1]
+    ServiceB --&gt; |Round Robin| PodB2[Pod B2]
+    ServiceB --&gt; |Round Robin| PodB3[Pod B3]
+</code></pre>
+<p><strong>Load Balancing Methods:</strong></p>
+<ol>
+<li><strong>Global</strong>: Geographic routing based on client location and region health</li>
+<li><strong>Regional</strong>: Load distribution across multiple availability zones</li>
+<li><strong>Service</strong>: Kubernetes service-level load balancing</li>
+<li><strong>Session Affinity</strong>: Sticky sessions for streaming connections</li>
+<li><strong>Health-Aware</strong>: Routing based on service health and capacity</li>
+</ol>
+<h3 id="traffic-management">Traffic Management</h3>
+<pre><code class="language-mermaid">graph TD
+    Client[Client] --&gt; |HTTP| Gateway[Gateway]
+
+    Gateway --&gt; |Rate Limit Check| RateLimiter[Rate Limiter]
+
+    RateLimiter --&gt; |Accept| Router[Traffic Router]
+    RateLimiter --&gt; |Reject| RateError[Rate Limit Error]
+
+    Router --&gt; |Based on Header| BlueService[Blue Deployment]
+    Router --&gt; |Based on Header| GreenService[Green Deployment]
+    Router --&gt; |Based on Weight| CanaryService[Canary Deployment]
+
+    BlueService --&gt; BlueInstances[Blue Instances]
+    GreenService --&gt; GreenInstances[Green Instances]
+    CanaryService --&gt; CanaryInstances[Canary Instances]
+</code></pre>
+<p><strong>Traffic Management Capabilities:</strong></p>
+<ol>
+<li><strong>Blue-Green Deployments</strong>: Switch between deployment versions</li>
+<li><strong>Canary Releases</strong>: Gradual rollout of new versions</li>
+<li><strong>A/B Testing</strong>: Split traffic for feature testing</li>
+<li><strong>Circuit Breaking</strong>: Prevent cascading failures</li>
+<li><strong>Rate Limiting</strong>: Protect services from traffic spikes</li>
+<li><strong>Traffic Splitting</strong>: Route by percentage or header values</li>
+</ol>
+<h2 id="storage-architecture">Storage Architecture</h2>
+<h3 id="database-options">Database Options</h3>
+<pre><code class="language-mermaid">graph TD
+    App[LLM Gateway Application] --&gt; |JDBC/JPA| DBAbstraction[Database Abstraction Layer]
+
+    DBAbstraction --&gt; PostgreSQL[PostgreSQL&lt;br&gt;Primary Database]
+    DBAbstraction --&gt; MySQL[MySQL&lt;br&gt;Alternative]
+    DBAbstraction --&gt; SQLServer[SQL Server&lt;br&gt;Enterprise Option]
+
+    subgraph &quot;PostgreSQL Setup&quot;
+        PostgreSQL --&gt; PGPrimary[Primary Node]
+        PGPrimary --&gt; |Streaming Replication| PGReplica1[Replica Node 1]
+        PGPrimary --&gt; |Streaming Replication| PGReplica2[Replica Node 2]
+        PGPrimary --&gt; |Archiving| WALArchive[WAL Archive]
+    end
+
+    subgraph &quot;Backup Strategy&quot;
+        WALArchive --&gt; DailyBackup[Daily Full Backup]
+        WALArchive --&gt; ContinuousArchiving[Continuous WAL Archiving]
+        DailyBackup --&gt; BackupStorage[Backup Storage]
+        ContinuousArchiving --&gt; BackupStorage
+    end
+</code></pre>
+<p><strong>Database Requirements:</strong></p>
+<ol>
+<li><strong>Performance</strong>: Support for high transaction rates</li>
+<li><strong>Scalability</strong>: Horizontal read scaling through replicas</li>
+<li><strong>Reliability</strong>: Automatic failover and high availability</li>
+<li><strong>Backup</strong>: Point-in-time recovery capabilities</li>
+<li><strong>Security</strong>: Column-level encryption for sensitive data</li>
+</ol>
+<h3 id="cache-infrastructure">Cache Infrastructure</h3>
+<pre><code class="language-mermaid">graph TD
+    App[LLM Gateway Application] --&gt; |Redis Client| CacheAbstraction[Cache Abstraction Layer]
+
+    CacheAbstraction --&gt; Redis[Redis&lt;br&gt;Primary Cache]
+    CacheAbstraction --&gt; Memcached[Memcached&lt;br&gt;Alternative]
+
+    subgraph &quot;Redis Setup&quot;
+        Redis --&gt; RedisMaster[Master Node]
+        RedisMaster --&gt; |Replication| RedisSlave1[Replica Node 1]
+        RedisMaster --&gt; |Replication| RedisSlave2[Replica Node 2]
+
+        RedisMaster --&gt; |Persistence| RDB[RDB Snapshots]
+        RedisMaster --&gt; |Persistence| AOF[AOF Log]
+    end
+
+    subgraph &quot;Cache Policies&quot;
+        TTLPolicy[TTL-Based Expiration]
+        LRUPolicy[LRU Eviction]
+        SizeLimit[Memory Limit]
+    end
+
+    TTLPolicy --&gt; RedisMaster
+    LRUPolicy --&gt; RedisMaster
+    SizeLimit --&gt; RedisMaster
+</code></pre>
+<p><strong>Cache Design:</strong></p>
+<ol>
+<li><strong>High Availability</strong>: Multi-node Redis cluster</li>
+<li><strong>Persistence</strong>: RDB snapshots and AOF logs</li>
+<li><strong>Eviction Policies</strong>: TTL and LRU-based approaches</li>
+<li><strong>Memory Management</strong>: Configurable memory limits</li>
+<li><strong>Data Partitioning</strong>: Sharding for large deployments</li>
+</ol>
+<h3 id="persistent-volume-management">Persistent Volume Management</h3>
+<pre><code class="language-mermaid">graph TD
+    Pod[LLM Gateway Pod] --&gt; |Volume Mount| PV[Persistent Volume]
+
+    PV --&gt; |Storage Class| SC[Storage Class]
+
+    SC --&gt; |Dynamic Provisioning| StorageBackend[Storage Backend]
+
+    subgraph &quot;Storage Options&quot;
+        BlockStorage[Block Storage&lt;br&gt;EBS, Persistent Disk]
+        FileStorage[File Storage&lt;br&gt;EFS, Azure Files]
+        ObjectStorage[Object Storage&lt;br&gt;S3, Blob Storage]
+    end
+
+    StorageBackend --&gt; BlockStorage
+    StorageBackend --&gt; FileStorage
+    StorageBackend --&gt; ObjectStorage
+</code></pre>
+<p><strong>Storage Requirements:</strong></p>
+<ol>
+<li><strong>Performance</strong>: Low-latency storage for databases</li>
+<li><strong>Reliability</strong>: Redundant storage for critical data</li>
+<li><strong>Scalability</strong>: Dynamically expandable volumes</li>
+<li><strong>Backup</strong>: Integration with backup systems</li>
+<li><strong>Security</strong>: Encryption at rest for sensitive data</li>
+</ol>
+<h2 id="infrastructure-as-code">Infrastructure as Code</h2>
+<h3 id="terraform-modules">Terraform Modules</h3>
+<pre><code class="language-mermaid">graph TD
+    Root[Root Module] --&gt; NetworkModule[Network Module]
+    Root --&gt; ComputeModule[Compute Module]
+    Root --&gt; StorageModule[Storage Module]
+    Root --&gt; DatabaseModule[Database Module]
+    Root --&gt; CacheModule[Cache Module]
+    Root --&gt; KubernetesModule[Kubernetes Module]
+
+    NetworkModule --&gt; VPC[VPC Resources]
+    NetworkModule --&gt; Subnets[Subnet Resources]
+    NetworkModule --&gt; SecurityGroups[Security Group Resources]
+
+    ComputeModule --&gt; NodePool[Node Pool Resources]
+    ComputeModule --&gt; LoadBalancer[Load Balancer Resources]
+
+    StorageModule --&gt; PersistentStorage[Persistent Storage Resources]
+    StorageModule --&gt; ObjectStorage[Object Storage Resources]
+
+    DatabaseModule --&gt; DBCluster[Database Cluster Resources]
+    DatabaseModule --&gt; DBBackup[Database Backup Resources]
+
+    CacheModule --&gt; CacheCluster[Cache Cluster Resources]
+
+    KubernetesModule --&gt; K8sCluster[Kubernetes Cluster Resources]
+    KubernetesModule --&gt; K8sConfig[Kubernetes Configuration Resources]
+</code></pre>
+<p><strong>Terraform Structure:</strong></p>
+<ol>
+<li><strong>Modular Architecture</strong>: Composable infrastructure components</li>
+<li><strong>Environment Separation</strong>: Dev, staging, production configurations</li>
+<li><strong>Provider Abstraction</strong>: Support for multiple cloud providers</li>
+<li><strong>State Management</strong>: Remote state with locking</li>
+<li><strong>Secret Handling</strong>: Integration with secret management systems</li>
+</ol>
+<h3 id="helm-charts">Helm Charts</h3>
+<pre><code class="language-mermaid">graph TD
+    LLMGatewayChart[LLM Gateway Helm Chart] --&gt; APIChart[API Chart]
+    LLMGatewayChart --&gt; WebChart[Web UI Chart]
+    LLMGatewayChart --&gt; DBChart[Database Chart]
+    LLMGatewayChart --&gt; CacheChart[Cache Chart]
+
+    APIChart --&gt; APIDeployment[API Deployment]
+    APIChart --&gt; APIService[API Service]
+    APIChart --&gt; APIIngress[API Ingress]
+    APIChart --&gt; APIConfig[API ConfigMap]
+    APIChart --&gt; APISecret[API Secret]
+
+    WebChart --&gt; WebDeployment[Web Deployment]
+    WebChart --&gt; WebService[Web Service]
+    WebChart --&gt; WebIngress[Web Ingress]
+
+    DBChart --&gt; DBStatefulSet[DB StatefulSet]
+    DBChart --&gt; DBService[DB Service]
+    DBChart --&gt; DBSecret[DB Secret]
+    DBChart --&gt; DBPersistentVolume[DB PersistentVolume]
+
+    CacheChart --&gt; CacheStatefulSet[Cache StatefulSet]
+    CacheChart --&gt; CacheService[Cache Service]
+    CacheChart --&gt; CacheConfig[Cache ConfigMap]
+    CacheChart --&gt; CachePersistentVolume[Cache PersistentVolume]
+</code></pre>
+<p><strong>Helm Chart Features:</strong></p>
+<ol>
+<li><strong>Environment Parameterization</strong>: Values files for different environments</li>
+<li><strong>Dependency Management</strong>: Chart dependencies for components</li>
+<li><strong>Resource Templates</strong>: Templated Kubernetes resources</li>
+<li><strong>Hooks</strong>: Pre/post-install and upgrade hooks</li>
+<li><strong>Versioning</strong>: Chart versioning for release management</li>
+</ol>
+<h2 id="deployment-pipeline">Deployment Pipeline</h2>
+<pre><code class="language-mermaid">graph TD
+    Code[Source Code] --&gt; |Git Push| CI[CI Pipeline]
+
+    CI --&gt; UnitTests[Unit Tests]
+    CI --&gt; IntegrationTests[Integration Tests]
+    CI --&gt; SecurityScan[Security Scan]
+    CI --&gt; BuildImage[Build Container Image]
+
+    BuildImage --&gt; |Tag &amp; Push| Registry[Container Registry]
+
+    Registry --&gt; |Deployment Request| CD[CD Pipeline]
+
+    CD --&gt; ValuesGen[Generate Values]
+    ValuesGen --&gt; HelmDeploy[Helm Deployment]
+
+    HelmDeploy --&gt; Kubernetes[Kubernetes Cluster]
+
+    Kubernetes --&gt; |Deployment| ValidationTests[Validation Tests]
+    ValidationTests --&gt; |Success| NotifySuccess[Notification - Success]
+    ValidationTests --&gt; |Failure| RollBack[Rollback]
+    RollBack --&gt; NotifyFailure[Notification - Failure]
+</code></pre>
+<p><strong>Deployment Pipeline Features:</strong></p>
+<ol>
+<li><strong>Automated Testing</strong>: Comprehensive test suite execution</li>
+<li><strong>Security Scanning</strong>: Vulnerability and compliance checks</li>
+<li><strong>Image Management</strong>: Versioned and signed container images</li>
+<li><strong>Configuration Generation</strong>: Environment-specific configuration</li>
+<li><strong>Deployment Automation</strong>: Helm-based deployment process</li>
+<li><strong>Validation</strong>: Post-deployment testing and verification</li>
+<li><strong>Rollback</strong>: Automated rollback on deployment failures</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="domain-model.html">Domain Model and Business Logic</a> | <strong>Next</strong>: <a href="observability-telemetry.html">Observability and Telemetry</a></p>
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>runtime-behavior-concurrency</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="runtime-behavior-concurrency">Runtime Behavior &amp; Concurrency</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#request-processing-lifecycle">Request Processing Lifecycle</a></li>
+<li><a href="#synchronous-request-handling">Synchronous Request Handling</a></li>
+<li><a href="#streaming-request-handling">Streaming Request Handling</a></li>
+<li><a href="#concurrency-model">Concurrency Model</a></li>
+<li><a href="#thread-pool-architecture">Thread Pool Architecture</a></li>
+<li><a href="#asynchronous-processing">Asynchronous Processing</a></li>
+<li><a href="#throttling-and-backpressure">Throttling and Backpressure</a></li>
+<li><a href="#event-driven-components">Event-Driven Components</a></li>
+<li><a href="#state-management">State Management</a></li>
+<li><a href="#transaction-handling">Transaction Handling</a></li>
+<li><a href="#timeouts-and-circuit-breaking">Timeouts and Circuit Breaking</a></li>
+<li><a href="#resource-management">Resource Management</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This document describes the runtime behavior and concurrency model of the LLM Gateway, explaining how requests are processed, how concurrency is managed, and how the system handles high load scenarios. The LLM Gateway processes a mix of synchronous and streaming requests with varying latency requirements, necessitating careful design of its runtime architecture.</p>
+<h2 id="request-processing-lifecycle">Request Processing Lifecycle</h2>
+<h3 id="synchronous-request-handling">Synchronous Request Handling</h3>
+<p>This sequence diagram illustrates the lifecycle of a typical synchronous request through the system:</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client
+    participant APIController as &lt;&lt;controller&gt;&gt; API Controller
+    participant ExecutionManager as &lt;&lt;service&gt;&gt; ExecutionManager
+    participant CacheService as &lt;&lt;service&gt;&gt; Cache Service
+    participant ClientManager as &lt;&lt;service&gt;&gt; Client Manager
+    participant LLMClient as &lt;&lt;client&gt;&gt; LLM Provider Client
+    participant LLMProvider as &lt;&lt;external&gt;&gt; LLM Provider
+
+    Client-&gt;&gt;APIController: Submit request
+    activate APIController
+
+    APIController-&gt;&gt;APIController: Authenticate &amp; validate
+
+    APIController-&gt;&gt;ExecutionManager: execute(request)
+    activate ExecutionManager
+
+    ExecutionManager-&gt;&gt;CacheService: checkCache(request)
+    activate CacheService
+    CacheService--&gt;&gt;ExecutionManager: cacheResult (hit/miss)
+    deactivate CacheService
+
+    alt Cache Hit
+        ExecutionManager--&gt;&gt;APIController: Cached response
+    else Cache Miss
+        ExecutionManager-&gt;&gt;ClientManager: getClient(provider)
+        activate ClientManager
+        ClientManager--&gt;&gt;ExecutionManager: providerClient
+        deactivate ClientManager
+
+        ExecutionManager-&gt;&gt;LLMClient: fetchAnswer(request)
+        activate LLMClient
+
+        LLMClient-&gt;&gt;LLMProvider: API call
+        activate LLMProvider
+
+        LLMProvider--&gt;&gt;LLMClient: Raw response
+        deactivate LLMProvider
+
+        LLMClient--&gt;&gt;ExecutionManager: Processed response
+        deactivate LLMClient
+
+        ExecutionManager-&gt;&gt;CacheService: storeInCache(request, response)
+
+        ExecutionManager-&gt;&gt;ExecutionManager: recordMetrics()
+
+        ExecutionManager--&gt;&gt;APIController: Final response
+    end
+
+    deactivate ExecutionManager
+
+    APIController--&gt;&gt;Client: Formatted response
+    deactivate APIController
+</code></pre>
+<p><strong>Lifecycle Steps:</strong></p>
+<ol>
+<li><strong>Request Reception</strong>: Client submits an HTTP or gRPC request</li>
+<li><strong>Authentication &amp; Validation</strong>: Request is authenticated and validated</li>
+<li><strong>Execution Delegation</strong>: Request is passed to the execution manager</li>
+<li><strong>Cache Check</strong>: System checks if an identical request exists in cache</li>
+<li><strong>Provider Selection</strong>: If cache miss, appropriate provider client is selected</li>
+<li><strong>LLM Request</strong>: The request is sent to the LLM provider</li>
+<li><strong>Response Processing</strong>: Provider response is processed and normalized</li>
+<li><strong>Caching</strong>: Response is cached if cacheable</li>
+<li><strong>Metric Recording</strong>: Usage metrics are recorded</li>
+<li><strong>Response Delivery</strong>: Formatted response is returned to client</li>
+</ol>
+<h3 id="streaming-request-handling">Streaming Request Handling</h3>
+<p>Streaming requests follow a similar but distinct pattern:</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client
+    participant APIController as &lt;&lt;controller&gt;&gt; API Controller
+    participant StreamEmitter as &lt;&lt;util&gt;&gt; Response Emitter
+    participant ExecutionManager as &lt;&lt;service&gt;&gt; ExecutionManager
+    participant ClientManager as &lt;&lt;service&gt;&gt; Client Manager
+    participant LLMClient as &lt;&lt;client&gt;&gt; LLM Provider Client
+    participant LLMProvider as &lt;&lt;external&gt;&gt; LLM Provider
+
+    Client-&gt;&gt;APIController: Submit streaming request
+    activate APIController
+
+    APIController-&gt;&gt;APIController: Authenticate &amp; validate
+
+    APIController-&gt;&gt;StreamEmitter: Create emitter
+    activate StreamEmitter
+
+    APIController-&gt;&gt;ExecutionManager: streamExecute(request, handler)
+    activate ExecutionManager
+
+    ExecutionManager-&gt;&gt;ClientManager: getClient(provider)
+    activate ClientManager
+    ClientManager--&gt;&gt;ExecutionManager: providerClient
+    deactivate ClientManager
+
+    ExecutionManager-&gt;&gt;LLMClient: streamResponse(request, handler)
+    activate LLMClient
+
+    LLMClient-&gt;&gt;LLMProvider: Streaming API call
+    activate LLMProvider
+
+    loop For each token
+        LLMProvider--&gt;&gt;LLMClient: Token chunk
+        LLMClient--&gt;&gt;StreamEmitter: Process &amp; emit chunk
+        StreamEmitter--&gt;&gt;Client: Stream chunk
+    end
+
+    LLMProvider--&gt;&gt;LLMClient: Stream complete
+    deactivate LLMProvider
+
+    LLMClient--&gt;&gt;ExecutionManager: Stream complete
+    deactivate LLMClient
+
+    ExecutionManager-&gt;&gt;ExecutionManager: recordMetrics()
+
+    ExecutionManager--&gt;&gt;APIController: Streaming complete
+    deactivate ExecutionManager
+
+    APIController-&gt;&gt;StreamEmitter: Close stream
+    deactivate StreamEmitter
+
+    APIController--&gt;&gt;Client: Connection closed
+    deactivate APIController
+</code></pre>
+<p><strong>Streaming Lifecycle Steps:</strong></p>
+<ol>
+<li><strong>Request Reception</strong>: Client submits a streaming request</li>
+<li><strong>Stream Initialization</strong>: Response emitter is created for the client connection</li>
+<li><strong>Execution Delegation</strong>: Streaming execution is initiated with callback handler</li>
+<li><strong>Provider Selection</strong>: Appropriate provider client is selected</li>
+<li><strong>Streaming Request</strong>: Streaming connection is established with LLM provider</li>
+<li><strong>Token Processing</strong>: Each token is processed and emitted to the client as received</li>
+<li><strong>Stream Completion</strong>: Upon completion, metrics are recorded and connection is closed</li>
+</ol>
+<h2 id="concurrency-model">Concurrency Model</h2>
+<p>The LLM Gateway implements a hybrid concurrency model combining thread pools for CPU-bound work and asynchronous processing for I/O-bound operations.</p>
+<h3 id="thread-pool-architecture">Thread Pool Architecture</h3>
+<pre><code class="language-mermaid">graph TD
+    Client[Client Requests] --&gt; LoadBalancer[Load Balancer]
+
+    LoadBalancer --&gt; RequestWorkers[Request Worker Pool]
+
+    RequestWorkers --&gt; ControllerThread[Controller Thread]
+
+    ControllerThread --&gt; ComputeTP[Compute Thread Pool]
+    ControllerThread --&gt; IoTP[I/O Thread Pool]
+
+    ComputeTP --&gt; ProcessingTasks[Processing Tasks&lt;br&gt;- Request validation&lt;br&gt;- Response transformation&lt;br&gt;- Token counting]
+
+    IoTP --&gt; IoTasks[I/O Tasks&lt;br&gt;- Database access&lt;br&gt;- Provider API calls&lt;br&gt;- Cache operations]
+
+    ProcessingTasks --&gt; Results[Results Aggregator]
+    IoTasks --&gt; Results
+
+    Results --&gt; ResponseThread[Response Thread]
+    ResponseThread --&gt; Client
+
+    style ComputeTP fill:#f9f,stroke:#333,stroke-width:2px
+    style IoTP fill:#bbf,stroke:#333,stroke-width:2px
+</code></pre>
+<p><strong>Thread Pool Components:</strong></p>
+<ol>
+<li><strong>Request Worker Pool</strong></li>
+<li>Size: <code>min(32, num_cores * 2)</code></li>
+<li>Purpose: Initial request handling and routing</li>
+<li>
+<p>Configuration: Fixed size with small queue</p>
+</li>
+<li>
+<p><strong>Compute Thread Pool</strong></p>
+</li>
+<li>Size: <code>num_cores * 4</code></li>
+<li>Purpose: CPU-intensive operations (validation, transformation)</li>
+<li>
+<p>Configuration: Work-stealing pool with bounded queue</p>
+</li>
+<li>
+<p><strong>I/O Thread Pool</strong></p>
+</li>
+<li>Size: Elastic (16-128 threads)</li>
+<li>Purpose: I/O-bound operations (network, database)</li>
+<li>
+<p>Configuration: Cached thread pool with timeout</p>
+</li>
+<li>
+<p><strong>Streaming Thread Pool</strong></p>
+</li>
+<li>Size: Elastic (8-64 threads)</li>
+<li>Purpose: Managing streaming connections</li>
+<li>Configuration: Virtual threads (Java 19+) or cached thread pool</li>
+</ol>
+<h3 id="asynchronous-processing">Asynchronous Processing</h3>
+<p>The system uses the CompletableFuture API for asynchronous processing:</p>
+<pre><code class="language-java">// Example of async execution flow in ExecutionManagerImpl
+public CompletableFuture&lt;LLMFetchAnswerResponseDTO&gt; executeAsync(LLMFetchAnswerRequestDTO request) {
+    return CompletableFuture
+        .supplyAsync(() -&gt; validateRequest(request), computeExecutor)
+        .thenComposeAsync(this::checkCache, ioExecutor)
+        .thenComposeAsync(result -&gt; {
+            if (result.isPresent()) {
+                return CompletableFuture.completedFuture(result.get());
+            } else {
+                return executeWithProvider(request);
+            }
+        }, ioExecutor)
+        .thenApplyAsync(this::postProcessResponse, computeExecutor)
+        .whenCompleteAsync((response, error) -&gt; {
+            if (error == null) {
+                recordMetrics(request, response);
+            } else {
+                recordError(request, error);
+            }
+        }, computeExecutor);
+}
+</code></pre>
+<p><strong>Key Async Patterns:</strong></p>
+<ul>
+<li>Task submission to appropriate thread pools based on operation type</li>
+<li>Asynchronous composition of dependent operations</li>
+<li>Non-blocking I/O for external service calls</li>
+<li>Parallel execution of independent operations</li>
+</ul>
+<h3 id="throttling-and-backpressure">Throttling and Backpressure</h3>
+<p>The system implements several mechanisms for throttling and backpressure:</p>
+<pre><code class="language-mermaid">graph TD
+    Client[Client Requests] --&gt; RateLimit[Rate Limiter&lt;br&gt;Per API Key/Tenant]
+
+    RateLimit --&gt;|Accept| Semaphore[Concurrency Semaphore&lt;br&gt;Per Provider]
+    RateLimit --&gt;|Reject| RateLimitResponse[429 Too Many Requests]
+
+    Semaphore --&gt;|Permit Available| ProcessRequest[Process Request]
+    Semaphore --&gt;|No Permit| Queue[Request Queue]
+
+    Queue --&gt;|Timeout| QueueTimeoutResponse[503 Service Unavailable]
+    Queue --&gt;|Dequeue| ProcessRequest
+
+    ProcessRequest --&gt; Provider[LLM Provider]
+
+    Provider --&gt;|Provider Throttling| BackoffRetry[Backoff and Retry]
+    Provider --&gt;|Success| Response[Return Response]
+
+    BackoffRetry --&gt; Provider
+    BackoffRetry --&gt;|Max Retries| FailureResponse[500 Server Error]
+</code></pre>
+<p><strong>Throttling Components:</strong></p>
+<ol>
+<li><strong>API Rate Limiter</strong></li>
+<li>Configured per tenant and API key</li>
+<li>Implements token bucket algorithm</li>
+<li>
+<p>Customizable bucket size and refill rate</p>
+</li>
+<li>
+<p><strong>Concurrency Semaphores</strong></p>
+</li>
+<li>Limit parallel requests to each provider</li>
+<li>Prevent provider quota exhaustion</li>
+<li>
+<p>Dynamically adjustable based on provider health</p>
+</li>
+<li>
+<p><strong>Request Queuing</strong></p>
+</li>
+<li>Queue for requests that exceed concurrency limits</li>
+<li>Time-based eviction for queued requests</li>
+<li>
+<p>Priority based on client tier</p>
+</li>
+<li>
+<p><strong>Adaptive Retry</strong></p>
+</li>
+<li>Exponential backoff for rate-limited requests</li>
+<li>Circuit breaking for failing providers</li>
+<li>Per-provider retry configuration</li>
+</ol>
+<h2 id="event-driven-components">Event-Driven Components</h2>
+<p>The LLM Gateway includes several event-driven components for non-request processing:</p>
+<pre><code class="language-mermaid">graph TD
+    RequestProcess[Request Processing] --&gt;|Emit Event| EventBus[Event Bus]
+
+    EventBus --&gt; AnalyticsConsumer[Analytics Consumer]
+    EventBus --&gt; AuditConsumer[Audit Consumer]
+    EventBus --&gt; CacheInvalidator[Cache Invalidation Consumer]
+    EventBus --&gt; NotificationConsumer[Notification Consumer]
+
+    AnalyticsConsumer --&gt; AnalyticsQueue[Analytics Queue]
+    AuditConsumer --&gt; AuditQueue[Audit Queue]
+
+    AnalyticsQueue --&gt; AnalyticsProcessor[Analytics Processor]
+    AuditQueue --&gt; AuditProcessor[Audit Processor]
+
+    AnalyticsProcessor --&gt; Metrics[(Metrics Database)]
+    AuditProcessor --&gt; AuditLog[(Audit Log)]
+</code></pre>
+<p><strong>Event-Driven Components:</strong></p>
+<ol>
+<li><strong>Event Bus</strong></li>
+<li>Implementation: In-memory message bus</li>
+<li>Event types: Request, Response, Error, Config Change</li>
+<li>
+<p>Dispatcher: Single-threaded with overflow protection</p>
+</li>
+<li>
+<p><strong>Analytics Consumer</strong></p>
+</li>
+<li>Purpose: Process usage metrics</li>
+<li>Processing model: Batched processing</li>
+<li>
+<p>Throughput: High-throughput, low latency</p>
+</li>
+<li>
+<p><strong>Audit Consumer</strong></p>
+</li>
+<li>Purpose: Record audit events</li>
+<li>Processing model: Reliable delivery</li>
+<li>
+<p>Storage: Persistent audit log</p>
+</li>
+<li>
+<p><strong>Cache Invalidation Consumer</strong></p>
+</li>
+<li>Purpose: Invalidate affected cache entries</li>
+<li>Processing model: Immediate processing</li>
+<li>Scope: Targeted invalidation</li>
+</ol>
+<h2 id="state-management">State Management</h2>
+<p>The LLM Gateway uses different state management approaches for different components:</p>
+<ol>
+<li><strong>Request State</strong></li>
+<li>Stateless request processing</li>
+<li>No session state between requests</li>
+<li>
+<p>Request context passed through execution chain</p>
+</li>
+<li>
+<p><strong>Configuration State</strong></p>
+</li>
+<li>Cached configuration loaded at startup</li>
+<li>Dynamic reconfiguration via admin APIs</li>
+<li>
+<p>Configuration changes broadcast via events</p>
+</li>
+<li>
+<p><strong>Connection State</strong></p>
+</li>
+<li>Connection pooling for provider clients</li>
+<li>Keep-alive for persistent connections</li>
+<li>
+<p>Circuit breaking for failed connections</p>
+</li>
+<li>
+<p><strong>Streaming State</strong></p>
+</li>
+<li>Per-request state for streaming responses</li>
+<li>Token buffer for efficient streaming</li>
+<li>Stream timeout monitoring</li>
+</ol>
+<h2 id="transaction-handling">Transaction Handling</h2>
+<p>The system implements transaction handling for data consistency:</p>
+<ol>
+<li><strong>Database Transactions</strong></li>
+<li>Transaction boundaries defined at service layer</li>
+<li>Optimistic locking for concurrent updates</li>
+<li>
+<p>Read-committed isolation level</p>
+</li>
+<li>
+<p><strong>Distributed Operations</strong></p>
+</li>
+<li>Eventual consistency for distributed operations</li>
+<li>Idempotent operations where possible</li>
+<li>
+<p>Compensating transactions for failures</p>
+</li>
+<li>
+<p><strong>Error Handling in Transactions</strong></p>
+</li>
+<li>Automatic rollback on exceptions</li>
+<li>Detailed transaction logging</li>
+<li>Recovery mechanisms for partial failures</li>
+</ol>
+<h2 id="timeouts-and-circuit-breaking">Timeouts and Circuit Breaking</h2>
+<p>The LLM Gateway implements a comprehensive timeout and circuit breaking strategy:</p>
+<pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; Closed
+
+    state &quot;Closed&quot; as Closed {
+        [*] --&gt; Monitoring
+        Monitoring --&gt; Monitoring: Success++
+        Monitoring --&gt; Monitoring: Failure++
+        Monitoring --&gt; CheckThreshold: After each operation
+        CheckThreshold --&gt; Monitoring: Failure rate &lt; threshold
+        CheckThreshold --&gt; ExitClosed: Failure rate &gt; threshold
+    }
+
+    Closed --&gt; Open: ExitClosed
+
+    state &quot;Open&quot; as Open {
+        [*] --&gt; Waiting
+        Waiting --&gt; CheckTimeout: After sleep window
+        CheckTimeout --&gt; ExitOpen
+    }
+
+    Open --&gt; HalfOpen: ExitOpen
+
+    state &quot;HalfOpen&quot; as HalfOpen {
+        [*] --&gt; Testing
+        Testing --&gt; AllowSingleRequest: Request received
+        AllowSingleRequest --&gt; CheckResult: Process request
+        CheckResult --&gt; Testing: Success (success++)
+        CheckResult --&gt; ExitToOpen: Failure
+        Testing --&gt; CheckSuccesses: After each success
+        CheckSuccesses --&gt; ExitToClose: Success count &gt; threshold
+        CheckSuccesses --&gt; Testing: Success count &lt; threshold
+    }
+
+    HalfOpen --&gt; Closed: ExitToClose
+    HalfOpen --&gt; Open: ExitToOpen
+</code></pre>
+<p><strong>Timeout Configuration:</strong></p>
+<ol>
+<li><strong>Connection Timeouts</strong></li>
+<li>HTTP connection establishment: 5 seconds</li>
+<li>Socket read timeout: 30-120 seconds (model dependent)</li>
+<li>
+<p>Socket write timeout: 5 seconds</p>
+</li>
+<li>
+<p><strong>Request Timeouts</strong></p>
+</li>
+<li>Default request timeout: 60 seconds</li>
+<li>Streaming initial response: 10 seconds</li>
+<li>Streaming token timeout: 5 seconds</li>
+<li>
+<p>Configurable per request and provider</p>
+</li>
+<li>
+<p><strong>Queue Timeouts</strong></p>
+</li>
+<li>Queue wait time: 30 seconds</li>
+<li>Processing time: Model-dependent</li>
+<li>Client connection idle timeout: 120 seconds</li>
+</ol>
+<p><strong>Circuit Breaker Configuration:</strong></p>
+<ol>
+<li><strong>Failure Thresholds</strong></li>
+<li>Error threshold: 50% of requests in 1-minute window</li>
+<li>Minimum requests: 5 requests in window</li>
+<li>
+<p>Tracked errors: Timeouts, 5xx responses, connection errors</p>
+</li>
+<li>
+<p><strong>Recovery Strategy</strong></p>
+</li>
+<li>Open circuit duration: 30 seconds</li>
+<li>Half-open test requests: 5 requests</li>
+<li>Success threshold: 3 consecutive successes</li>
+<li>Backoff multiplier: 1.5x (up to 5 minutes)</li>
+</ol>
+<h2 id="resource-management">Resource Management</h2>
+<p>The LLM Gateway implements careful resource management to prevent resource exhaustion:</p>
+<ol>
+<li><strong>Memory Management</strong></li>
+<li>Response size limits based on client tier</li>
+<li>Streaming buffer size limits</li>
+<li>Off-heap buffers for large responses</li>
+<li>
+<p>Garbage collection tuning for predictable latency</p>
+</li>
+<li>
+<p><strong>Connection Management</strong></p>
+</li>
+<li>HTTP connection pooling (default: 100 per route)</li>
+<li>Connection TTL: 5 minutes</li>
+<li>Idle timeout: 60 seconds</li>
+<li>
+<p>DNS cache TTL: 30 seconds</p>
+</li>
+<li>
+<p><strong>Monitoring and Adaptation</strong></p>
+</li>
+<li>Real-time resource usage monitoring</li>
+<li>Adaptive concurrency limits based on system load</li>
+<li>Graceful degradation under high load</li>
+<li>Health check probes for external dependencies</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="data-flow-storage-design.html">Data Flow and Storage Design</a> | <strong>Next</strong>: <a href="extension-points.html">Extension Points and Plug-In Strategy</a></p>
+</body>
+</html>

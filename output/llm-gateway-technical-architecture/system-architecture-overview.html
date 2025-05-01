@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>system-architecture-overview</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="system-architecture-overview">System Architecture Overview</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#architectural-principles">Architectural Principles</a></li>
+<li><a href="#high-level-component-diagram">High-Level Component Diagram</a></li>
+<li><a href="#key-subsystems">Key Subsystems</a></li>
+<li><a href="#api-layer">API Layer</a></li>
+<li><a href="#execution-layer">Execution Layer</a></li>
+<li><a href="#provider-integration-layer">Provider Integration Layer</a></li>
+<li><a href="#cache-and-storage-layer">Cache and Storage Layer</a></li>
+<li><a href="#observability-layer">Observability Layer</a></li>
+<li><a href="#inter-module-communication">Inter-Module Communication</a></li>
+<li><a href="#control-flow">Control Flow</a></li>
+<li><a href="#key-design-decisions">Key Design Decisions</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>The LLM Gateway is designed as a middleware service that provides a unified interface to multiple Large Language Model (LLM) providers while offering enterprise-grade features such as security controls, prompt management, caching, and observability. The system follows a modular architecture with well-defined interface boundaries to enable extensibility and maintainability.</p>
+<h2 id="architectural-principles">Architectural Principles</h2>
+<p>The LLM Gateway architecture adheres to the following core principles:</p>
+<ol>
+<li><strong>Provider Agnosticism</strong>: Abstract provider-specific implementations behind unified interfaces</li>
+<li><strong>Modular Design</strong>: Clearly separated components with well-defined responsibilities</li>
+<li><strong>Extensibility</strong>: Well-defined extension points for adding new providers and features</li>
+<li><strong>Observability</strong>: Comprehensive logging, metrics, and tracing throughout the system</li>
+<li><strong>Security-First Design</strong>: Security controls integrated at all layers</li>
+<li><strong>Enterprise Readiness</strong>: Support for high availability, scalability, and compliance requirements</li>
+</ol>
+<h2 id="high-level-component-diagram">High-Level Component Diagram</h2>
+<pre><code class="language-mermaid">graph TD
+    Client[Client Application] --&gt; |HTTP/gRPC| API[API Layer]
+
+    subgraph &quot;LLM Gateway Service&quot;
+        API --&gt; |calls| Execution[Execution Layer]
+        API --&gt; |manages| PromptRegistry[Prompt Registry]
+
+        Execution --&gt; |uses| ClientManager[Client Manager]
+        Execution --&gt; |queries| Cache[Cache Service]
+
+        ClientManager --&gt; |manages| GPT4Client[OpenAI Clients]
+        ClientManager --&gt; |manages| ClaudeClient[Anthropic Clients]
+        ClientManager --&gt; |manages| BedrockClient[AWS Bedrock Clients]
+        ClientManager --&gt; |manages| CustomClient[Custom LLM Clients]
+
+        GPT4Client --&gt; |calls| GPT4[&lt;&lt;external&gt;&gt; OpenAI APIs]
+        ClaudeClient --&gt; |calls| Claude[&lt;&lt;external&gt;&gt; Anthropic APIs]
+        BedrockClient --&gt; |calls| Bedrock[&lt;&lt;external&gt;&gt; AWS Bedrock]
+        CustomClient --&gt; |calls| CustomLLM[&lt;&lt;external&gt;&gt; Custom LLMs]
+
+        Execution --&gt; |emits| Analytics[Analytics Service]
+        Execution --&gt; |records| Audit[Audit Service]
+
+        API --&gt; |validates| Auth[Authentication Service]
+    end
+
+    Cache --&gt; |uses| Redis[(&lt;&lt;storage&gt;&gt; Redis)]
+    PromptRegistry --&gt; |uses| DB[(&lt;&lt;storage&gt;&gt; Database)]
+    Analytics --&gt; |pushes to| Metrics[(&lt;&lt;storage&gt;&gt; Metrics Store)]
+    Audit --&gt; |writes to| AuditLog[(&lt;&lt;storage&gt;&gt; Audit Logs)]
+
+    classDef apiLayer fill:#D5E8D4,stroke:#82B366;
+    classDef executionLayer fill:#DAE8FC,stroke:#6C8EBF;
+    classDef clientLayer fill:#FFE6CC,stroke:#D79B00;
+    classDef externalSystems fill:#F5F5F5,stroke:#666666;
+    classDef storageLayer fill:#FFF2CC,stroke:#D6B656;
+    classDef securityLayer fill:#F8CECC,stroke:#B85450;
+
+    class API,PromptRegistry apiLayer;
+    class Execution,ClientManager executionLayer;
+    class GPT4Client,ClaudeClient,BedrockClient,CustomClient clientLayer;
+    class GPT4,Claude,Bedrock,CustomLLM externalSystems;
+    class Cache,Redis,DB,Metrics,AuditLog storageLayer;
+    class Auth,Audit securityLayer;
+</code></pre>
+<h2 id="key-subsystems">Key Subsystems</h2>
+<h3 id="api-layer">API Layer</h3>
+<p>The API Layer provides HTTP and gRPC endpoints for clients to interact with the LLM Gateway. It's responsible for:</p>
+<ul>
+<li>Request validation and normalization</li>
+<li>Authentication and authorization</li>
+<li>Rate limiting and throttling</li>
+<li>Request routing to appropriate execution components</li>
+</ul>
+<p><strong>Core Components:</strong>
+- <code>GrpcService</code>: Handles gRPC API requests (<code>com.aisera.service.llm.grpc.GrpcService</code>)
+- <code>PromptExecutionController</code>: Processes REST API requests for executing prompts (<code>com.aisera.service.llm.rest.PromptExecutionController</code>)
+- <code>PromptStudioManagementController</code>: Manages prompt templates and configurations (<code>com.aisera.service.llm.rest.PromptStudioManagementController</code>)
+- <code>LLMPromptRegistryVersioningAPIs</code>: Handles versioning of prompts (<code>com.aisera.service.llm.rest.LLMPromptRegistryVersioningAPIs</code>)</p>
+<h3 id="execution-layer">Execution Layer</h3>
+<p>The Execution Layer orchestrates the fulfillment of LLM requests, including:</p>
+<ul>
+<li>LLM provider selection</li>
+<li>Cache handling</li>
+<li>Request transformation</li>
+<li>Response processing</li>
+</ul>
+<p><strong>Core Components:</strong>
+- <code>ExecutionManager</code>: Coordinates request execution (<code>com.aisera.service.llm.execution.ExecutionManager</code>)
+- <code>ExecutionManagerImpl</code>: Primary implementation of execution orchestration (<code>com.aisera.service.llm.execution.ExecutionManagerImpl</code>)
+- <code>PromptManager</code>: Manages prompt templates and application (<code>com.aisera.service.llm.prompt.PromptManager</code>)
+- <code>PromptApplier</code>: Applies templates to generate prompts (<code>com.aisera.service.llm.prompt.PromptApplier</code>)</p>
+<h3 id="provider-integration-layer">Provider Integration Layer</h3>
+<p>The Provider Integration Layer abstracts various LLM providers behind a unified interface:</p>
+<ul>
+<li>Provider-specific client implementations</li>
+<li>Authentication handling</li>
+<li>Request/response transformations</li>
+<li>Error handling and retries</li>
+</ul>
+<p><strong>Core Components:</strong>
+- <code>ClientManager</code>: Interface for client management (<code>com.aisera.service.llm.client.ClientManager</code>)
+- <code>ClientRegistry</code>: Registry of available LLM clients (<code>com.aisera.service.llm.client.ClientRegistry</code>)
+- <code>GPT4ClientManagerImpl</code>: OpenAI GPT-4 client implementation (<code>com.aisera.service.llm.client.gpt4.GPT4ClientManagerImpl</code>)
+- <code>BRLlama2ClientManagerImpl</code>: AWS Bedrock Llama 2 client implementation (<code>com.aisera.service.llm.client.bedrock.llama2.BRLlama2ClientManagerImpl</code>)
+- <code>AiseraLLMClientManagerImpl</code>: Aisera's own LLM client implementation (<code>com.aisera.service.llm.client.aisera.llm.AiseraLLMClientManagerImpl</code>)</p>
+<h3 id="cache-and-storage-layer">Cache and Storage Layer</h3>
+<p>The Cache and Storage Layer provides mechanisms for data persistence and performance optimization:</p>
+<ul>
+<li>LLM response caching</li>
+<li>Prompt template storage</li>
+<li>Configuration persistence</li>
+<li>Tenant-specific settings</li>
+</ul>
+<p><strong>Core Components:</strong>
+- <code>LLMCache</code>: Caching service for LLM responses (<code>com.aisera.service.llm.cache.LLMCache</code>)
+- <code>LLMCacheReq</code>: Cache request object (<code>com.aisera.service.llm.cache.LLMCacheReq</code>)
+- <code>PromptDAO</code>: Data access for prompt management (<code>com.aisera.service.llm.prompt.dao.PromptDAO</code>)
+- <code>TenantConfigCache</code>: Tenant-specific configuration cache (<code>com.aisera.service.llm.tenant.TenantConfigCache</code>)</p>
+<h3 id="observability-layer">Observability Layer</h3>
+<p>The Observability Layer handles logging, metrics, and auditing:</p>
+<ul>
+<li>Request/response logging</li>
+<li>Performance metrics</li>
+<li>Usage tracking</li>
+<li>Audit trail generation</li>
+</ul>
+<p><strong>Core Components:</strong>
+- <code>LlmAnalyticsHandler</code>: Collects and processes analytics (<code>com.aisera.service.llm.utils.analytics.LlmAnalyticsHandler</code>)
+- <code>MetricUtils</code>: Utility for metric collection (<code>com.aisera.service.llm.utils.MetricUtils</code>)
+- <code>LLMPromptAuditClient</code>: Auditing client for prompt usage (<code>com.aisera.service.llm.audit.LLMPromptAuditClient</code>)</p>
+<h2 id="inter-module-communication">Inter-Module Communication</h2>
+<p>Modules in the LLM Gateway communicate through well-defined interfaces:</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client
+    participant APILayer as &lt;&lt;controller&gt;&gt; API Layer
+    participant ExecMgr as &lt;&lt;service&gt;&gt; ExecutionManager
+    participant ClientMgr as &lt;&lt;service&gt;&gt; ClientManager
+    participant Cache as &lt;&lt;service&gt;&gt; LLMCache
+    participant PromptMgr as &lt;&lt;service&gt;&gt; PromptManager
+    participant LLMClient as &lt;&lt;adapter&gt;&gt; LLM Provider Client
+    participant LLMProvider as &lt;&lt;external&gt;&gt; LLM Provider API
+
+    Client-&gt;&gt;APILayer: Submit prompt request
+    APILayer-&gt;&gt;APILayer: Validate request
+    APILayer-&gt;&gt;APILayer: Authenticate user
+
+    APILayer-&gt;&gt;PromptMgr: Retrieve and apply prompt template
+    PromptMgr--&gt;&gt;APILayer: Return processed prompt
+
+    APILayer-&gt;&gt;ExecMgr: Execute LLM request
+
+    ExecMgr-&gt;&gt;Cache: Check response cache
+
+    alt Cache Hit
+        Cache--&gt;&gt;ExecMgr: Return cached response
+    else Cache Miss
+        ExecMgr-&gt;&gt;ClientMgr: Get appropriate LLM client
+        ClientMgr--&gt;&gt;ExecMgr: Return provider client
+
+        ExecMgr-&gt;&gt;LLMClient: Execute request
+        LLMClient-&gt;&gt;LLMProvider: Call LLM API
+
+        LLMProvider--&gt;&gt;LLMClient: Return response
+        LLMClient--&gt;&gt;ExecMgr: Process and return response
+
+        ExecMgr-&gt;&gt;Cache: Store in cache
+    end
+
+    ExecMgr-&gt;&gt;ExecMgr: Post-process response
+    ExecMgr--&gt;&gt;APILayer: Return final response
+    APILayer--&gt;&gt;Client: Return formatted response
+</code></pre>
+<h2 id="control-flow">Control Flow</h2>
+<p>The typical control flow for an LLM request follows these steps:</p>
+<ol>
+<li><strong>Request Reception</strong>: The API layer receives a request through HTTP/REST or gRPC endpoints</li>
+<li><strong>Authentication</strong>: The request is authenticated against configured providers (OAuth, API key, etc.)</li>
+<li><strong>Validation</strong>: Request parameters are validated for correctness</li>
+<li><strong>Prompt Retrieval</strong>: If a prompt ID is provided, the template is retrieved from the registry</li>
+<li><strong>Prompt Application</strong>: The template is applied with provided parameters</li>
+<li><strong>Cache Check</strong>: The system checks if an identical request has been cached</li>
+<li><strong>Provider Selection</strong>: If not cached, the appropriate LLM provider is selected based on policy</li>
+<li><strong>Request Transformation</strong>: The request is transformed to provider-specific format</li>
+<li><strong>Provider Call</strong>: The provider client executes the request against the external API</li>
+<li><strong>Response Processing</strong>: The response is processed and normalized</li>
+<li><strong>Caching</strong>: If cacheable, the response is stored in cache</li>
+<li><strong>Analytics</strong>: Usage metrics are recorded</li>
+<li><strong>Auditing</strong>: An audit record is created if enabled</li>
+<li><strong>Response Delivery</strong>: The final response is returned to the client</li>
+</ol>
+<h2 id="key-design-decisions">Key Design Decisions</h2>
+<h3 id="1-provider-abstraction-architecture">1. Provider Abstraction Architecture</h3>
+<p>The system uses a combination of interfaces and factory patterns to abstract provider-specific implementations:</p>
+<ul>
+<li><code>ClientManager</code>: Interface defining provider-agnostic operations</li>
+<li><code>ClientRegistry</code>: Factory pattern implementation that returns appropriate client implementations</li>
+<li>Provider-specific implementations for each supported LLM</li>
+</ul>
+<p>This approach enables adding new providers with minimal changes to core system logic.</p>
+<h3 id="2-caching-strategy">2. Caching Strategy</h3>
+<p>The caching system is designed for high performance and configurability:</p>
+<ul>
+<li>Redis-based distributed cache for scalability</li>
+<li>Tenant-specific cache configurations</li>
+<li>Hash-based cache keys generated from normalized requests</li>
+<li>TTL-based cache expiration with configurable durations</li>
+<li>Partial caching support for streaming responses</li>
+</ul>
+<h3 id="3-execution-pipeline-design">3. Execution Pipeline Design</h3>
+<p>The execution pipeline follows a middleware pattern with configurable interceptors:</p>
+<ul>
+<li><code>ExecutionManager</code> coordinates the overall execution flow</li>
+<li>Pluggable middleware components for cross-cutting concerns</li>
+<li>Support for both synchronous and streaming response patterns</li>
+<li>Retry logic with configurable backoff strategies</li>
+</ul>
+<h3 id="4-prompt-management">4. Prompt Management</h3>
+<p>The prompt management system supports versioning and governance:</p>
+<ul>
+<li>Prompt templates with variable substitution</li>
+<li>Version control with draft, publish, and archive states</li>
+<li>Access control based on tenant and user roles</li>
+<li>Inheritance and composition for prompt reuse</li>
+</ul>
+<hr />
+<p><strong>Previous</strong>: <a href="README.html">README</a> | <strong>Next</strong>: <a href="module-level-architecture.html">Module-Level Architecture</a></p>
+</body>
+</html>

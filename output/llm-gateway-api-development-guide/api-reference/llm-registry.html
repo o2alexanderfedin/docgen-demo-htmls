@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>llm-registry</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="llm-registry-api">LLM Registry API</h1>
+<p>The LLM Registry API allows you to manage LLM provider configurations and retrieve information about available models.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#list-models">List Models</a></li>
+<li><a href="#list-providers">List Providers</a></li>
+<li><a href="#list-categories">List Categories</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The LLM Registry API provides endpoints for retrieving information about the available LLM models and providers. This information is useful for configuring prompts and selecting the appropriate LLM for different use cases.</p>
+<h2 id="list-models">List Models</h2>
+<p>Retrieves a list of available LLM models for a tenant.</p>
+<h3 id="endpoint">Endpoint</h3>
+<pre><code>GET /v1/tenants/{tenantId}/llm/prompts/models
+</code></pre>
+<h3 id="permission">Permission</h3>
+<p><code>llm:read</code></p>
+<h3 id="path-parameters">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters">Response Parameters</h3>
+<p>Returns an array of LLM model objects.</p>
+<h3 id="example">Example</h3>
+<h4 id="request">Request</h4>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/models&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h4 id="python-example">Python Example</h4>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com&quot;
+tenant_id = &quot;9000&quot;
+
+response = requests.get(
+    f&quot;{base_url}/v1/tenants/{tenant_id}/llm/prompts/models&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    }
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h4 id="javascriptnodejs-example">JavaScript/Node.js Example</h4>
+<pre><code class="language-javascript">const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com';
+const tenantId = '9000';
+
+async function listModels() {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/v1/tenants/${tenantId}/llm/prompts/models`,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      }
+    );
+
+    console.log(`Status: ${response.status}`);
+    console.log(`Response: ${JSON.stringify(response.data)}`);
+  } catch (error) {
+    console.error('Error listing models:', error.message);
+  }
+}
+
+listModels();
+</code></pre>
+<h4 id="response">Response</h4>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;gpt-4&quot;,
+    &quot;displayName&quot;: &quot;GPT-4&quot;,
+    &quot;description&quot;: &quot;OpenAI's most capable model, optimized for chat&quot;,
+    &quot;contextWindow&quot;: 8192,
+    &quot;cost&quot;: {
+      &quot;inputTokens&quot;: 0.03,
+      &quot;outputTokens&quot;: 0.06,
+      &quot;unit&quot;: &quot;USD per 1000 tokens&quot;
+    },
+    &quot;capabilities&quot;: [
+      &quot;text-generation&quot;,
+      &quot;chat&quot;,
+      &quot;function-calling&quot;
+    ]
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;name&quot;: &quot;llama2-70b&quot;,
+    &quot;displayName&quot;: &quot;Llama 2 (70B)&quot;,
+    &quot;description&quot;: &quot;Meta's open source large language model&quot;,
+    &quot;contextWindow&quot;: 4096,
+    &quot;cost&quot;: {
+      &quot;inputTokens&quot;: 0.00075,
+      &quot;outputTokens&quot;: 0.00075,
+      &quot;unit&quot;: &quot;USD per 1000 tokens&quot;
+    },
+    &quot;capabilities&quot;: [
+      &quot;text-generation&quot;,
+      &quot;chat&quot;
+    ]
+  }
+]
+</code></pre>
+<h2 id="list-providers">List Providers</h2>
+<p>Retrieves a list of available LLM providers for a tenant.</p>
+<h3 id="endpoint_1">Endpoint</h3>
+<pre><code>GET /v1/tenants/{tenantId}/llm/prompts/providers
+</code></pre>
+<h3 id="permission_1">Permission</h3>
+<p><code>llm:read</code></p>
+<h3 id="path-parameters_1">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_1">Response Parameters</h3>
+<p>Returns an array of provider names.</p>
+<h3 id="example_1">Example</h3>
+<h4 id="request_1">Request</h4>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/providers&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h4 id="response_1">Response</h4>
+<pre><code class="language-json">[
+  &quot;openai&quot;,
+  &quot;bedrock&quot;,
+  &quot;anthropic&quot;,
+  &quot;aisera&quot;
+]
+</code></pre>
+<h2 id="list-categories">List Categories</h2>
+<p>Retrieves a list of available prompt categories for a tenant.</p>
+<h3 id="endpoint_2">Endpoint</h3>
+<pre><code>GET /v1/tenants/{tenantId}/llm/prompts/categories
+</code></pre>
+<h3 id="permission_2">Permission</h3>
+<p><code>llm:read</code></p>
+<h3 id="path-parameters_2">Path Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+</tbody>
+</table>
+<h3 id="response-parameters_2">Response Parameters</h3>
+<p>Returns an array of category names.</p>
+<h3 id="example_2">Example</h3>
+<h4 id="request_2">Request</h4>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/categories&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h4 id="python-example_1">Python Example</h4>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com&quot;
+tenant_id = &quot;9000&quot;
+
+response = requests.get(
+    f&quot;{base_url}/v1/tenants/{tenant_id}/llm/prompts/categories&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    }
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h4 id="response_2">Response</h4>
+<pre><code class="language-json">[
+  &quot;support&quot;,
+  &quot;summarization&quot;,
+  &quot;extraction&quot;,
+  &quot;classification&quot;,
+  &quot;generation&quot;
+]
+</code></pre>
+</body>
+</html>

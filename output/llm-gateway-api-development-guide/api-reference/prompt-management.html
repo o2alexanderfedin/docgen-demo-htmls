@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>prompt-management</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="prompt-management-api">Prompt Management API</h1>
+<p>The Prompt Management API allows you to create, read, update, and delete prompts and prompt groups.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#prompt-groups">Prompt Groups</a></li>
+<li><a href="#list-prompt-groups">List Prompt Groups</a></li>
+<li><a href="#get-prompt-group">Get Prompt Group</a></li>
+<li><a href="#create-prompt-group">Create Prompt Group</a></li>
+<li><a href="#update-prompt-group">Update Prompt Group</a></li>
+<li><a href="#delete-prompt-group">Delete Prompt Group</a></li>
+<li><a href="#prompts">Prompts</a></li>
+<li><a href="#list-prompts">List Prompts</a></li>
+<li><a href="#list-prompts-by-tenant">List Prompts by Tenant</a></li>
+<li><a href="#get-prompt">Get Prompt</a></li>
+<li><a href="#create-prompt">Create Prompt</a></li>
+<li><a href="#update-prompt">Update Prompt</a></li>
+<li><a href="#delete-prompt">Delete Prompt</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The Prompt Management API is divided into two main areas:</p>
+<ol>
+<li><strong>Prompt Groups</strong>: Collections of prompts that share common configurations like LLM provider details</li>
+<li><strong>Prompts</strong>: Individual prompt templates with input and output parameter definitions</li>
+</ol>
+<h2 id="prompt-groups">Prompt Groups</h2>
+<h3 id="list-prompt-groups">List Prompt Groups</h3>
+<p>Retrieves a list of all prompt groups for a tenant.</p>
+<h4 id="endpoint">Endpoint</h4>
+<pre><code>GET /llm/v1/prompt_group/list
+</code></pre>
+<h4 id="permission">Permission</h4>
+<p><code>llm:read</code></p>
+<h4 id="query-parameters">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>No</td>
+<td>The ID of the tenant (defaults to "9000")</td>
+</tr>
+<tr>
+<td>showTenantOnlyGroups</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to show only tenant-specific groups (defaults to false)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters">Response Parameters</h4>
+<p>Returns an array of prompt group objects.</p>
+<h4 id="example">Example</h4>
+<h5 id="request">Request</h5>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/llm/v1/prompt_group/list?tenantId=9000&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h5 id="python-example">Python Example</h5>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com/llm/v1&quot;
+
+response = requests.get(
+    f&quot;{base_url}/prompt_group/list&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    },
+    params={
+        &quot;tenantId&quot;: &quot;9000&quot;
+    }
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h5 id="javascriptnodejs-example">JavaScript/Node.js Example</h5>
+<pre><code class="language-javascript">const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com/llm/v1';
+
+async function listPromptGroups() {
+  try {
+    const response = await axios.get(
+      `${baseUrl}/prompt_group/list`,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        },
+        params: {
+          tenantId: '9000'
+        }
+      }
+    );
+
+    console.log(`Status: ${response.status}`);
+    console.log(`Response: ${JSON.stringify(response.data)}`);
+  } catch (error) {
+    console.error('Error listing prompt groups:', error.message);
+  }
+}
+
+listPromptGroups();
+</code></pre>
+<h5 id="response">Response</h5>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;gpt-4&quot;,
+    &quot;displayName&quot;: &quot;GPT-4&quot;,
+    &quot;description&quot;: &quot;OpenAI's GPT-4 model&quot;,
+    &quot;category&quot;: &quot;openai&quot;,
+    &quot;isActive&quot;: true,
+    &quot;endpoint&quot;: &quot;https://api.openai.com/v1/chat/completions&quot;,
+    &quot;config&quot;: {
+      &quot;provider&quot;: &quot;openai&quot;,
+      &quot;model&quot;: &quot;gpt-4&quot;
+    },
+    &quot;authConfig&quot;: {
+      &quot;apiKeyHeader&quot;: &quot;Authorization&quot;,
+      &quot;apiKeyPrefix&quot;: &quot;Bearer &quot;
+    }
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;name&quot;: &quot;llama2&quot;,
+    &quot;displayName&quot;: &quot;Llama 2&quot;,
+    &quot;description&quot;: &quot;Meta's Llama 2 model via AWS Bedrock&quot;,
+    &quot;category&quot;: &quot;bedrock&quot;,
+    &quot;isActive&quot;: true,
+    &quot;endpoint&quot;: &quot;https://bedrock.aws.amazon.com/model/llama2-70b&quot;,
+    &quot;config&quot;: {
+      &quot;provider&quot;: &quot;bedrock&quot;,
+      &quot;model&quot;: &quot;llama2-70b&quot;
+    },
+    &quot;authConfig&quot;: {
+      &quot;authType&quot;: &quot;aws_signature&quot;
+    }
+  }
+]
+</code></pre>
+<h3 id="get-prompt-group">Get Prompt Group</h3>
+<p>Retrieves a specific prompt group by name.</p>
+<h4 id="endpoint_1">Endpoint</h4>
+<pre><code>GET /llm/v1/prompt_group
+</code></pre>
+<h4 id="permission_1">Permission</h4>
+<p><code>llm:read</code></p>
+<h4 id="query-parameters_1">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>No</td>
+<td>The ID of the tenant (defaults to "9000")</td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt group</td>
+</tr>
+<tr>
+<td>showTenantOnlyGroups</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to show only tenant-specific groups (defaults to false)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_1">Response Parameters</h4>
+<p>Returns the prompt group object.</p>
+<h4 id="example_1">Example</h4>
+<h5 id="request_1">Request</h5>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/llm/v1/prompt_group?tenantId=9000&amp;name=gpt-4&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h5 id="response_1">Response</h5>
+<pre><code class="language-json">{
+  &quot;id&quot;: 1,
+  &quot;name&quot;: &quot;gpt-4&quot;,
+  &quot;displayName&quot;: &quot;GPT-4&quot;,
+  &quot;description&quot;: &quot;OpenAI's GPT-4 model&quot;,
+  &quot;category&quot;: &quot;openai&quot;,
+  &quot;isActive&quot;: true,
+  &quot;endpoint&quot;: &quot;https://api.openai.com/v1/chat/completions&quot;,
+  &quot;config&quot;: {
+    &quot;provider&quot;: &quot;openai&quot;,
+    &quot;model&quot;: &quot;gpt-4&quot;
+  },
+  &quot;authConfig&quot;: {
+    &quot;apiKeyHeader&quot;: &quot;Authorization&quot;,
+    &quot;apiKeyPrefix&quot;: &quot;Bearer &quot;
+  }
+}
+</code></pre>
+<h3 id="create-prompt-group">Create Prompt Group</h3>
+<p>Creates a new prompt group.</p>
+<h4 id="endpoint_2">Endpoint</h4>
+<pre><code>POST /llm/v1/prompt_group
+</code></pre>
+<h4 id="permission_2">Permission</h4>
+<p><code>llm:write</code></p>
+<h4 id="query-parameters_2">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>No</td>
+<td>The ID of the tenant (defaults to "9000")</td>
+</tr>
+</tbody>
+</table>
+<h4 id="request-body">Request Body</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt group</td>
+</tr>
+<tr>
+<td>displayName</td>
+<td>string</td>
+<td>No</td>
+<td>The display name of the prompt group</td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td>No</td>
+<td>The description of the prompt group</td>
+</tr>
+<tr>
+<td>category</td>
+<td>string</td>
+<td>No</td>
+<td>The category of the prompt group</td>
+</tr>
+<tr>
+<td>isActive</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether the prompt group is active</td>
+</tr>
+<tr>
+<td>endpoint</td>
+<td>string</td>
+<td>Yes</td>
+<td>The endpoint for the LLM provider</td>
+</tr>
+<tr>
+<td>config</td>
+<td>object</td>
+<td>No</td>
+<td>Configuration for the LLM provider</td>
+</tr>
+<tr>
+<td>authConfig</td>
+<td>object</td>
+<td>No</td>
+<td>Authentication configuration for the LLM provider</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_2">Response Parameters</h4>
+<p>Returns the created prompt group object.</p>
+<h4 id="example_2">Example</h4>
+<h5 id="request_2">Request</h5>
+<pre><code class="language-bash">curl -X POST &quot;https://api.aisera.com/llm/v1/prompt_group?tenantId=9000&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;name&quot;: &quot;claude-instant&quot;,
+    &quot;displayName&quot;: &quot;Claude Instant&quot;,
+    &quot;description&quot;: &quot;Anthropic's Claude Instant model&quot;,
+    &quot;category&quot;: &quot;anthropic&quot;,
+    &quot;isActive&quot;: true,
+    &quot;endpoint&quot;: &quot;https://api.anthropic.com/v1/messages&quot;,
+    &quot;config&quot;: {
+      &quot;provider&quot;: &quot;anthropic&quot;,
+      &quot;model&quot;: &quot;claude-instant-1.2&quot;
+    },
+    &quot;authConfig&quot;: {
+      &quot;apiKeyHeader&quot;: &quot;x-api-key&quot;
+    }
+  }'
+</code></pre>
+<h5 id="python-example_1">Python Example</h5>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com/llm/v1&quot;
+
+payload = {
+    &quot;name&quot;: &quot;claude-instant&quot;,
+    &quot;displayName&quot;: &quot;Claude Instant&quot;,
+    &quot;description&quot;: &quot;Anthropic's Claude Instant model&quot;,
+    &quot;category&quot;: &quot;anthropic&quot;,
+    &quot;isActive&quot;: True,
+    &quot;endpoint&quot;: &quot;https://api.anthropic.com/v1/messages&quot;,
+    &quot;config&quot;: {
+      &quot;provider&quot;: &quot;anthropic&quot;,
+      &quot;model&quot;: &quot;claude-instant-1.2&quot;
+    },
+    &quot;authConfig&quot;: {
+      &quot;apiKeyHeader&quot;: &quot;x-api-key&quot;
+    }
+}
+
+response = requests.post(
+    f&quot;{base_url}/prompt_group&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;,
+        &quot;Content-Type&quot;: &quot;application/json&quot;
+    },
+    params={
+        &quot;tenantId&quot;: &quot;9000&quot;
+    },
+    json=payload
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h5 id="response_2">Response</h5>
+<pre><code class="language-json">{
+  &quot;id&quot;: 3,
+  &quot;name&quot;: &quot;claude-instant&quot;,
+  &quot;displayName&quot;: &quot;Claude Instant&quot;,
+  &quot;description&quot;: &quot;Anthropic's Claude Instant model&quot;,
+  &quot;category&quot;: &quot;anthropic&quot;,
+  &quot;isActive&quot;: true,
+  &quot;endpoint&quot;: &quot;https://api.anthropic.com/v1/messages&quot;,
+  &quot;config&quot;: {
+    &quot;provider&quot;: &quot;anthropic&quot;,
+    &quot;model&quot;: &quot;claude-instant-1.2&quot;
+  },
+  &quot;authConfig&quot;: {
+    &quot;apiKeyHeader&quot;: &quot;x-api-key&quot;
+  }
+}
+</code></pre>
+<h3 id="update-prompt-group">Update Prompt Group</h3>
+<p>Updates an existing prompt group.</p>
+<h4 id="endpoint_3">Endpoint</h4>
+<pre><code>PUT /llm/v1/prompt_group
+</code></pre>
+<h4 id="permission_3">Permission</h4>
+<p><code>llm:write</code></p>
+<h4 id="query-parameters_3">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>No</td>
+<td>The ID of the tenant (defaults to "9000")</td>
+</tr>
+</tbody>
+</table>
+<h4 id="request-body_1">Request Body</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt group (cannot be changed)</td>
+</tr>
+<tr>
+<td>displayName</td>
+<td>string</td>
+<td>No</td>
+<td>The display name of the prompt group</td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td>No</td>
+<td>The description of the prompt group</td>
+</tr>
+<tr>
+<td>category</td>
+<td>string</td>
+<td>No</td>
+<td>The category of the prompt group</td>
+</tr>
+<tr>
+<td>isActive</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether the prompt group is active</td>
+</tr>
+<tr>
+<td>endpoint</td>
+<td>string</td>
+<td>No</td>
+<td>The endpoint for the LLM provider</td>
+</tr>
+<tr>
+<td>config</td>
+<td>object</td>
+<td>No</td>
+<td>Configuration for the LLM provider</td>
+</tr>
+<tr>
+<td>authConfig</td>
+<td>object</td>
+<td>No</td>
+<td>Authentication configuration for the LLM provider</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_3">Response Parameters</h4>
+<p>Returns the updated prompt group object.</p>
+<h4 id="example_3">Example</h4>
+<h5 id="request_3">Request</h5>
+<pre><code class="language-bash">curl -X PUT &quot;https://api.aisera.com/llm/v1/prompt_group?tenantId=9000&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;name&quot;: &quot;claude-instant&quot;,
+    &quot;displayName&quot;: &quot;Claude Instant Updated&quot;,
+    &quot;description&quot;: &quot;Anthropic's Claude Instant model - updated description&quot;,
+    &quot;config&quot;: {
+      &quot;provider&quot;: &quot;anthropic&quot;,
+      &quot;model&quot;: &quot;claude-instant-1.2&quot;,
+      &quot;maxTokens&quot;: 2000
+    }
+  }'
+</code></pre>
+<h5 id="response_3">Response</h5>
+<pre><code class="language-json">{
+  &quot;id&quot;: 3,
+  &quot;name&quot;: &quot;claude-instant&quot;,
+  &quot;displayName&quot;: &quot;Claude Instant Updated&quot;,
+  &quot;description&quot;: &quot;Anthropic's Claude Instant model - updated description&quot;,
+  &quot;category&quot;: &quot;anthropic&quot;,
+  &quot;isActive&quot;: true,
+  &quot;endpoint&quot;: &quot;https://api.anthropic.com/v1/messages&quot;,
+  &quot;config&quot;: {
+    &quot;provider&quot;: &quot;anthropic&quot;,
+    &quot;model&quot;: &quot;claude-instant-1.2&quot;,
+    &quot;maxTokens&quot;: 2000
+  },
+  &quot;authConfig&quot;: {
+    &quot;apiKeyHeader&quot;: &quot;x-api-key&quot;
+  }
+}
+</code></pre>
+<h3 id="delete-prompt-group">Delete Prompt Group</h3>
+<p>Deletes a prompt group. Note that a prompt group can only be deleted if it has no associated prompts.</p>
+<h4 id="endpoint_4">Endpoint</h4>
+<pre><code>DELETE /llm/v1/prompt_group
+</code></pre>
+<h4 id="permission_4">Permission</h4>
+<p><code>llm:delete</code></p>
+<h4 id="query-parameters_4">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>No</td>
+<td>The ID of the tenant (defaults to "9000")</td>
+</tr>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt group</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_4">Response Parameters</h4>
+<p>Returns a 200 OK status if successful.</p>
+<h4 id="example_4">Example</h4>
+<h5 id="request_4">Request</h5>
+<pre><code class="language-bash">curl -X DELETE &quot;https://api.aisera.com/llm/v1/prompt_group?tenantId=9000&amp;name=claude-instant&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h5 id="response_4">Response</h5>
+<pre><code>200 OK
+</code></pre>
+<h2 id="prompts">Prompts</h2>
+<h3 id="list-prompts">List Prompts</h3>
+<p>Retrieves a list of prompts for a prompt group or bot.</p>
+<h4 id="endpoint_5">Endpoint</h4>
+<pre><code>GET /llm/v1/prompt/list
+</code></pre>
+<h4 id="permission_5">Permission</h4>
+<p><code>llm:read</code></p>
+<h4 id="query-parameters_5">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>No</td>
+<td>The ID of the tenant (defaults to "9000")</td>
+</tr>
+<tr>
+<td>groupId</td>
+<td>number</td>
+<td>No</td>
+<td>The ID of the prompt group</td>
+</tr>
+<tr>
+<td>showTenantOnlyPrompts</td>
+<td>boolean</td>
+<td>No</td>
+<td>Whether to show only tenant-specific prompts (defaults to false)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_5">Response Parameters</h4>
+<p>Returns an array of prompt objects.</p>
+<h4 id="example_5">Example</h4>
+<h5 id="request_5">Request</h5>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/llm/v1/prompt/list?tenantId=9000&amp;groupId=1&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h5 id="python-example_2">Python Example</h5>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com/llm/v1&quot;
+
+response = requests.get(
+    f&quot;{base_url}/prompt/list&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    },
+    params={
+        &quot;tenantId&quot;: &quot;9000&quot;,
+        &quot;groupId&quot;: 1
+    }
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h5 id="response_5">Response</h5>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;customer-support-qa&quot;,
+    &quot;displayName&quot;: &quot;Customer Support Q&amp;A&quot;,
+    &quot;template&quot;: &quot;You are a helpful customer support assistant. Answer the following question:\n\n{{query}}&quot;,
+    &quot;userTemplate&quot;: &quot;{{query}}&quot;,
+    &quot;inputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;query&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true,
+        &quot;description&quot;: &quot;The user's question&quot;
+      }
+    ],
+    &quot;outputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;answer&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The answer to the question&quot;
+      },
+      {
+        &quot;name&quot;: &quot;category&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The category of the question&quot;
+      }
+    ],
+    &quot;llmRegistryId&quot;: 1,
+    &quot;botId&quot;: 123,
+    &quot;status&quot;: &quot;Active&quot;,
+    &quot;type&quot;: &quot;chat&quot;,
+    &quot;isRegistered&quot;: true,
+    &quot;isImported&quot;: false,
+    &quot;isDefault&quot;: true,
+    &quot;isSystem&quot;: false,
+    &quot;category&quot;: &quot;support&quot;,
+    &quot;useCase&quot;: &quot;Customer support chatbot&quot;,
+    &quot;script&quot;: &quot;function processResponse(response) {\n  return [\n    { name: 'answer', value: response },\n    { name: 'category', value: determineCategory(response) }\n  ];\n}&quot;,
+    &quot;description&quot;: &quot;A prompt for answering customer support questions&quot;
+  }
+]
+</code></pre>
+<h3 id="list-prompts-by-tenant">List Prompts by Tenant</h3>
+<p>Retrieves a list of prompts for a tenant.</p>
+<h4 id="endpoint_6">Endpoint</h4>
+<pre><code>GET /v1/tenants/{tenantId}/llm/prompts
+</code></pre>
+<h4 id="permission_6">Permission</h4>
+<p><code>llm:read</code></p>
+<h4 id="path-parameters">Path Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+</tbody>
+</table>
+<h4 id="query-parameters_6">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>botId</td>
+<td>number</td>
+<td>No</td>
+<td>The ID of the bot</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_6">Response Parameters</h4>
+<p>Returns an array of prompt objects.</p>
+<h4 id="example_6">Example</h4>
+<h5 id="request_6">Request</h5>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts?botId=123&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h5 id="response_6">Response</h5>
+<pre><code class="language-json">[
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;customer-support-qa&quot;,
+    &quot;displayName&quot;: &quot;Customer Support Q&amp;A&quot;,
+    &quot;template&quot;: &quot;You are a helpful customer support assistant. Answer the following question:\n\n{{query}}&quot;,
+    &quot;userTemplate&quot;: &quot;{{query}}&quot;,
+    &quot;inputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;query&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true,
+        &quot;description&quot;: &quot;The user's question&quot;
+      }
+    ],
+    &quot;outputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;answer&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The answer to the question&quot;
+      },
+      {
+        &quot;name&quot;: &quot;category&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The category of the question&quot;
+      }
+    ],
+    &quot;modelId&quot;: 1,
+    &quot;botId&quot;: 123,
+    &quot;status&quot;: &quot;Active&quot;,
+    &quot;scope&quot;: &quot;bot&quot;,
+    &quot;type&quot;: &quot;chat&quot;,
+    &quot;isRegistered&quot;: true,
+    &quot;isImported&quot;: false,
+    &quot;isDefault&quot;: true,
+    &quot;isSystem&quot;: false,
+    &quot;category&quot;: &quot;support&quot;,
+    &quot;useCase&quot;: &quot;Customer support chatbot&quot;,
+    &quot;script&quot;: &quot;function processResponse(response) {\n  return [\n    { name: 'answer', value: response },\n    { name: 'category', value: determineCategory(response) }\n  ];\n}&quot;,
+    &quot;description&quot;: &quot;A prompt for answering customer support questions&quot;
+  }
+]
+</code></pre>
+<h3 id="get-prompt">Get Prompt</h3>
+<p>Retrieves a specific prompt by ID.</p>
+<h4 id="endpoint_7">Endpoint</h4>
+<pre><code>GET /v1/tenants/{tenantId}/llm/prompts/{promptId}
+</code></pre>
+<h4 id="permission_7">Permission</h4>
+<p><code>llm:read</code></p>
+<h4 id="path-parameters_1">Path Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>number</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_7">Response Parameters</h4>
+<p>Returns the prompt object.</p>
+<h4 id="example_7">Example</h4>
+<h5 id="request_7">Request</h5>
+<pre><code class="language-bash">curl -X GET &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/1&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h5 id="python-example_3">Python Example</h5>
+<pre><code class="language-python">import requests
+
+api_key = &quot;YOUR_API_KEY&quot;
+base_url = &quot;https://api.aisera.com&quot;
+tenant_id = &quot;9000&quot;
+prompt_id = 1
+
+response = requests.get(
+    f&quot;{base_url}/v1/tenants/{tenant_id}/llm/prompts/{prompt_id}&quot;,
+    headers={
+        &quot;Authorization&quot;: f&quot;Bearer {api_key}&quot;
+    }
+)
+
+print(f&quot;Status: {response.status_code}&quot;)
+print(f&quot;Response: {response.json()}&quot;)
+</code></pre>
+<h5 id="response_7">Response</h5>
+<pre><code class="language-json">{
+  &quot;id&quot;: 1,
+  &quot;name&quot;: &quot;customer-support-qa&quot;,
+  &quot;displayName&quot;: &quot;Customer Support Q&amp;A&quot;,
+  &quot;template&quot;: &quot;You are a helpful customer support assistant. Answer the following question:\n\n{{query}}&quot;,
+  &quot;userTemplate&quot;: &quot;{{query}}&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;query&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;description&quot;: &quot;The user's question&quot;
+    }
+  ],
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;answer&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The answer to the question&quot;
+    },
+    {
+      &quot;name&quot;: &quot;category&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The category of the question&quot;
+    }
+  ],
+  &quot;modelId&quot;: 1,
+  &quot;botId&quot;: 123,
+  &quot;status&quot;: &quot;Active&quot;,
+  &quot;scope&quot;: &quot;bot&quot;,
+  &quot;type&quot;: &quot;chat&quot;,
+  &quot;isRegistered&quot;: true,
+  &quot;isImported&quot;: false,
+  &quot;isDefault&quot;: true,
+  &quot;isSystem&quot;: false,
+  &quot;category&quot;: &quot;support&quot;,
+  &quot;useCase&quot;: &quot;Customer support chatbot&quot;,
+  &quot;script&quot;: &quot;function processResponse(response) {\n  return [\n    { name: 'answer', value: response },\n    { name: 'category', value: determineCategory(response) }\n  ];\n}&quot;,
+  &quot;description&quot;: &quot;A prompt for answering customer support questions&quot;
+}
+</code></pre>
+<h3 id="create-prompt">Create Prompt</h3>
+<p>Creates a new prompt.</p>
+<h4 id="endpoint_8">Endpoint</h4>
+<pre><code>POST /v1/tenants/{tenantId}/llm/prompts
+</code></pre>
+<h4 id="permission_8">Permission</h4>
+<p><code>llm:write</code></p>
+<h4 id="path-parameters_2">Path Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+</tbody>
+</table>
+<h4 id="query-parameters_7">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userDetails</td>
+<td>string</td>
+<td>No</td>
+<td>User details for auditing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="request-body_2">Request Body</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>string</td>
+<td>Yes</td>
+<td>The name of the prompt</td>
+</tr>
+<tr>
+<td>displayName</td>
+<td>string</td>
+<td>No</td>
+<td>The display name of the prompt</td>
+</tr>
+<tr>
+<td>template</td>
+<td>string</td>
+<td>Yes</td>
+<td>The prompt template</td>
+</tr>
+<tr>
+<td>userTemplate</td>
+<td>string</td>
+<td>No</td>
+<td>The user template portion of the prompt</td>
+</tr>
+<tr>
+<td>inputParams</td>
+<td>array</td>
+<td>No</td>
+<td>The input parameters for the prompt</td>
+</tr>
+<tr>
+<td>outputParams</td>
+<td>array</td>
+<td>No</td>
+<td>The output parameters for the prompt</td>
+</tr>
+<tr>
+<td>modelId</td>
+<td>number</td>
+<td>Yes</td>
+<td>The ID of the LLM model to use</td>
+</tr>
+<tr>
+<td>botId</td>
+<td>number</td>
+<td>No</td>
+<td>The ID of the bot (if scope is "bot")</td>
+</tr>
+<tr>
+<td>scope</td>
+<td>string</td>
+<td>No</td>
+<td>The scope of the prompt ("bot", "tenant", or "global")</td>
+</tr>
+<tr>
+<td>type</td>
+<td>string</td>
+<td>No</td>
+<td>The type of the prompt</td>
+</tr>
+<tr>
+<td>category</td>
+<td>string</td>
+<td>No</td>
+<td>The category of the prompt</td>
+</tr>
+<tr>
+<td>useCase</td>
+<td>string</td>
+<td>No</td>
+<td>The use case for the prompt</td>
+</tr>
+<tr>
+<td>script</td>
+<td>string</td>
+<td>No</td>
+<td>JavaScript script for processing the response</td>
+</tr>
+<tr>
+<td>description</td>
+<td>string</td>
+<td>No</td>
+<td>The description of the prompt</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_8">Response Parameters</h4>
+<p>Returns the created prompt object.</p>
+<h4 id="example_8">Example</h4>
+<h5 id="request_8">Request</h5>
+<pre><code class="language-bash">curl -X POST &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;name&quot;: &quot;text-summarization&quot;,
+    &quot;displayName&quot;: &quot;Text Summarization&quot;,
+    &quot;template&quot;: &quot;Summarize the following text in one sentence:\n\n{{text}}&quot;,
+    &quot;inputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;text&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;required&quot;: true,
+        &quot;description&quot;: &quot;The text to summarize&quot;
+      }
+    ],
+    &quot;outputParams&quot;: [
+      {
+        &quot;name&quot;: &quot;summary&quot;,
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;The one-sentence summary&quot;
+      }
+    ],
+    &quot;modelId&quot;: 1,
+    &quot;botId&quot;: 123,
+    &quot;scope&quot;: &quot;bot&quot;,
+    &quot;type&quot;: &quot;completion&quot;,
+    &quot;category&quot;: &quot;summarization&quot;,
+    &quot;useCase&quot;: &quot;Text summarization&quot;,
+    &quot;script&quot;: &quot;function processResponse(response) {\n  return [{ name: \&quot;summary\&quot;, value: response.trim() }];\n}&quot;,
+    &quot;description&quot;: &quot;A prompt for summarizing text in one sentence&quot;
+  }'
+</code></pre>
+<h5 id="javascriptnodejs-example_1">JavaScript/Node.js Example</h5>
+<pre><code class="language-javascript">const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY';
+const baseUrl = 'https://api.aisera.com';
+const tenantId = '9000';
+
+async function createPrompt() {
+  try {
+    const payload = {
+      name: 'text-summarization',
+      displayName: 'Text Summarization',
+      template: 'Summarize the following text in one sentence:\n\n{{text}}',
+      inputParams: [
+        {
+          name: 'text',
+          type: 'string',
+          required: true,
+          description: 'The text to summarize'
+        }
+      ],
+      outputParams: [
+        {
+          name: 'summary',
+          type: 'string',
+          description: 'The one-sentence summary'
+        }
+      ],
+      modelId: 1,
+      botId: 123,
+      scope: 'bot',
+      type: 'completion',
+      category: 'summarization',
+      useCase: 'Text summarization',
+      script: 'function processResponse(response) {\n  return [{ name: &quot;summary&quot;, value: response.trim() }];\n}',
+      description: 'A prompt for summarizing text in one sentence'
+    };
+
+    const response = await axios.post(
+      `${baseUrl}/v1/tenants/${tenantId}/llm/prompts`,
+      payload,
+      {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log(`Status: ${response.status}`);
+    console.log(`Response: ${JSON.stringify(response.data)}`);
+  } catch (error) {
+    console.error('Error creating prompt:', error.message);
+  }
+}
+
+createPrompt();
+</code></pre>
+<h5 id="response_8">Response</h5>
+<pre><code class="language-json">{
+  &quot;id&quot;: 2,
+  &quot;name&quot;: &quot;text-summarization&quot;,
+  &quot;displayName&quot;: &quot;Text Summarization&quot;,
+  &quot;template&quot;: &quot;Summarize the following text in one sentence:\n\n{{text}}&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;text&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;description&quot;: &quot;The text to summarize&quot;
+    }
+  ],
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;summary&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The one-sentence summary&quot;
+    }
+  ],
+  &quot;modelId&quot;: 1,
+  &quot;botId&quot;: 123,
+  &quot;status&quot;: &quot;Active&quot;,
+  &quot;scope&quot;: &quot;bot&quot;,
+  &quot;type&quot;: &quot;completion&quot;,
+  &quot;isRegistered&quot;: true,
+  &quot;isImported&quot;: false,
+  &quot;isDefault&quot;: true,
+  &quot;isSystem&quot;: false,
+  &quot;category&quot;: &quot;summarization&quot;,
+  &quot;useCase&quot;: &quot;Text summarization&quot;,
+  &quot;script&quot;: &quot;function processResponse(response) {\n  return [{ name: \&quot;summary\&quot;, value: response.trim() }];\n}&quot;,
+  &quot;description&quot;: &quot;A prompt for summarizing text in one sentence&quot;
+}
+</code></pre>
+<h3 id="update-prompt">Update Prompt</h3>
+<p>Updates an existing prompt.</p>
+<h4 id="endpoint_9">Endpoint</h4>
+<pre><code>PUT /v1/tenants/{tenantId}/llm/prompts/{promptId}
+</code></pre>
+<h4 id="permission_9">Permission</h4>
+<p><code>llm:write</code></p>
+<h4 id="path-parameters_3">Path Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>number</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+</tbody>
+</table>
+<h4 id="query-parameters_8">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userDetails</td>
+<td>string</td>
+<td>No</td>
+<td>User details for auditing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="request-body_3">Request Body</h4>
+<p>Same as the create prompt request body, but the <code>name</code> field cannot be changed.</p>
+<h4 id="response-parameters_9">Response Parameters</h4>
+<p>Returns the updated prompt object.</p>
+<h4 id="example_9">Example</h4>
+<h5 id="request_9">Request</h5>
+<pre><code class="language-bash">curl -X PUT &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/2&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;displayName&quot;: &quot;Text Summarization Updated&quot;,
+    &quot;template&quot;: &quot;Summarize the following text in one sentence. Be concise and clear:\n\n{{text}}&quot;,
+    &quot;category&quot;: &quot;summarization&quot;,
+    &quot;script&quot;: &quot;function processResponse(response) {\n  return [{ name: \&quot;summary\&quot;, value: response.trim() }];\n}&quot;
+  }'
+</code></pre>
+<h5 id="response_9">Response</h5>
+<pre><code class="language-json">{
+  &quot;id&quot;: 2,
+  &quot;name&quot;: &quot;text-summarization&quot;,
+  &quot;displayName&quot;: &quot;Text Summarization Updated&quot;,
+  &quot;template&quot;: &quot;Summarize the following text in one sentence. Be concise and clear:\n\n{{text}}&quot;,
+  &quot;inputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;text&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;required&quot;: true,
+      &quot;description&quot;: &quot;The text to summarize&quot;
+    }
+  ],
+  &quot;outputParams&quot;: [
+    {
+      &quot;name&quot;: &quot;summary&quot;,
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;description&quot;: &quot;The one-sentence summary&quot;
+    }
+  ],
+  &quot;modelId&quot;: 1,
+  &quot;botId&quot;: 123,
+  &quot;status&quot;: &quot;Active&quot;,
+  &quot;scope&quot;: &quot;bot&quot;,
+  &quot;type&quot;: &quot;completion&quot;,
+  &quot;isRegistered&quot;: true,
+  &quot;isImported&quot;: false,
+  &quot;isDefault&quot;: true,
+  &quot;isSystem&quot;: false,
+  &quot;category&quot;: &quot;summarization&quot;,
+  &quot;useCase&quot;: &quot;Text summarization&quot;,
+  &quot;script&quot;: &quot;function processResponse(response) {\n  return [{ name: \&quot;summary\&quot;, value: response.trim() }];\n}&quot;,
+  &quot;description&quot;: &quot;A prompt for summarizing text in one sentence&quot;
+}
+</code></pre>
+<h3 id="delete-prompt">Delete Prompt</h3>
+<p>Deletes a prompt.</p>
+<h4 id="endpoint_10">Endpoint</h4>
+<pre><code>DELETE /v1/tenants/{tenantId}/llm/prompts/{promptId}
+</code></pre>
+<h4 id="permission_10">Permission</h4>
+<p><code>llm:delete</code></p>
+<h4 id="path-parameters_4">Path Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tenantId</td>
+<td>string</td>
+<td>Yes</td>
+<td>The ID of the tenant</td>
+</tr>
+<tr>
+<td>promptId</td>
+<td>number</td>
+<td>Yes</td>
+<td>The ID of the prompt</td>
+</tr>
+</tbody>
+</table>
+<h4 id="query-parameters_9">Query Parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>userDetails</td>
+<td>string</td>
+<td>No</td>
+<td>User details for auditing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="response-parameters_10">Response Parameters</h4>
+<p>Returns a 204 No Content status if successful.</p>
+<h4 id="example_10">Example</h4>
+<h5 id="request_10">Request</h5>
+<pre><code class="language-bash">curl -X DELETE &quot;https://api.aisera.com/v1/tenants/9000/llm/prompts/2?userDetails=jane.doe@example.com&quot; \
+  -H &quot;Authorization: Bearer YOUR_API_KEY&quot;
+</code></pre>
+<h5 id="response_10">Response</h5>
+<pre><code>204 No Content
+</code></pre>
+</body>
+</html>

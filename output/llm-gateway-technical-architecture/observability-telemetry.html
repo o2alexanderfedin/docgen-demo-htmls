@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>observability-telemetry</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="observability-and-telemetry">Observability and Telemetry</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#observability-architecture">Observability Architecture</a></li>
+<li><a href="#system-overview">System Overview</a></li>
+<li><a href="#component-integration">Component Integration</a></li>
+<li><a href="#logging-framework">Logging Framework</a></li>
+<li><a href="#log-structure">Log Structure</a></li>
+<li><a href="#log-levels">Log Levels</a></li>
+<li><a href="#contextual-logging">Contextual Logging</a></li>
+<li><a href="#log-storage-and-rotation">Log Storage and Rotation</a></li>
+<li><a href="#metrics-collection">Metrics Collection</a></li>
+<li><a href="#core-metrics">Core Metrics</a></li>
+<li><a href="#business-metrics">Business Metrics</a></li>
+<li><a href="#prometheus-integration">Prometheus Integration</a></li>
+<li><a href="#custom-metrics">Custom Metrics</a></li>
+<li><a href="#distributed-tracing">Distributed Tracing</a></li>
+<li><a href="#trace-propagation">Trace Propagation</a></li>
+<li><a href="#span-instrumentation">Span Instrumentation</a></li>
+<li><a href="#sampling-strategy">Sampling Strategy</a></li>
+<li><a href="#health-monitoring">Health Monitoring</a></li>
+<li><a href="#health-checks">Health Checks</a></li>
+<li><a href="#readiness-and-liveness">Readiness and Liveness</a></li>
+<li><a href="#dependency-health">Dependency Health</a></li>
+<li><a href="#alerting-system">Alerting System</a></li>
+<li><a href="#alert-rules">Alert Rules</a></li>
+<li><a href="#alert-routing">Alert Routing</a></li>
+<li><a href="#alert-remediation">Alert Remediation</a></li>
+<li><a href="#dashboard-and-visualization">Dashboard and Visualization</a></li>
+<li><a href="#operational-dashboards">Operational Dashboards</a></li>
+<li><a href="#business-dashboards">Business Dashboards</a></li>
+<li><a href="#custom-visualization">Custom Visualization</a></li>
+<li><a href="#usage-analytics">Usage Analytics</a></li>
+<li><a href="#user-behavior-analytics">User Behavior Analytics</a></li>
+<li><a href="#cost-tracking">Cost Tracking</a></li>
+<li><a href="#trend-analysis">Trend Analysis</a></li>
+<li><a href="#auditability">Auditability</a></li>
+<li><a href="#audit-logging">Audit Logging</a></li>
+<li><a href="#compliance-reporting">Compliance Reporting</a></li>
+<li><a href="#integration-points">Integration Points</a></li>
+<li><a href="#external-monitoring-systems">External Monitoring Systems</a></li>
+<li><a href="#siem-integration">SIEM Integration</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This document describes the observability and telemetry architecture of the LLM Gateway, detailing how the system collects, processes, and exposes operational and business metrics. Comprehensive observability is a core design principle of the LLM Gateway, enabling operators to understand system behavior, diagnose issues, and optimize performance.</p>
+<h2 id="observability-architecture">Observability Architecture</h2>
+<h3 id="system-overview">System Overview</h3>
+<p>The observability architecture is designed to provide a complete view of the system's state and behavior:</p>
+<pre><code class="language-mermaid">graph TD
+    subgraph &quot;LLM Gateway Components&quot;
+        API[API Layer] --&gt; |Emits| Logs[Logs]
+        API --&gt; |Registers| Metrics[Metrics]
+        API --&gt; |Creates| Traces[Traces]
+
+        Service[Service Layer] --&gt; |Emits| Logs
+        Service --&gt; |Registers| Metrics
+        Service --&gt; |Creates| Traces
+
+        Provider[Provider Layer] --&gt; |Emits| Logs
+        Provider --&gt; |Registers| Metrics
+        Provider --&gt; |Creates| Traces
+
+        Data[Data Layer] --&gt; |Emits| Logs
+        Data --&gt; |Registers| Metrics
+        Data --&gt; |Creates| Traces
+    end
+
+    Logs --&gt; |Collected by| LogAgent[Log Collector]
+    Metrics --&gt; |Scraped by| MetricsCollector[Metrics Collector]
+    Traces --&gt; |Exported to| TraceCollector[Trace Collector]
+
+    LogAgent --&gt; |Sends to| LogStorage[Log Storage]
+    MetricsCollector --&gt; |Sends to| MetricsStorage[Metrics Storage]
+    TraceCollector --&gt; |Sends to| TraceStorage[Trace Storage]
+
+    LogStorage --&gt; |Displayed in| Dashboard[Dashboards]
+    MetricsStorage --&gt; |Displayed in| Dashboard
+    TraceStorage --&gt; |Displayed in| Dashboard
+
+    MetricsStorage --&gt; |Evaluated by| AlertManager[Alert Manager]
+    AlertManager --&gt; |Sends to| NotificationChannels[Notification Channels]
+</code></pre>
+<h3 id="component-integration">Component Integration</h3>
+<p>The observability components are integrated into the application through a combination of frameworks, libraries, and custom code:</p>
+<pre><code class="language-mermaid">classDiagram
+    class ObservabilityFacade {
+        &lt;&lt;service&gt;&gt;
+        +getLogger(context) Logger
+        +getMetricRegistry() MetricRegistry
+        +getTracer() Tracer
+        +createSpan(name) Span
+        +recordEvent(event) void
+        +registerHealthCheck(check) void
+    }
+
+    class Logger {
+        &lt;&lt;interface&gt;&gt;
+        +debug(message) void
+        +info(message) void
+        +warn(message) void
+        +error(message) void
+        +log(level, message, context) void
+    }
+
+    class MetricRegistry {
+        &lt;&lt;interface&gt;&gt;
+        +counter(name) Counter
+        +gauge(name) Gauge
+        +timer(name) Timer
+        +histogram(name) Histogram
+        +register(metric) void
+    }
+
+    class Tracer {
+        &lt;&lt;interface&gt;&gt;
+        +startSpan(name) Span
+        +activeSpan() Span
+        +inject(context, format, carrier) void
+        +extract(format, carrier) SpanContext
+    }
+
+    class HealthCheck {
+        &lt;&lt;interface&gt;&gt;
+        +check() HealthStatus
+        +getName() String
+        +getType() HealthCheckType
+    }
+
+    ObservabilityFacade --&gt; Logger
+    ObservabilityFacade --&gt; MetricRegistry
+    ObservabilityFacade --&gt; Tracer
+    ObservabilityFacade --&gt; HealthCheck
+</code></pre>
+<h2 id="logging-framework">Logging Framework</h2>
+<h3 id="log-structure">Log Structure</h3>
+<p>The LLM Gateway uses a structured logging format to ensure logs are machine-parseable and easily searchable:</p>
+<pre><code class="language-json">{
+  &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
+  &quot;level&quot;: &quot;INFO&quot;,
+  &quot;thread&quot;: &quot;http-nio-8080-exec-3&quot;,
+  &quot;logger&quot;: &quot;com.aisera.service.llm.execution.ExecutionManagerImpl&quot;,
+  &quot;message&quot;: &quot;Request execution completed&quot;,
+  &quot;context&quot;: {
+    &quot;requestId&quot;: &quot;req-1234-5678-90ab-cdef&quot;,
+    &quot;tenantId&quot;: &quot;tenant-123&quot;,
+    &quot;userId&quot;: &quot;user-456&quot;,
+    &quot;providerType&quot;: &quot;OPENAI&quot;,
+    &quot;modelId&quot;: &quot;gpt-4&quot;,
+    &quot;executionTimeMs&quot;: 1243,
+    &quot;tokenCount&quot;: 356,
+    &quot;cacheHit&quot;: false
+  },
+  &quot;traceId&quot;: &quot;trace-1234-5678-90ab-cdef&quot;,
+  &quot;spanId&quot;: &quot;span-1234-5678-90ab-cdef&quot;
+}
+</code></pre>
+<h3 id="log-levels">Log Levels</h3>
+<p>The system uses the following log levels with clear guidelines for their use:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Purpose</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ERROR</td>
+<td>System errors requiring immediate attention</td>
+<td>Connection failures, API errors, data corruption</td>
+</tr>
+<tr>
+<td>WARN</td>
+<td>Potential issues that don't prevent operation</td>
+<td>Slow responses, retries, degraded functionality</td>
+</tr>
+<tr>
+<td>INFO</td>
+<td>Normal operational events</td>
+<td>Request processing, configuration changes, system startup</td>
+</tr>
+<tr>
+<td>DEBUG</td>
+<td>Detailed information for troubleshooting</td>
+<td>Request/response details, internal state, algorithm steps</td>
+</tr>
+<tr>
+<td>TRACE</td>
+<td>Very detailed diagnostic information</td>
+<td>Token-level processing, cache operations, low-level calls</td>
+</tr>
+</tbody>
+</table>
+<h3 id="contextual-logging">Contextual Logging</h3>
+<p>The LLM Gateway implements Mapped Diagnostic Context (MDC) to correlate log entries across threads and systems:</p>
+<pre><code class="language-java">// Example of contextual logging
+try (var context = LogContext.create()
+        .put(&quot;requestId&quot;, request.getId())
+        .put(&quot;tenantId&quot;, request.getTenantId())
+        .put(&quot;provider&quot;, request.getProviderType())) {
+
+    logger.info(&quot;Processing request&quot;);
+
+    // Logic that generates more logs with the same context
+    executeRequest(request);
+
+    logger.info(&quot;Request processing completed&quot;);
+}
+</code></pre>
+<p>Key context attributes that are automatically included in all logs:</p>
+<ol>
+<li><strong>requestId</strong>: Unique identifier for each request</li>
+<li><strong>tenantId</strong>: Tenant identifier for multi-tenant isolation</li>
+<li><strong>userId</strong>: User identifier (when available)</li>
+<li><strong>traceId</strong>: Distributed tracing identifier</li>
+<li><strong>spanId</strong>: Current span identifier within the trace</li>
+</ol>
+<h3 id="log-storage-and-rotation">Log Storage and Rotation</h3>
+<pre><code class="language-mermaid">graph TD
+    Application[Application] --&gt; |Writes to| LocalLog[Local Log Files]
+
+    LocalLog --&gt; |Collected by| LogAgent[Log Collection Agent]
+
+    LogAgent --&gt; |Forwards to| LogAggregator[Log Aggregator]
+
+    LogAggregator --&gt; |Indexes in| SearchEngine[Log Search Engine]
+
+    LogAggregator --&gt; |Archives to| ColdStorage[Cold Storage]
+
+    SearchEngine --&gt; |Retention Policy| LogRetention[Log Retention]
+    LogRetention --&gt; |Move Aged Logs| ColdStorage
+
+    SearchEngine --&gt; |Query Interface| Kibana[Visualization Tools]
+</code></pre>
+<p><strong>Log Storage Strategy:</strong></p>
+<ol>
+<li><strong>Local Storage</strong>:</li>
+<li>File-based logging with time-based rotation</li>
+<li>Maximum file size: 100MB</li>
+<li>
+<p>Retention period: 7 days locally</p>
+</li>
+<li>
+<p><strong>Centralized Storage</strong>:</p>
+</li>
+<li>Elasticsearch for hot storage (30 days)</li>
+<li>S3/blob storage for cold storage (1+ years)</li>
+<li>
+<p>Compression and encryption for archived logs</p>
+</li>
+<li>
+<p><strong>Rotation Policy</strong>:</p>
+</li>
+<li>Hourly rotation for high-volume environments</li>
+<li>Daily rotation for standard environments</li>
+<li>Size-based rotation as a safeguard (100MB limit)</li>
+</ol>
+<h2 id="metrics-collection">Metrics Collection</h2>
+<h3 id="core-metrics">Core Metrics</h3>
+<p>The LLM Gateway collects the following core system metrics:</p>
+<p><strong>System Metrics:</strong>
+- CPU usage (percentage, per core, system/user/io wait)
+- Memory usage (heap/non-heap, garbage collection statistics)
+- Disk usage (reads/writes, latency, throughput)
+- Network usage (bytes in/out, packets, errors)
+- Thread pool statistics (active, queued, completed tasks)</p>
+<p><strong>Application Metrics:</strong>
+- Request rate (requests per second, per endpoint)
+- Response time (average, percentiles, distribution)
+- Error rate (by type, endpoint, and provider)
+- Cache performance (hit rate, miss rate, eviction rate)
+- Queue depth (for asynchronous processing)
+- Connection pool status (active, idle, waiting)</p>
+<h3 id="business-metrics">Business Metrics</h3>
+<p>Business metrics provide insight into usage patterns and service utilization:</p>
+<p><strong>Usage Metrics:</strong>
+- Requests by provider (count, percentage)
+- Tokens used (input, output, by provider and model)
+- Unique tenants and users (daily, weekly, monthly)
+- Feature usage (which API endpoints are used)
+- Cache efficiency (savings from cache hits)</p>
+<p><strong>Financial Metrics:</strong>
+- Cost by provider and model
+- Cost by tenant and user
+- Savings from optimizations
+- Revenue (for commercial deployments)
+- Margin analysis (cost vs. revenue)</p>
+<h3 id="prometheus-integration">Prometheus Integration</h3>
+<p>The LLM Gateway exposes metrics in Prometheus format:</p>
+<pre><code># HELP llm_request_duration_seconds Request execution time in seconds
+# TYPE llm_request_duration_seconds histogram
+llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;0.1&quot;} 12
+llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;0.5&quot;} 45
+llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;1.0&quot;} 78
+llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;2.0&quot;} 96
+llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;5.0&quot;} 112
+llm_request_duration_seconds_bucket{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,le=&quot;+Inf&quot;} 120
+llm_request_duration_seconds_count{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;} 120
+llm_request_duration_seconds_sum{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;} 142.5
+
+# HELP llm_request_total Total number of LLM requests
+# TYPE llm_request_total counter
+llm_request_total{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,success=&quot;true&quot;} 118
+llm_request_total{tenant=&quot;tenant1&quot;,provider=&quot;openai&quot;,model=&quot;gpt-4&quot;,success=&quot;false&quot;} 2
+</code></pre>
+<p><strong>Key Prometheus Metrics:</strong></p>
+<ol>
+<li><strong>Counters</strong>:</li>
+<li><code>llm_request_total</code>: Total requests by tenant, provider, model</li>
+<li><code>llm_error_total</code>: Error count by error type</li>
+<li><code>llm_token_total</code>: Token usage by tenant, provider, model</li>
+<li>
+<p><code>llm_cache_operation_total</code>: Cache operations by operation type</p>
+</li>
+<li>
+<p><strong>Gauges</strong>:</p>
+</li>
+<li><code>llm_active_requests</code>: Currently active requests</li>
+<li><code>llm_queue_size</code>: Current queue depth</li>
+<li><code>llm_thread_pool_active</code>: Active threads in thread pools</li>
+<li>
+<p><code>llm_cache_size</code>: Current cache size</p>
+</li>
+<li>
+<p><strong>Histograms</strong>:</p>
+</li>
+<li><code>llm_request_duration_seconds</code>: Request execution time</li>
+<li><code>llm_provider_latency_seconds</code>: Provider API latency</li>
+<li><code>llm_token_count</code>: Distribution of token counts</li>
+<li>
+<p><code>llm_queue_wait_seconds</code>: Time spent in queue</p>
+</li>
+<li>
+<p><strong>Summaries</strong>:</p>
+</li>
+<li><code>llm_request_summary_seconds</code>: Request time summary statistics</li>
+<li><code>llm_provider_summary_seconds</code>: Provider latency summary</li>
+</ol>
+<h3 id="custom-metrics">Custom Metrics</h3>
+<p>The LLM Gateway supports custom business metrics through the metrics API:</p>
+<pre><code class="language-java">// Example of custom metrics registration
+@Component
+public class CustomMetricsCollector {
+
+    private final Counter customIntegrationRequests;
+    private final Timer customProcessingTime;
+
+    public CustomMetricsCollector(MetricsRegistry registry) {
+        customIntegrationRequests = registry.counter(&quot;custom_integration_requests_total&quot;);
+        customProcessingTime = registry.timer(&quot;custom_processing_seconds&quot;);
+    }
+
+    public void recordIntegrationRequest() {
+        customIntegrationRequests.increment();
+    }
+
+    public void recordProcessingTime(Runnable task) {
+        customProcessingTime.record(task);
+    }
+}
+</code></pre>
+<h2 id="distributed-tracing">Distributed Tracing</h2>
+<h3 id="trace-propagation">Trace Propagation</h3>
+<p>The LLM Gateway implements distributed tracing using the OpenTelemetry standard:</p>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client
+    participant API as API Gateway
+    participant LLMSvc as LLM Gateway Service
+    participant PromptSvc as Prompt Service
+    participant ProviderSvc as Provider Service
+    participant LLMProvider as LLM Provider API
+
+    Client-&gt;&gt;API: Request
+    Note over Client,API: Generate Root Trace ID
+
+    API-&gt;&gt;LLMSvc: Forward Request
+    Note over API,LLMSvc: Propagate Trace ID
+
+    LLMSvc-&gt;&gt;PromptSvc: Get Prompt
+    Note over LLMSvc,PromptSvc: Propagate Trace ID
+    PromptSvc--&gt;&gt;LLMSvc: Return Prompt
+
+    LLMSvc-&gt;&gt;ProviderSvc: Execute Request
+    Note over LLMSvc,ProviderSvc: Propagate Trace ID
+
+    ProviderSvc-&gt;&gt;LLMProvider: API Call
+    Note over ProviderSvc,LLMProvider: Trace External Call
+    LLMProvider--&gt;&gt;ProviderSvc: Response
+
+    ProviderSvc--&gt;&gt;LLMSvc: Return Response
+    LLMSvc--&gt;&gt;API: Return Response
+    API--&gt;&gt;Client: Final Response
+</code></pre>
+<p><strong>Trace Context Propagation:</strong></p>
+<ol>
+<li><strong>HTTP Headers</strong>: W3C Trace Context headers (<code>traceparent</code>, <code>tracestate</code>)</li>
+<li><strong>gRPC Metadata</strong>: Trace context in gRPC metadata</li>
+<li><strong>Async Operations</strong>: Context propagation across async boundaries</li>
+<li><strong>Scheduled Tasks</strong>: Trace context for scheduled operations</li>
+</ol>
+<h3 id="span-instrumentation">Span Instrumentation</h3>
+<p>The system creates spans for important operations to provide detailed execution visibility:</p>
+<pre><code class="language-mermaid">graph TD
+    RootSpan[Span: HTTP Request] --&gt; AuthSpan[Span: Authentication]
+    RootSpan --&gt; ValidationSpan[Span: Validation]
+    RootSpan --&gt; ExecutionSpan[Span: Execution]
+
+    ExecutionSpan --&gt; CacheCheckSpan[Span: Cache Check]
+    ExecutionSpan --&gt; PromptRenderSpan[Span: Prompt Rendering]
+    ExecutionSpan --&gt; ProviderCallSpan[Span: Provider Call]
+
+    ProviderCallSpan --&gt; SerializationSpan[Span: Request Serialization]
+    ProviderCallSpan --&gt; NetworkSpan[Span: Network Call]
+    ProviderCallSpan --&gt; DeserializationSpan[Span: Response Deserialization]
+
+    ExecutionSpan --&gt; PostProcessSpan[Span: Post Processing]
+    ExecutionSpan --&gt; CacheStoreSpan[Span: Cache Store]
+    ExecutionSpan --&gt; AnalyticsSpan[Span: Analytics Recording]
+</code></pre>
+<p><strong>Span Attributes:</strong></p>
+<p>Each span includes relevant attributes to provide context:</p>
+<pre><code class="language-yaml"># Example HTTP Request Span
+name: &quot;/api/v1/prompt/execute&quot;
+kind: SERVER
+attributes:
+  http.method: &quot;POST&quot;
+  http.url: &quot;https://llm-gateway.example.com/api/v1/prompt/execute&quot;
+  http.status_code: 200
+  tenant.id: &quot;tenant-123&quot;
+  user.id: &quot;user-456&quot;
+  request.id: &quot;req-1234-5678-90ab-cdef&quot;
+
+# Example Provider Call Span
+name: &quot;provider.call.openai&quot;
+kind: CLIENT
+attributes:
+  provider.type: &quot;OPENAI&quot;
+  provider.model: &quot;gpt-4&quot;
+  provider.endpoint: &quot;https://api.openai.com/v1/chat/completions&quot;
+  request.prompt_tokens: 156
+  request.completion_tokens: 200
+  request.total_tokens: 356
+  cache.hit: false
+  error: null
+</code></pre>
+<h3 id="sampling-strategy">Sampling Strategy</h3>
+<p>The LLM Gateway implements an adaptive sampling strategy to balance observability with resource efficiency:</p>
+<pre><code class="language-mermaid">flowchart TD
+    Request[Incoming Request] --&gt; SamplingDecision{Sampling Decision}
+
+    SamplingDecision --&gt;|Error Requests| AlwaysSample[100% Sampling]
+    SamplingDecision --&gt;|Slow Requests| AlwaysSample
+    SamplingDecision --&gt;|New Patterns| AlwaysSample
+    SamplingDecision --&gt;|Normal Requests| RateSampling[Rate-Based Sampling]
+
+    subgraph &quot;Sampling Configuration&quot;
+        BaseRate[Base Rate: 10%]
+        ErrorRate[Error Rate: 100%]
+        SlowThreshold[Slow Threshold: P95]
+        AdaptiveRules[Adaptive Rules]
+    end
+
+    BaseRate --&gt; RateSampling
+    AdaptiveRules --&gt; SamplingDecision
+</code></pre>
+<p><strong>Sampling Configuration:</strong></p>
+<ol>
+<li><strong>Base Sampling Rate</strong>: 10% of normal requests</li>
+<li><strong>Error Sampling</strong>: 100% of requests with errors</li>
+<li><strong>Performance Sampling</strong>: 100% of slow requests (&gt;P95)</li>
+<li><strong>Tenant Sampling</strong>: Higher rates for new or problematic tenants</li>
+<li><strong>Adaptive Sampling</strong>: Dynamically adjusted based on system conditions</li>
+<li><strong>Debug Mode</strong>: 100% sampling when enabled for troubleshooting</li>
+</ol>
+<h2 id="health-monitoring">Health Monitoring</h2>
+<h3 id="health-checks">Health Checks</h3>
+<p>The LLM Gateway implements comprehensive health checks for all components:</p>
+<pre><code class="language-mermaid">graph TD
+    HealthEndpoint[&quot;/actuator/health&quot;] --&gt; HealthAggregator[Health Aggregator]
+
+    HealthAggregator --&gt; DBHealth[Database Health]
+    HealthAggregator --&gt; CacheHealth[Cache Health]
+    HealthAggregator --&gt; ProviderHealth[Provider Health]
+    HealthAggregator --&gt; SelfHealth[Internal Health]
+
+    DBHealth --&gt; DBConnectivity[DB Connectivity]
+    DBHealth --&gt; DBPerformance[DB Performance]
+
+    CacheHealth --&gt; CacheConnectivity[Cache Connectivity]
+    CacheHealth --&gt; CachePerformance[Cache Performance]
+
+    ProviderHealth --&gt; OpenAIHealth[OpenAI Status]
+    ProviderHealth --&gt; AnthropicHealth[Anthropic Status]
+    ProviderHealth --&gt; BedrockHealth[AWS Bedrock Status]
+
+    SelfHealth --&gt; DiskSpace[Disk Space]
+    SelfHealth --&gt; MemoryStatus[Memory Status]
+    SelfHealth --&gt; ThreadpoolStatus[Threadpool Status]
+</code></pre>
+<p><strong>Health Check Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;status&quot;: &quot;UP&quot;,
+  &quot;components&quot;: {
+    &quot;db&quot;: {
+      &quot;status&quot;: &quot;UP&quot;,
+      &quot;details&quot;: {
+        &quot;database&quot;: &quot;PostgreSQL&quot;,
+        &quot;version&quot;: &quot;14.4&quot;,
+        &quot;responseTime&quot;: &quot;12ms&quot;
+      }
+    },
+    &quot;cache&quot;: {
+      &quot;status&quot;: &quot;UP&quot;,
+      &quot;details&quot;: {
+        &quot;type&quot;: &quot;Redis&quot;,
+        &quot;version&quot;: &quot;6.2.6&quot;,
+        &quot;responseTime&quot;: &quot;2ms&quot;
+      }
+    },
+    &quot;providers&quot;: {
+      &quot;status&quot;: &quot;UP&quot;,
+      &quot;components&quot;: {
+        &quot;openai&quot;: {
+          &quot;status&quot;: &quot;UP&quot;,
+          &quot;details&quot;: {
+            &quot;latency&quot;: &quot;245ms&quot;,
+            &quot;models&quot;: [&quot;gpt-3.5-turbo&quot;, &quot;gpt-4&quot;]
+          }
+        },
+        &quot;anthropic&quot;: {
+          &quot;status&quot;: &quot;DEGRADED&quot;,
+          &quot;details&quot;: {
+            &quot;latency&quot;: &quot;580ms&quot;,
+            &quot;models&quot;: [&quot;claude-2&quot;]
+          }
+        },
+        &quot;bedrock&quot;: {
+          &quot;status&quot;: &quot;UP&quot;,
+          &quot;details&quot;: {
+            &quot;latency&quot;: &quot;320ms&quot;,
+            &quot;models&quot;: [&quot;llama2-70b&quot;, &quot;claude-instant&quot;]
+          }
+        }
+      }
+    },
+    &quot;disk&quot;: {
+      &quot;status&quot;: &quot;UP&quot;,
+      &quot;details&quot;: {
+        &quot;free&quot;: &quot;15.2GB&quot;,
+        &quot;threshold&quot;: &quot;10GB&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h3 id="readiness-and-liveness">Readiness and Liveness</h3>
+<p>The system distinguishes between liveness (is the application running?) and readiness (is it able to handle requests?):</p>
+<pre><code class="language-mermaid">flowchart TD
+    LivenessProbe[Liveness Probe] --&gt; |JVM Running?| JVMStatus{JVM Status}
+    JVMStatus --&gt;|UP| LivenessUp[Liveness UP]
+    JVMStatus --&gt;|DOWN| LivenessDown[Liveness DOWN]
+
+    ReadinessProbe[Readiness Probe] --&gt; |Dependencies Available?| DependencyStatus{Dependency Status}
+    DependencyStatus --&gt;|All UP| ReadinessUp[Readiness UP]
+    DependencyStatus --&gt;|Any DOWN| ReadinessDown[Readiness DOWN]
+
+    subgraph &quot;Readiness Dependencies&quot;
+        DBStatus[Database Status]
+        CacheStatus[Cache Status]
+        CoreProviderStatus[Core Provider Status]
+    end
+
+    DependencyStatus --&gt; DBStatus
+    DependencyStatus --&gt; CacheStatus
+    DependencyStatus --&gt; CoreProviderStatus
+</code></pre>
+<p><strong>Probe Configurations:</strong></p>
+<ol>
+<li><strong>Liveness Probe</strong>:</li>
+<li>Checks: Basic JVM health, deadlock detection</li>
+<li>Interval: 30 seconds</li>
+<li>Timeout: 5 seconds</li>
+<li>
+<p>Failure threshold: 3 attempts</p>
+</li>
+<li>
+<p><strong>Readiness Probe</strong>:</p>
+</li>
+<li>Checks: Dependencies health, thread pool status</li>
+<li>Interval: 10 seconds</li>
+<li>Timeout: 5 seconds</li>
+<li>Failure threshold: 2 attempts</li>
+</ol>
+<h3 id="dependency-health">Dependency Health</h3>
+<p>The system continuously monitors the health of dependencies and adapts behavior accordingly:</p>
+<pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; Healthy
+
+    Healthy --&gt; Degraded: Performance Issues
+    Degraded --&gt; Healthy: Performance Recovers
+    Degraded --&gt; Unhealthy: Persistent Issues
+    Unhealthy --&gt; Degraded: Partial Recovery
+    Unhealthy --&gt; Healthy: Full Recovery
+
+    state Healthy {
+        [*] --&gt; NormalOperation
+        NormalOperation --&gt; Monitoring: Regular Health Check
+        Monitoring --&gt; NormalOperation: Health Confirmed
+    }
+
+    state Degraded {
+        [*] --&gt; LimitedOperation
+        LimitedOperation --&gt; BackoffStrategy: Reduce Load
+        BackoffStrategy --&gt; AdaptiveRouting: Route Around Issues
+        AdaptiveRouting --&gt; LimitedOperation
+    }
+
+    state Unhealthy {
+        [*] --&gt; FailoverMode
+        FailoverMode --&gt; CircuitOpen: Stop Sending Requests
+        CircuitOpen --&gt; ProbingMode: Periodic Health Check
+        ProbingMode --&gt; CircuitOpen: Still Unhealthy
+        ProbingMode --&gt; [*]: Recovery Detected
+    }
+</code></pre>
+<p><strong>Health State Management:</strong></p>
+<ol>
+<li><strong>Healthy</strong>: Normal operation, full traffic</li>
+<li><strong>Degraded</strong>: </li>
+<li>Increased latency or error rates</li>
+<li>Throttling and backoff strategies applied</li>
+<li>Traffic reduction if necessary</li>
+<li><strong>Unhealthy</strong>:</li>
+<li>Circuit breaker activation</li>
+<li>Traffic rerouting to alternative providers</li>
+<li>Periodic health probing for recovery detection</li>
+</ol>
+<h2 id="alerting-system">Alerting System</h2>
+<h3 id="alert-rules">Alert Rules</h3>
+<p>The LLM Gateway implements a comprehensive set of alerts:</p>
+<p><strong>Infrastructure Alerts:</strong>
+- High CPU usage (&gt;80% for 5 minutes)
+- High memory usage (&gt;85% for 5 minutes)
+- Disk space running low (&lt;15% free)
+- Database connection pool saturation (&gt;85% for 3 minutes)
+- Cache connection issues (&gt;3 failures in 1 minute)</p>
+<p><strong>Application Alerts:</strong>
+- High error rate (&gt;1% of requests for 5 minutes)
+- High latency (P95 &gt;2x normal for 5 minutes)
+- Circuit breaker tripped (any provider)
+- Request queue buildup (&gt;100 queued requests for 2 minutes)
+- Cache hit rate drop (&gt;30% decrease from baseline)</p>
+<p><strong>Business Alerts:</strong>
+- Unusual traffic patterns (&gt;3σ from baseline)
+- Cost spikes (&gt;50% increase from daily average)
+- Unusual model usage patterns (anomaly detection)
+- Tenant quota approaching (&gt;85% of limit)
+- Service level objective violations</p>
+<h3 id="alert-routing">Alert Routing</h3>
+<p>Alerts are routed to appropriate teams based on alert type, severity, and context:</p>
+<pre><code class="language-mermaid">graph TD
+    Alert[Alert Triggered] --&gt; Router[Alert Router]
+
+    Router --&gt; |Infrastructure| Platform[Platform Team]
+    Router --&gt; |Application| AppTeam[Application Team]
+    Router --&gt; |Security| SecTeam[Security Team]
+    Router --&gt; |Business| BizTeam[Business Team]
+
+    subgraph &quot;Notification Channels&quot;
+        Platform --&gt; PlatformSlack[Slack - Platform]
+        Platform --&gt; PlatformPager[PagerDuty - Platform]
+
+        AppTeam --&gt; AppSlack[Slack - App Team]
+        AppTeam --&gt; AppPager[PagerDuty - App]
+
+        SecTeam --&gt; SecEmail[Email - Security]
+        SecTeam --&gt; SecTicket[JIRA - Security]
+
+        BizTeam --&gt; BizEmail[Email - Business]
+        BizTeam --&gt; BizDashboard[Dashboard]
+    end
+</code></pre>
+<p><strong>Alert Severity Levels:</strong></p>
+<ol>
+<li><strong>Critical</strong>: Immediate attention required (24/7)</li>
+<li>System unavailability</li>
+<li>Data loss or corruption</li>
+<li>
+<p>Security breaches</p>
+</li>
+<li>
+<p><strong>High</strong>: Urgent attention during business hours</p>
+</li>
+<li>Degraded performance</li>
+<li>Provider failures</li>
+<li>
+<p>Approaching resource limits</p>
+</li>
+<li>
+<p><strong>Medium</strong>: Attention required within 24 hours</p>
+</li>
+<li>Minor performance issues</li>
+<li>Non-critical component failures</li>
+<li>
+<p>Business metric anomalies</p>
+</li>
+<li>
+<p><strong>Low</strong>: Attention required within the week</p>
+</li>
+<li>Warning signs</li>
+<li>Technical debt indicators</li>
+<li>Optimization opportunities</li>
+</ol>
+<h3 id="alert-remediation">Alert Remediation</h3>
+<p>Alerts include context and recommended remediation steps:</p>
+<pre><code class="language-json">{
+  &quot;alertName&quot;: &quot;high_error_rate&quot;,
+  &quot;severity&quot;: &quot;high&quot;,
+  &quot;status&quot;: &quot;firing&quot;,
+  &quot;startTime&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
+  &quot;description&quot;: &quot;High error rate detected for OpenAI GPT-4 provider&quot;,
+  &quot;value&quot;: &quot;5.2%&quot;,
+  &quot;threshold&quot;: &quot;1.0%&quot;,
+  &quot;context&quot;: {
+    &quot;provider&quot;: &quot;openai&quot;,
+    &quot;model&quot;: &quot;gpt-4&quot;,
+    &quot;errorTypes&quot;: {
+      &quot;rate_limit_exceeded&quot;: 65,
+      &quot;timeout&quot;: 12,
+      &quot;bad_request&quot;: 8
+    },
+    &quot;affectedTenants&quot;: [&quot;tenant-123&quot;, &quot;tenant-456&quot;],
+    &quot;traceIds&quot;: [&quot;trace-1234&quot;, &quot;trace-5678&quot;]
+  },
+  &quot;remediation&quot;: [
+    &quot;Check OpenAI status page for outages&quot;,
+    &quot;Review recent changes to request patterns&quot;,
+    &quot;Consider enabling rate limit protection temporarily&quot;,
+    &quot;Adjust retry parameters&quot;,
+    &quot;If persistent, failover to alternative provider&quot;
+  ],
+  &quot;runbook&quot;: &quot;https://docs.example.com/runbooks/high-error-rate&quot;
+}
+</code></pre>
+<h2 id="dashboard-and-visualization">Dashboard and Visualization</h2>
+<h3 id="operational-dashboards">Operational Dashboards</h3>
+<p>The LLM Gateway provides pre-built operational dashboards for monitoring system health and performance:</p>
+<p><strong>System Health Dashboard:</strong>
+- Overall system status
+- Component health indicators
+- Resource utilization (CPU, memory, disk, network)
+- JVM metrics (heap, garbage collection, threads)
+- Alert history and status</p>
+<p><strong>Request Processing Dashboard:</strong>
+- Request rate and throughput
+- Response time (average, percentiles)
+- Error rates and types
+- Queue depths and processing times
+- Circuit breaker status</p>
+<p><strong>Provider Performance Dashboard:</strong>
+- Provider availability
+- Provider latency
+- Error rates by provider
+- Cost by provider
+- Token usage by provider</p>
+<p><strong>Cache Performance Dashboard:</strong>
+- Cache hit/miss rates
+- Cache size and memory usage
+- Cache operation latency
+- Eviction rates
+- Cache efficiency metrics</p>
+<h3 id="business-dashboards">Business Dashboards</h3>
+<p>Business dashboards provide insights into usage patterns and business metrics:</p>
+<p><strong>Usage Overview Dashboard:</strong>
+- Requests by tenant and user
+- Token usage by tenant and model
+- Active users and tenants
+- Feature usage distribution
+- Growth trends</p>
+<p><strong>Cost Management Dashboard:</strong>
+- Total cost by tenant and model
+- Cost trends and forecasts
+- Cost optimization opportunities
+- Cost allocation by department/project
+- ROI metrics</p>
+<p><strong>SLA Compliance Dashboard:</strong>
+- Availability metrics
+- Performance against SLAs
+- Error budget consumption
+- Incident history
+- Mean time to recovery</p>
+<h3 id="custom-visualization">Custom Visualization</h3>
+<p>The system supports custom visualization through flexible data export options:</p>
+<pre><code class="language-mermaid">graph TD
+    MetricsDB[(Metrics Database)] --&gt; Grafana[Grafana]
+    LogsDB[(Logs Database)] --&gt; Kibana[Kibana]
+    TracesDB[(Traces Database)] --&gt; Jaeger[Jaeger UI]
+
+    Grafana --&gt; CustomDashboards[Custom Dashboards]
+    Kibana --&gt; LogExplorer[Log Explorer]
+    Jaeger --&gt; TraceAnalyzer[Trace Analyzer]
+
+    MetricsDB --&gt; |Export| DataLake[Data Lake]
+    LogsDB --&gt; |Export| DataLake
+    TracesDB --&gt; |Export| DataLake
+
+    DataLake --&gt; |BI Tools| Tableau[Tableau]
+    DataLake --&gt; |BI Tools| PowerBI[Power BI]
+    DataLake --&gt; |BI Tools| DataStudio[Google Data Studio]
+</code></pre>
+<p><strong>Data Export Options:</strong></p>
+<ol>
+<li><strong>Real-time Streaming</strong>: Kafka/Kinesis integration for real-time data</li>
+<li><strong>Batch Export</strong>: Scheduled exports to data lake or data warehouse</li>
+<li><strong>Query API</strong>: Direct query access for custom visualizations</li>
+<li><strong>Dashboard Embedding</strong>: Embed standard dashboards in other systems</li>
+<li><strong>Alerting Webhooks</strong>: Integration with external alerting systems</li>
+</ol>
+<h2 id="usage-analytics">Usage Analytics</h2>
+<h3 id="user-behavior-analytics">User Behavior Analytics</h3>
+<p>The system collects anonymized usage data to identify patterns and optimization opportunities:</p>
+<p><strong>Usage Patterns Analyzed:</strong>
+- Common prompt patterns
+- Model selection patterns
+- Parameter configurations
+- Response utilization
+- Session patterns</p>
+<p><strong>Analysis Techniques:</strong>
+- Clustering of similar requests
+- Trend analysis over time
+- Comparative analysis across tenants
+- Anomaly detection
+- Usage forecasting</p>
+<h3 id="cost-tracking">Cost Tracking</h3>
+<p>Detailed cost tracking enables optimization and chargeback:</p>
+<pre><code class="language-mermaid">graph TD
+    Request[API Request] --&gt; |Records| UsageEvent[Usage Event]
+
+    UsageEvent --&gt; |Processed by| CostCalculator[Cost Calculator]
+
+    CostCalculator --&gt; |Rates from| CostRules[(Cost Rules Database)]
+
+    CostCalculator --&gt; |Writes to| CostJournal[(Cost Journal)]
+
+    CostJournal --&gt; |Aggregated into| DailyCosts[Daily Cost Reports]
+    CostJournal --&gt; |Aggregated into| TenantCosts[Tenant Cost Reports]
+    CostJournal --&gt; |Aggregated into| ModelCosts[Model Cost Reports]
+
+    DailyCosts --&gt; |Analyzed by| TrendAnalyzer[Trend Analyzer]
+    TrendAnalyzer --&gt; Forecasts[Cost Forecasts]
+
+    TenantCosts --&gt; |Input to| Billing[Billing System]
+    TenantCosts --&gt; |Input to| Quotas[Quota Management]
+</code></pre>
+<p><strong>Cost Tracking Components:</strong></p>
+<ol>
+<li><strong>Usage Metering</strong>: Records detailed usage metrics</li>
+<li><strong>Cost Rules</strong>: Configurable pricing rules by provider and model</li>
+<li><strong>Cost Journal</strong>: Detailed record of each billable action</li>
+<li><strong>Aggregation</strong>: Roll-up by time, tenant, model, etc.</li>
+<li><strong>Analysis</strong>: Identify trends and optimization opportunities</li>
+<li><strong>Forecasting</strong>: Predict future costs based on trends</li>
+</ol>
+<h3 id="trend-analysis">Trend Analysis</h3>
+<p>Long-term trend analysis provides insights for capacity planning and optimization:</p>
+<p><strong>Trend Dimensions:</strong>
+- Overall system growth
+- Tenant-specific growth
+- Model usage shifts
+- Cost efficiency trends
+- Error rate patterns</p>
+<p><strong>Analysis Timeframes:</strong>
+- Daily patterns (24-hour cycles)
+- Weekly patterns (weekday vs. weekend)
+- Monthly trends (growth and seasonality)
+- Quarterly business cycles
+- Annual planning horizons</p>
+<h2 id="auditability">Auditability</h2>
+<h3 id="audit-logging">Audit Logging</h3>
+<p>The LLM Gateway maintains comprehensive audit logs for security and compliance:</p>
+<p><strong>Audited Events:</strong>
+- Authentication and authorization attempts
+- Administrative actions (configuration changes)
+- Prompt template changes and versioning
+- Provider credential changes
+- Usage limit modifications
+- Security-relevant operations</p>
+<p><strong>Audit Log Format:</strong></p>
+<pre><code class="language-json">{
+  &quot;timestamp&quot;: &quot;2023-05-15T14:22:18.543Z&quot;,
+  &quot;eventType&quot;: &quot;PROMPT_TEMPLATE_MODIFIED&quot;,
+  &quot;actor&quot;: {
+    &quot;userId&quot;: &quot;user-456&quot;,
+    &quot;username&quot;: &quot;admin@example.com&quot;,
+    &quot;ipAddress&quot;: &quot;192.168.1.100&quot;,
+    &quot;userAgent&quot;: &quot;Mozilla/5.0 ...&quot;
+  },
+  &quot;resource&quot;: {
+    &quot;type&quot;: &quot;PROMPT_TEMPLATE&quot;,
+    &quot;id&quot;: &quot;prompt-789&quot;,
+    &quot;name&quot;: &quot;Customer Support Assistant&quot;
+  },
+  &quot;action&quot;: &quot;MODIFY&quot;,
+  &quot;status&quot;: &quot;SUCCESS&quot;,
+  &quot;details&quot;: {
+    &quot;changes&quot;: [&quot;template&quot;, &quot;parameters&quot;],
+    &quot;version&quot;: &quot;2.3&quot;,
+    &quot;comment&quot;: &quot;Updated to improve customer response format&quot;
+  },
+  &quot;traceId&quot;: &quot;trace-1234-5678-90ab-cdef&quot;
+}
+</code></pre>
+<h3 id="compliance-reporting">Compliance Reporting</h3>
+<p>The system provides compliance reporting capabilities for regulatory requirements:</p>
+<p><strong>Compliance Reports:</strong>
+- Usage audit reports (who used what, when)
+- Content filtering reports (safety measures)
+- Data handling reports (PII detection and handling)
+- Access control reports (permission changes)
+- Security incident reports</p>
+<p><strong>Regulatory Frameworks Supported:</strong>
+- SOC 2 Type II
+- GDPR
+- HIPAA
+- CCPA/CPRA
+- Industry-specific regulations</p>
+<h2 id="integration-points">Integration Points</h2>
+<h3 id="external-monitoring-systems">External Monitoring Systems</h3>
+<p>The LLM Gateway integrates with external monitoring systems through standard protocols:</p>
+<p><strong>Integration Methods:</strong>
+- Prometheus metrics endpoint
+- OpenTelemetry trace export
+- Structured log output
+- Health check API
+- Webhook notifications</p>
+<p><strong>Supported Systems:</strong>
+- Prometheus/Grafana
+- Datadog
+- New Relic
+- Dynatrace
+- Elastic Stack
+- CloudWatch
+- Azure Monitor</p>
+<h3 id="siem-integration">SIEM Integration</h3>
+<p>Security Information and Event Management integration for security monitoring:</p>
+<p><strong>SIEM Data Flows:</strong>
+- Security audit logs
+- Authentication events
+- Authorization events
+- Configuration changes
+- Suspicious activity detection</p>
+<p><strong>Integration Methods:</strong>
+- Syslog forwarding
+- Log shipping agents
+- API-based integration
+- Webhook notifications
+- Custom log formats</p>
+<hr />
+<p><strong>Previous</strong>: <a href="deployment-scaling.html">Deployment and Scaling Architecture</a> | <strong>Next</strong>: <a href="security-architecture.html">Security Architecture</a></p>
+</body>
+</html>

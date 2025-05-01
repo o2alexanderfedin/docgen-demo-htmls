@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>README</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="llm-gateway-product-documentation">LLM Gateway Product Documentation</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="product-overview.html">Product Overview</a></li>
+<li><a href="key-features.html">Key Features</a></li>
+<li><a href="user-journeys.html">User Journeys &amp; Use Cases</a></li>
+<li><a href="system-architecture.html">System Architecture</a></li>
+<li><a href="release-roadmap.html">Release Roadmap</a></li>
+<li><a href="business-impact.html">Business Impact</a></li>
+<li><a href="faqs.html">FAQs &amp; Known Limitations</a></li>
+<li><a href="../llm-gateway-api-development-guide/README.html">Technical Documentation</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>Welcome to the LLM Gateway Product Documentation. This comprehensive guide provides detailed information about the LLM Gateway product, its features, use cases, architecture, and business impact.</p>
+<p>The LLM Gateway serves as a unified interface between your applications and various Large Language Models (LLMs), providing standardized access, management, and control capabilities for LLM interactions.</p>
+<h2 id="visual-documentation-approach">Visual Documentation Approach</h2>
+<p>This documentation uses UML diagrams created with Mermaid to enhance understanding of key concepts:</p>
+<pre><code class="language-mermaid">graph TD
+    A[Architecture Diagrams] --&gt;|System Structure| B[Component Relationships]
+    A --&gt;|Data Flow| C[Sequence Diagrams]
+    A --&gt;|State Changes| D[State Diagrams]
+
+    B --&gt; B1[High-level Architecture]
+    B --&gt; B2[Service Components]
+
+    C --&gt; C1[Prompt Execution Flow]
+    C --&gt; C2[User-System Interactions]
+
+    D --&gt; D1[Prompt Lifecycle]
+    D --&gt; D2[Process Workflows]
+
+    E[Flow Diagrams] --&gt; E1[User Journeys]
+    E --&gt; E2[Implementation Steps]
+</code></pre>
+<h3 id="diagram-types">Diagram Types</h3>
+<ol>
+<li><strong>Architecture Diagrams</strong> (in <a href="system-architecture.html">System Architecture</a>)</li>
+<li>Visualizing the high-level structure of the LLM Gateway</li>
+<li>
+<p>Showing relationships between components and services</p>
+</li>
+<li>
+<p><strong>Component Diagrams</strong> (in <a href="system-architecture.html">System Architecture</a>)</p>
+</li>
+<li>Illustrating classes and methods in key services</li>
+<li>
+<p>Depicting interfaces and dependencies</p>
+</li>
+<li>
+<p><strong>Sequence Diagrams</strong> (in <a href="system-architecture.html">System Architecture</a>)</p>
+</li>
+<li>Demonstrating interaction flows between system components</li>
+<li>
+<p>Visualizing process steps in chronological order</p>
+</li>
+<li>
+<p><strong>State Diagrams</strong> (in <a href="system-architecture.html">System Architecture</a>)</p>
+</li>
+<li>Showing lifecycle states of key entities</li>
+<li>
+<p>Displaying transitions and decision points</p>
+</li>
+<li>
+<p><strong>Flow Diagrams</strong> (in <a href="user-journeys.html">User Journeys</a>)</p>
+</li>
+<li>Mapping implementation steps and user journeys</li>
+<li>Illustrating workflow processes</li>
+</ol>
+<p>All diagrams use Mermaid syntax for consistency, maintainability, and native rendering in documentation tools.</p>
+<h3 id="how-to-use-this-documentation">How to Use This Documentation</h3>
+<p>This product documentation is organized into several sections to help different audiences find the information they need:</p>
+<ul>
+<li><strong>Product Managers &amp; Business Stakeholders</strong>: Focus on <a href="product-overview.html">Product Overview</a>, <a href="key-features.html">Key Features</a>, <a href="user-journeys.html">User Journeys</a>, and <a href="business-impact.html">Business Impact</a></li>
+<li><strong>Architects &amp; Technical Leaders</strong>: Review <a href="system-architecture.html">System Architecture</a> and <a href="../llm-gateway-api-development-guide/README.html">Technical Documentation</a></li>
+<li><strong>Development Teams</strong>: Explore <a href="../llm-gateway-api-development-guide/README.html">Technical Documentation</a> with detailed API reference</li>
+<li><strong>Project Planners</strong>: Check <a href="release-roadmap.html">Release Roadmap</a> for upcoming features and timeline</li>
+</ul>
+<h3 id="related-documentation">Related Documentation</h3>
+<p>For detailed technical implementation guidance, please refer to:
+- <a href="../llm-gateway-api-development-guide/README.html">API Developer Guide</a>
+- <a href="../llm-gateway-api-development-guide/getting-started.html">Getting Started Guide</a>
+- <a href="../llm-gateway-api-development-guide/api-reference/README.html">API Reference</a></p>
+</body>
+</html>

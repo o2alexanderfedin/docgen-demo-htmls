@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>system-architecture</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="system-architecture">System Architecture</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#architecture-overview">Architecture Overview</a></li>
+<li><a href="#core-components">Core Components</a></li>
+<li><a href="#integration-points">Integration Points</a></li>
+<li><a href="#deployment-models">Deployment Models</a></li>
+<li><a href="#scalability-and-performance">Scalability and Performance</a></li>
+<li><a href="#security-architecture">Security Architecture</a></li>
+<li><a href="#data-flow">Data Flow</a></li>
+</ul>
+<h2 id="architecture-overview">Architecture Overview</h2>
+<p>The LLM Gateway is built on a modern, cloud-native architecture designed for scalability, resilience, and extensibility. The system employs a microservices approach with containerized components that can be deployed across various environments.</p>
+<h3 id="architectural-principles">Architectural Principles</h3>
+<p>The LLM Gateway architecture adheres to the following key principles:</p>
+<ol>
+<li><strong>Service Abstraction</strong>: Providing a unified interface that abstracts the complexities of diverse LLM providers</li>
+<li><strong>Horizontal Scalability</strong>: Allowing the system to scale out to handle increased load</li>
+<li><strong>High Availability</strong>: Ensuring reliability through redundancy and failover mechanisms</li>
+<li><strong>Security by Design</strong>: Implementing security at every layer of the architecture</li>
+<li><strong>Extensibility</strong>: Supporting easy integration of new LLM providers and capabilities</li>
+<li><strong>Observability</strong>: Providing comprehensive monitoring, logging, and analytics</li>
+</ol>
+<h3 id="architecture-diagram">Architecture Diagram</h3>
+<pre><code class="language-mermaid">graph TD
+    Client[Client Applications] --&gt;|REST/gRPC| ApiGateway[API Gateway]
+    ApiGateway --&gt;|Authentication| IAM[Identity &amp; Access Management]
+    ApiGateway --&gt;|Request Routing| ExecutionService[Execution Service]
+    ApiGateway --&gt;|Template Management| PromptService[Prompt Management Service]
+    ApiGateway --&gt;|Analytics Queries| AnalyticsService[Analytics Service]
+
+    ExecutionService --&gt;|Cache Check| CacheService[Cache Service]
+    ExecutionService --&gt;|Provider Selection| ProviderMgmt[Provider Management]
+    ExecutionService --&gt;|Usage Tracking| AnalyticsService
+
+    PromptService --&gt;|Storage| TemplateDB[(Template Database)]
+    PromptService --&gt;|Version Control| VersionControl[Version Control]
+
+    ProviderMgmt --&gt;|Provider A| ProviderA[LLM Provider A]
+    ProviderMgmt --&gt;|Provider B| ProviderB[LLM Provider B]
+    ProviderMgmt --&gt;|Provider C| ProviderC[LLM Provider C]
+
+    CacheService --&gt;|Storage| CacheDB[(Cache Database)]
+
+    AnalyticsService --&gt;|Metrics Storage| MetricsDB[(Metrics Database)]
+    AnalyticsService --&gt;|Reporting| Dashboard[Analytics Dashboard]
+
+    IAM --&gt;|User Directory| UserDB[(User Database)]
+
+    subgraph &quot;Client Layer&quot;
+        Client
+    end
+
+    subgraph &quot;API Layer&quot;
+        ApiGateway
+    end
+
+    subgraph &quot;Service Layer&quot;
+        ExecutionService
+        PromptService
+        ProviderMgmt
+        CacheService
+        AnalyticsService
+        IAM
+    end
+
+    subgraph &quot;Provider Layer&quot;
+        ProviderA
+        ProviderB
+        ProviderC
+    end
+
+    subgraph &quot;Data Layer&quot;
+        TemplateDB
+        CacheDB
+        MetricsDB
+        UserDB
+    end
+</code></pre>
+<p><em>The above diagram illustrates the high-level architecture of the LLM Gateway, showing the main components and their interactions across different layers of the system.</em></p>
+<h2 id="core-components">Core Components</h2>
+<p>The LLM Gateway consists of several core components, each responsible for specific aspects of functionality:</p>
+<h3 id="component-diagram">Component Diagram</h3>
+<pre><code class="language-mermaid">classDiagram
+    class APIGateway {
+        +authenticateRequest()
+        +routeRequest()
+        +enforceRateLimits()
+        +validateInput()
+    }
+
+    class PromptManagementService {
+        +createPrompt()
+        +updatePrompt()
+        +getPrompt()
+        +listPrompts()
+        +createVersion()
+        +publishVersion()
+    }
+
+    class ExecutionService {
+        +executePrompt()
+        +executeStreamingPrompt()
+        +checkCache()
+        +selectProvider()
+        +transformRequest()
+        +normalizeResponse()
+    }
+
+    class ProviderManagementService {
+        +registerProvider()
+        +getProviderCapabilities()
+        +monitorProviderHealth()
+        +routeToProvider()
+        +manageCredentials()
+    }
+
+    class CacheService {
+        +getCachedResponse()
+        +cacheResponse()
+        +invalidateCache()
+        +getCacheStats()
+    }
+
+    class AnalyticsService {
+        +trackUsage()
+        +generateReports()
+        +calculateCosts()
+        +aggregateMetrics()
+        +alertOnAnomalies()
+    }
+
+    class IAMService {
+        +authenticateUser()
+        +authorizeAction()
+        +manageRoles()
+        +integrateWithIdP()
+    }
+
+    APIGateway --&gt; ExecutionService : routes execution requests
+    APIGateway --&gt; PromptManagementService : routes prompt management requests
+    APIGateway --&gt; AnalyticsService : routes analytics queries
+    APIGateway --&gt; IAMService : validates authentication
+
+    ExecutionService --&gt; ProviderManagementService : requests provider access
+    ExecutionService --&gt; CacheService : checks/updates cache
+    ExecutionService --&gt; AnalyticsService : logs execution data
+
+    PromptManagementService --&gt; AnalyticsService : logs prompt operations
+
+    ProviderManagementService --&gt; AnalyticsService : logs provider metrics
+</code></pre>
+<p><em>This component diagram shows the relationship between core services and their primary functions within the LLM Gateway architecture.</em></p>
+<h3 id="api-layer">API Layer</h3>
+<p>The API Layer serves as the primary interface for client applications, providing REST and gRPC endpoints for all Gateway functionality.</p>
+<p><strong>Key Capabilities:</strong>
+- Request validation and authentication
+- Rate limiting and quota enforcement
+- Request routing to appropriate services
+- API versioning and compatibility management
+- Documentation and developer resources</p>
+<p><strong>Technologies:</strong>
+- REST API with OpenAPI specifications
+- gRPC API with Protocol Buffers
+- API Gateway for management and security</p>
+<h3 id="prompt-management-service">Prompt Management Service</h3>
+<p>The Prompt Management Service handles the creation, storage, retrieval, and versioning of prompt templates.</p>
+<p><strong>Key Capabilities:</strong>
+- CRUD operations for prompt templates
+- Parameterized template processing
+- Version control and publishing workflow
+- Template organization and categorization
+- Access control and permissions</p>
+<p><strong>Technologies:</strong>
+- Document-oriented database for template storage
+- Version control system for template history
+- Template rendering engine for parameter substitution</p>
+<h3 id="execution-service">Execution Service</h3>
+<p>The Execution Service manages the processing of prompts against various LLM providers, handling request formatting, response processing, and optimizations.</p>
+<p><strong>Key Capabilities:</strong>
+- Prompt formatting for specific providers
+- Request transmission to LLM providers
+- Response processing and normalization
+- Streaming support for real-time responses
+- Error handling and retry logic</p>
+<p><strong>Technologies:</strong>
+- Asynchronous processing framework
+- Provider-specific adapters
+- Stream processing capabilities
+- Queue management for high throughput</p>
+<h3 id="provider-management-service">Provider Management Service</h3>
+<p>The Provider Management Service maintains connections to various LLM providers, handling authentication, capability discovery, and provider-specific configurations.</p>
+<p><strong>Key Capabilities:</strong>
+- Provider connection management
+- Credential storage and rotation
+- Model and capability discovery
+- Provider health monitoring
+- Configuration management</p>
+<p><strong>Technologies:</strong>
+- Secure credential storage
+- Service discovery mechanisms
+- Health check system
+- Configuration management database</p>
+<h3 id="cache-service">Cache Service</h3>
+<p>The Cache Service optimizes performance and reduces costs by storing and retrieving results for identical or similar prompt requests.</p>
+<p><strong>Key Capabilities:</strong>
+- Deterministic request hashing
+- Configurable cache policies
+- Cache invalidation mechanisms
+- Cache analytics and monitoring
+- Distributed cache management</p>
+<p><strong>Technologies:</strong>
+- Distributed caching system
+- Content-addressable storage
+- Time-to-live management
+- Cache consistency protocols</p>
+<h3 id="analytics-service">Analytics Service</h3>
+<p>The Analytics Service collects, processes, and reports on system usage, performance, and business metrics.</p>
+<p><strong>Key Capabilities:</strong>
+- Usage data collection and aggregation
+- Performance metric tracking
+- Cost analysis and reporting
+- User and application analytics
+- Custom report generation</p>
+<p><strong>Technologies:</strong>
+- Time-series database for metrics
+- Data warehouse for analytics
+- Real-time processing pipeline
+- Visualization tools</p>
+<h3 id="identity-and-access-management">Identity and Access Management</h3>
+<p>The Identity and Access Management component handles authentication, authorization, and user management across the system.</p>
+<p><strong>Key Capabilities:</strong>
+- User authentication and session management
+- Role-based access control
+- Resource-level permissions
+- Multi-tenancy support
+- Integration with enterprise identity providers</p>
+<p><strong>Technologies:</strong>
+- OAuth 2.0 / OpenID Connect
+- SAML integration
+- Policy enforcement points
+- Directory services integration</p>
+<h2 id="integration-points">Integration Points</h2>
+<p>The LLM Gateway provides multiple integration points for connecting with external systems and services:</p>
+<h3 id="llm-provider-integrations">LLM Provider Integrations</h3>
+<p>The system integrates with various LLM providers through standardized adaptors:</p>
+<ul>
+<li><strong>Commercial API Providers</strong>: OpenAI, Anthropic, Cohere, AI21, etc.</li>
+<li><strong>Cloud Provider Services</strong>: AWS Bedrock, Azure OpenAI, Google Vertex AI, etc.</li>
+<li><strong>Open Source Models</strong>: Integration with self-hosted models like Llama, Falcon, Mistral</li>
+<li><strong>Custom Models</strong>: Support for organization-specific fine-tuned models</li>
+</ul>
+<h3 id="enterprise-system-integrations">Enterprise System Integrations</h3>
+<p>The Gateway connects with existing enterprise systems for seamless operation:</p>
+<ul>
+<li><strong>Identity Providers</strong>: Integration with LDAP, Active Directory, Okta, Auth0, etc.</li>
+<li><strong>Monitoring Systems</strong>: Prometheus, Grafana, DataDog, New Relic, etc.</li>
+<li><strong>Logging Systems</strong>: ELK Stack, Splunk, GrayLog, etc.</li>
+<li><strong>SIEM Solutions</strong>: Integration with security information and event management systems</li>
+</ul>
+<h3 id="client-integrations">Client Integrations</h3>
+<p>Multiple options are available for client applications to integrate with the Gateway:</p>
+<ul>
+<li><strong>REST API</strong>: Standard HTTP-based integration for broad compatibility</li>
+<li><strong>gRPC API</strong>: High-performance binary protocol for efficiency</li>
+<li><strong>Client SDKs</strong>: Language-specific libraries for Python, JavaScript, Java, etc.</li>
+<li><strong>Webhooks</strong>: Event notifications for asynchronous workflows</li>
+</ul>
+<h2 id="deployment-models">Deployment Models</h2>
+<p>The LLM Gateway supports multiple deployment models to meet different organizational requirements:</p>
+<h3 id="cloud-hosted-saas">Cloud-Hosted SaaS</h3>
+<ul>
+<li>Fully managed service hosted in the cloud</li>
+<li>Multi-tenant architecture with secure isolation</li>
+<li>Automatic updates and maintenance</li>
+<li>Elastic scaling based on demand</li>
+<li>Regional deployments for data sovereignty</li>
+</ul>
+<h3 id="self-hosted-cloud">Self-Hosted Cloud</h3>
+<ul>
+<li>Deployed in customer's cloud environment (AWS, Azure, GCP)</li>
+<li>Customer maintains control over data and infrastructure</li>
+<li>Integrates with existing cloud services</li>
+<li>Leverages cloud provider security and scaling</li>
+<li>Support for multi-region deployments</li>
+</ul>
+<h3 id="on-premises">On-Premises</h3>
+<ul>
+<li>Deployed within customer's data center</li>
+<li>Complete data control and air-gapped operation if needed</li>
+<li>Integration with on-premises identity and security</li>
+<li>Support for private networks and restricted environments</li>
+<li>Compatible with virtualization and container platforms</li>
+</ul>
+<h3 id="hybrid">Hybrid</h3>
+<ul>
+<li>Combination of cloud and on-premises components</li>
+<li>Flexible architecture to meet specific requirements</li>
+<li>Data processing where most appropriate</li>
+<li>Bridge between cloud and on-premises systems</li>
+<li>Progressive migration path</li>
+</ul>
+<h2 id="scalability-and-performance">Scalability and Performance</h2>
+<p>The LLM Gateway is designed to scale efficiently to meet growing demands:</p>
+<h3 id="horizontal-scaling">Horizontal Scaling</h3>
+<ul>
+<li>Stateless services for easy replication</li>
+<li>Load balancing across service instances</li>
+<li>Auto-scaling based on load metrics</li>
+<li>Resource-based scaling policies</li>
+<li>No single point of failure</li>
+</ul>
+<h3 id="performance-optimizations">Performance Optimizations</h3>
+<ul>
+<li>Distributed caching for response reuse</li>
+<li>Connection pooling to LLM providers</li>
+<li>Asynchronous processing for high throughput</li>
+<li>Query optimization for database operations</li>
+<li>Content compression for network efficiency</li>
+</ul>
+<h3 id="resource-management">Resource Management</h3>
+<ul>
+<li>Fine-grained resource allocation</li>
+<li>Priority queuing for critical workloads</li>
+<li>Resource quotas by tenant or application</li>
+<li>Graceful degradation under extreme load</li>
+<li>Resource usage monitoring and optimization</li>
+</ul>
+<h3 id="high-availability">High Availability</h3>
+<ul>
+<li>Multi-zone and multi-region deployment options</li>
+<li>Automated failover mechanisms</li>
+<li>Disaster recovery capabilities</li>
+<li>Data replication for resilience</li>
+<li>Regular backup procedures</li>
+</ul>
+<h2 id="security-architecture">Security Architecture</h2>
+<p>Security is implemented at multiple layers throughout the system:</p>
+<h3 id="authentication-and-authorization">Authentication and Authorization</h3>
+<ul>
+<li>Multi-factor authentication support</li>
+<li>Fine-grained permission model</li>
+<li>OAuth 2.0 and OpenID Connect</li>
+<li>API key management with rotation</li>
+<li>JWT-based session management</li>
+</ul>
+<h3 id="data-protection">Data Protection</h3>
+<ul>
+<li>Encryption in transit (TLS 1.3)</li>
+<li>Encryption at rest (AES-256)</li>
+<li>Key management system</li>
+<li>Data anonymization capabilities</li>
+<li>PII detection and handling</li>
+</ul>
+<h3 id="network-security">Network Security</h3>
+<ul>
+<li>Network segmentation</li>
+<li>Web Application Firewall</li>
+<li>DDoS protection</li>
+<li>IP allowlisting</li>
+<li>Traffic encryption</li>
+</ul>
+<h3 id="compliance-controls">Compliance Controls</h3>
+<ul>
+<li>Comprehensive audit logging</li>
+<li>Compliance reporting</li>
+<li>Data residency controls</li>
+<li>Retention policy enforcement</li>
+<li>Privacy controls</li>
+</ul>
+<h3 id="vulnerability-management">Vulnerability Management</h3>
+<ul>
+<li>Regular security scanning</li>
+<li>Dependency vulnerability checking</li>
+<li>Penetration testing</li>
+<li>Security patch management</li>
+<li>Responsible disclosure program</li>
+</ul>
+<h2 id="data-flow">Data Flow</h2>
+<p>The following sections describe the primary data flows through the system:</p>
+<h3 id="prompt-execution-flow">Prompt Execution Flow</h3>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant Client
+    participant API as API Gateway
+    participant Auth as IAM Service
+    participant Exec as Execution Service
+    participant Cache as Cache Service
+    participant Provider as Provider Management
+    participant LLM as LLM Provider
+    participant Analytics as Analytics Service
+
+    Client-&gt;&gt;API: Submit prompt execution request
+    API-&gt;&gt;Auth: Validate credentials &amp; permissions
+    Auth--&gt;&gt;API: Authentication result
+
+    alt Not Authenticated
+        API--&gt;&gt;Client: 401 Unauthorized
+    else Authenticated
+        API-&gt;&gt;Exec: Route execution request
+        Exec-&gt;&gt;Exec: Validate input format &amp; content
+
+        Exec-&gt;&gt;Cache: Check for cached response
+
+        alt Cache Hit
+            Cache--&gt;&gt;Exec: Return cached response
+        else Cache Miss
+            Exec-&gt;&gt;Provider: Select appropriate provider
+            Provider-&gt;&gt;Provider: Prepare credentials
+            Provider-&gt;&gt;LLM: Send formatted request
+            LLM--&gt;&gt;Provider: Return raw response
+            Provider--&gt;&gt;Exec: Return provider response
+            Exec-&gt;&gt;Exec: Normalize response format
+            Exec-&gt;&gt;Cache: Store in cache (if applicable)
+        end
+
+        Exec--&gt;&gt;API: Return formatted response
+        API--&gt;&gt;Client: Deliver response
+
+        par Asynchronous Analytics
+            Exec-&gt;&gt;Analytics: Record usage data
+            Analytics-&gt;&gt;Analytics: Process &amp; store metrics
+        end
+    end
+</code></pre>
+<p>The sequence diagram above illustrates the flow of a prompt execution request through the system, including:</p>
+<ol>
+<li><strong>Request Reception</strong>: Client submits prompt execution request via API</li>
+<li><strong>Authentication &amp; Authorization</strong>: System validates credentials and permissions</li>
+<li><strong>Request Validation</strong>: Input is validated for format and content policies</li>
+<li><strong>Cache Check</strong>: System checks if identical request exists in cache</li>
+<li><strong>Provider Selection</strong>: If not cached, appropriate LLM provider is selected</li>
+<li><strong>Request Transformation</strong>: Prompt is formatted for selected provider</li>
+<li><strong>Provider Execution</strong>: Request is sent to LLM provider</li>
+<li><strong>Response Processing</strong>: Response is normalized to standard format</li>
+<li><strong>Caching</strong>: Response is cached for future requests if applicable</li>
+<li><strong>Response Delivery</strong>: Formatted response is returned to client</li>
+<li><strong>Analytics Capture</strong>: Usage data is recorded for analytics</li>
+</ol>
+<h3 id="prompt-management-flow">Prompt Management Flow</h3>
+<pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; Draft: Create Template
+
+    state Draft {
+        [*] --&gt; Editing
+        Editing --&gt; Validation: Save Draft
+        Validation --&gt; Editing: Validation Failed
+        Validation --&gt; Testing: Validation Passed
+        Testing --&gt; Editing: Refinement Needed
+        Testing --&gt; ReviewReady: Testing Complete
+    }
+
+    Draft --&gt; Review: Submit for Review
+
+    state Review {
+        [*] --&gt; PendingReview
+        PendingReview --&gt; Rejected: Reject
+        PendingReview --&gt; Approved: Approve
+        Rejected --&gt; [*]
+    }
+
+    Review --&gt; Draft: Revise Rejected Template
+    Review --&gt; Publishing: Approval Complete
+
+    state Publishing {
+        [*] --&gt; PrePublish
+        PrePublish --&gt; Published: Publish
+        Published --&gt; [*]
+    }
+
+    Publishing --&gt; Active: Make Available
+
+    state Active {
+        [*] --&gt; InUse
+        InUse --&gt; Monitoring: Track Usage
+        Monitoring --&gt; Optimizing: Analyze Performance
+        Optimizing --&gt; [*]
+    }
+
+    Active --&gt; Draft: Create New Version
+    Active --&gt; Archived: Deprecate
+    Archived --&gt; [*]
+</code></pre>
+<p>The state diagram above illustrates the lifecycle of a prompt template through the system, including:</p>
+<ol>
+<li><strong>Template Creation</strong>: User creates or updates a prompt template</li>
+<li><strong>Validation</strong>: System validates template structure and parameters</li>
+<li><strong>Version Creation</strong>: New version is created in draft state</li>
+<li><strong>Testing</strong>: Template can be tested with sample parameters</li>
+<li><strong>Approval</strong>: Template version moves through approval workflow</li>
+<li><strong>Publishing</strong>: Version is published for production use</li>
+<li><strong>Distribution</strong>: Published template is available across the system</li>
+<li><strong>Usage Tracking</strong>: Template usage is tracked for analytics</li>
+</ol>
+<h3 id="analytics-data-flow">Analytics Data Flow</h3>
+<ol>
+<li><strong>Event Capture</strong>: System captures API calls, execution metrics, errors</li>
+<li><strong>Data Processing</strong>: Raw events are processed and enriched</li>
+<li><strong>Aggregation</strong>: Data is aggregated at various dimensions and time scales</li>
+<li><strong>Storage</strong>: Processed data is stored in appropriate databases</li>
+<li><strong>Analysis</strong>: Analytical queries process the data</li>
+<li><strong>Visualization</strong>: Results are presented in dashboards and reports</li>
+<li><strong>Alerting</strong>: Anomalies trigger notifications based on rules</li>
+<li><strong>Archival</strong>: Historical data is archived according to retention policies</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="user-journeys.html">User Journeys &amp; Use Cases</a> | <strong>Next</strong>: <a href="release-roadmap.html">Release Roadmap</a></p>
+</body>
+</html>

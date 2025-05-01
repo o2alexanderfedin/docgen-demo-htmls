@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>module-level-architecture</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 20px;
+        }
+        pre { 
+            background-color: #f6f8fa; 
+            padding: 16px;
+            border-radius: 6px;
+            overflow: auto;
+        }
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="module-level-architecture">Module-Level Architecture</h1>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#package-structure">Package Structure</a></li>
+<li><a href="#core-modules">Core Modules</a></li>
+<li><a href="#api--controller-layer">API &amp; Controller Layer</a></li>
+<li><a href="#execution-management">Execution Management</a></li>
+<li><a href="#client-management">Client Management</a></li>
+<li><a href="#prompt-management">Prompt Management</a></li>
+<li><a href="#model--dto-layer">Model &amp; DTO Layer</a></li>
+<li><a href="#cache-system">Cache System</a></li>
+<li><a href="#utility-services">Utility Services</a></li>
+<li><a href="#module-dependencies">Module Dependencies</a></li>
+<li><a href="#extension-points">Extension Points</a></li>
+<li><a href="#architectural-patterns">Architectural Patterns</a></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This document provides a detailed analysis of the LLM Gateway's module-level architecture, examining the responsibilities, interfaces, and internal structure of each major component. The system is designed around a modular architecture with well-defined interfaces to enable extensibility, maintainability, and scalability.</p>
+<h2 id="package-structure">Package Structure</h2>
+<p>The LLM Gateway code is organized into a hierarchical package structure within the <code>com.aisera.service.llm</code> namespace:</p>
+<pre><code>com.aisera.service.llm/
+├── Config.java                    # Global configuration
+├── JavaMicroservice.java          # Main service entry point
+├── audit/                         # Audit logging components
+├── bootstrap/                     # Service initialization
+├── cache/                         # Caching implementation
+├── client/                        # LLM client interfaces and implementations
+│   ├── ClientManager.java         # Client management interface
+│   ├── ClientRegistry.java        # Client registration &amp; factory
+│   ├── ClientType.java            # Enumeration of client types
+│   ├── aisera/                    # Aisera LLM client implementation
+│   ├── aws/                       # AWS client utilities
+│   ├── bedrock/                   # AWS Bedrock client implementations
+│   └── gpt4/                      # OpenAI GPT client implementations
+├── execution/                     # Execution orchestration
+├── grpc/                          # gRPC service definitions
+├── model/                         # Data models and DTOs
+│   ├── common/                    # Shared model classes
+│   ├── bedrock/                   # Bedrock-specific models
+│   ├── flant5/                    # FlanT5 model DTOs
+│   ├── functioncall/              # Function calling models
+│   ├── gpt/                       # OpenAI GPT models
+│   ├── llama2/                    # Llama 2 models
+│   ├── llm/                       # Core LLM models
+│   └── oasst/                     # Open Assistant models
+├── prompt/                        # Prompt management
+│   └── dao/                       # Prompt data access
+├── rest/                          # REST API controllers
+│   └── service/                   # REST service implementations
+├── tenant/                        # Multi-tenancy support
+└── utils/                         # Utility classes
+    ├── analytics/                 # Analytics collection
+    ├── bedrock/                   # Bedrock utilities
+    └── gpt/                       # GPT utilities
+</code></pre>
+<h2 id="core-modules">Core Modules</h2>
+<h3 id="api-controller-layer">API &amp; Controller Layer</h3>
+<p>The API Layer provides HTTP/REST and gRPC interfaces for external clients to interact with the LLM Gateway.</p>
+<pre><code class="language-mermaid">classDiagram
+    class GrpcService {
+        &lt;&lt;service&gt;&gt;
+        +executeLLM(request: LLMRequest) LLMResponse
+        +streamLLM(request: LLMRequest) Stream~LLMResponse~
+    }
+
+    class PromptExecutionController {
+        &lt;&lt;controller&gt;&gt;
+        +fetchAnswer(LLMFetchAnswerRequestDTO) LLMFetchAnswerResponseDTO
+        +fetchChatAnswer(LLMFetchChatAnswerRequestDTO) LLMFetchChatAnswerResponseDTO
+        +streamResponse(request) ResponseBodyEmitter
+    }
+
+    class PromptStudioManagementController {
+        &lt;&lt;controller&gt;&gt;
+        +createPrompt(PromptModel) Prompt
+        +getPrompt(id: String) Prompt
+        +listPrompts(filters) List~Prompt~
+        +executePrompt(ExecuteRequest) ExecuteResponse
+        +importPrompt(ImportRequest) ImportResponse
+    }
+
+    class LLMPromptRegistryVersioningAPIs {
+        &lt;&lt;controller&gt;&gt;
+        +publishPromptVersion(LLMPromptPublishDto) VersionDTO
+        +createDraft(LLMPromptDraftDto) VersionDTO
+        +listVersions(promptId) List~VersionDTO~
+        +deleteVersion(versionId) void
+        +rollbackToVersion(versionId) VersionDTO
+    }
+
+    class PrompManagementProcessor {
+        &lt;&lt;service&gt;&gt;
+        -promptDAO: PromptDAO
+        +processPromptCreation(promptData) PromptDTO
+        +processPromptUpdate(promptData) PromptDTO
+        +validatePrompt(promptData) boolean
+    }
+
+    class DirectPromptExecutionProcessor {
+        &lt;&lt;service&gt;&gt;
+        -executionManager: ExecutionManager
+        +processDirectPrompt(DirectPromptRequest) DirectPromptResponse
+    }
+
+    PromptStudioManagementController --&gt; PrompManagementProcessor
+    PromptExecutionController --&gt; DirectPromptExecutionProcessor
+    DirectPromptExecutionProcessor --&gt; ExecutionManager
+</code></pre>
+<p><strong>Key Components:</strong></p>
+<ul>
+<li><code>GrpcService</code>: Implements gRPC interfaces for LLM execution</li>
+<li><code>PromptExecutionController</code>: REST controller for executing LLM requests</li>
+<li><code>PromptStudioManagementController</code>: REST controller for prompt management</li>
+<li><code>LLMPromptRegistryVersioningAPIs</code>: REST controller for prompt versioning</li>
+<li><code>PrompManagementProcessor</code>: Service for prompt management operations</li>
+<li><code>DirectPromptExecutionProcessor</code>: Service for direct prompt execution</li>
+</ul>
+<p><strong>Public Interfaces:</strong></p>
+<ul>
+<li>REST APIs exposed via Spring Web annotations (<code>@RestController</code>, <code>@RequestMapping</code>)</li>
+<li>gRPC services defined in Protocol Buffer files and implemented in <code>GrpcService</code></li>
+</ul>
+<p><strong>Internal Implementation Details:</strong></p>
+<ul>
+<li>Controllers validate input and delegate to service implementations</li>
+<li>Authentication and authorization handled via filters and interceptors</li>
+<li>Request/response logging for auditing and debugging</li>
+<li>Exception handling with appropriate HTTP status codes</li>
+</ul>
+<h3 id="execution-management">Execution Management</h3>
+<p>The Execution Management module orchestrates the fulfillment of LLM requests, including provider selection, caching, and response processing.</p>
+<pre><code class="language-mermaid">classDiagram
+    class ExecutionManager {
+        &lt;&lt;interface&gt;&gt;
+        +execute(request: LLMRequest) LLMResponse
+        +streamExecute(request: LLMRequest) Stream~LLMResponse~
+    }
+
+    class ExecutionManagerImpl {
+        &lt;&lt;service&gt;&gt;
+        -clientManager: ClientManager
+        -cache: LLMCache
+        -analyticHandler: LlmAnalyticsHandler
+        -auditClient: LLMPromptAuditClient
+        +execute(request: LLMRequest) LLMResponse
+        +streamExecute(request: LLMRequest) Stream~LLMResponse~
+        -selectClient(request) ClientManager
+        -handleCaching(request) Optional~LLMResponse~
+        -postProcess(response) LLMResponse
+        -recordAnalytics(request, response) void
+        -auditExecution(request, response) void
+    }
+
+    class ExecutionManagerUtils {
+        &lt;&lt;utility&gt;&gt;
+        +extractClientType(request) ClientType
+        +normalizeRequest(request) LLMRequest
+        +transformResponse(response) LLMResponse
+        +isCacheable(request) boolean
+    }
+
+    ExecutionManager &lt;|.. ExecutionManagerImpl
+    ExecutionManagerImpl --&gt; ExecutionManagerUtils
+    ExecutionManagerImpl --&gt; ClientManager
+    ExecutionManagerImpl --&gt; LLMCache
+    ExecutionManagerImpl --&gt; LlmAnalyticsHandler
+    ExecutionManagerImpl --&gt; LLMPromptAuditClient
+</code></pre>
+<p><strong>Key Components:</strong></p>
+<ul>
+<li><code>ExecutionManager</code>: Core interface for executing LLM requests</li>
+<li><code>ExecutionManagerImpl</code>: Primary implementation of the execution orchestration</li>
+<li><code>ExecutionManagerUtils</code>: Utility methods for request/response handling</li>
+</ul>
+<p><strong>Public Interfaces:</strong></p>
+<ul>
+<li><code>execute()</code>: Synchronous LLM request execution</li>
+<li><code>streamExecute()</code>: Streaming execution for real-time responses</li>
+</ul>
+<p><strong>Internal Implementation Details:</strong></p>
+<ul>
+<li>Provider selection based on request parameters and configuration</li>
+<li>Cache management with TTL-based expiration</li>
+<li>Analytics and audit integration</li>
+<li>Error handling with retry logic</li>
+<li>Support for both text completion and chat completion models</li>
+</ul>
+<h3 id="client-management">Client Management</h3>
+<p>The Client Management module provides a unified interface to different LLM providers, abstracting the provider-specific implementation details.</p>
+<pre><code class="language-mermaid">classDiagram
+    class ClientManager {
+        &lt;&lt;interface&gt;&gt;
+        +fetchAnswer(req: LLMFetchAnswerRequestDTO) LLMFetchAnswerResponseDTO
+        +fetchChatAnswer(req: LLMFetchChatAnswerRequestDTO) LLMFetchChatAnswerResponseDTO
+        +streamResponse(req: LLMFetchAnswerRequestDTO, handler: LLMStreamResponseHandler) void
+    }
+
+    class ClientRegistry {
+        &lt;&lt;service&gt;&gt;
+        -clientMap: Map~ClientType, ClientManager~
+        +registerClient(type: ClientType, client: ClientManager) void
+        +getClient(type: ClientType) ClientManager
+        +getAllClients() Map~ClientType, ClientManager~
+        +supportsType(type: ClientType) boolean
+    }
+
+    class GPT4ClientManagerImpl {
+        &lt;&lt;service&gt;&gt;
+        -openAIClient: OpenAIClient
+        -apiKey: String
+        -tokenizer: GPT4TokenizerSingleton
+        +fetchAnswer(req) LLMFetchAnswerResponseDTO
+        +fetchChatAnswer(req) LLMFetchChatAnswerResponseDTO
+        +streamResponse(req, handler) void
+        -buildChatCompletionParams(req) GPTChatCompletionParamsDTO
+        -processResponse(response) LLMFetchAnswerResponseDTO
+    }
+
+    class BRLlama2ClientManagerImpl {
+        &lt;&lt;service&gt;&gt;
+        -bedrockClient: AiseraBedrockRuntimeClient
+        -promptBuilder: Llama2PromptBuilder
+        +fetchAnswer(req) LLMFetchAnswerResponseDTO
+        +fetchChatAnswer(req) LLMFetchChatAnswerResponseDTO
+        +streamResponse(req, handler) void
+        -buildRequest(req) BRLlama2RequestDTO
+        -processResponse(response) LLMFetchAnswerResponseDTO
+    }
+
+    ClientManager &lt;|.. GPT4ClientManagerImpl
+    ClientManager &lt;|.. BRLlama2ClientManagerImpl
+    ClientRegistry --&gt; ClientManager
+</code></pre>
+<p><strong>Key Components:</strong></p>
+<ul>
+<li><code>ClientManager</code>: Interface defining operations for LLM provider clients</li>
+<li><code>ClientRegistry</code>: Registry and factory for provider clients</li>
+<li><code>ClientType</code>: Enumeration of supported client types</li>
+<li>Provider-specific implementations (<code>GPT4ClientManagerImpl</code>, <code>BRLlama2ClientManagerImpl</code>, etc.)</li>
+</ul>
+<p><strong>Public Interfaces:</strong></p>
+<ul>
+<li>Client registration and retrieval via <code>ClientRegistry</code></li>
+<li>Standard methods for text and chat completions</li>
+<li>Streaming support with handler callbacks</li>
+</ul>
+<p><strong>Internal Implementation Details:</strong></p>
+<ul>
+<li>Provider-specific API clients and authentication</li>
+<li>Request/response transformation</li>
+<li>Token counting and budget management</li>
+<li>Connection pooling and retry strategies</li>
+<li>Error handling and normalization</li>
+</ul>
+<h3 id="prompt-management">Prompt Management</h3>
+<p>The Prompt Management module handles the storage, retrieval, and application of prompt templates.</p>
+<pre><code class="language-mermaid">classDiagram
+    class PromptManager {
+        &lt;&lt;interface&gt;&gt;
+        +getPrompt(id: String) PromptDTO
+        +listPrompts(filter) List~PromptDTO~
+        +createPrompt(prompt: PromptDTO) PromptDTO
+        +updatePrompt(id: String, prompt: PromptDTO) PromptDTO
+        +deletePrompt(id: String) void
+        +publishPrompt(id: String) PromptDTO
+        +createDraft(id: String) PromptDTO
+    }
+
+    class PromptManagerImpl {
+        &lt;&lt;service&gt;&gt;
+        -promptDAO: PromptDAO
+        -promptApplier: PromptApplier
+        +getPrompt(id) PromptDTO
+        +listPrompts(filter) List~PromptDTO~
+        +createPrompt(prompt) PromptDTO
+        +updatePrompt(id, prompt) PromptDTO
+        +deletePrompt(id) void
+        +publishPrompt(id) PromptDTO
+        +createDraft(id) PromptDTO
+        -validatePrompt(prompt) boolean
+    }
+
+    class PromptApplier {
+        &lt;&lt;service&gt;&gt;
+        +applyTemplate(template: String, params: Map) String
+        +validateTemplate(template: String) boolean
+        +extractParameters(template: String) Set~String~
+        -processConditionals(template, params) String
+        -substituteVariables(template, params) String
+    }
+
+    class PromptDAO {
+        &lt;&lt;repository&gt;&gt;
+        +findById(id: String) Optional~LLMPromptRegistryEntity~
+        +findAllByFilter(filter) List~LLMPromptRegistryEntity~
+        +save(entity: LLMPromptRegistryEntity) LLMPromptRegistryEntity
+        +delete(id: String) void
+        +findVersions(promptId) List~LLMPromptVersioningEntity~
+        +saveVersion(version: LLMPromptVersioningEntity) LLMPromptVersioningEntity
+    }
+
+    PromptManager &lt;|.. PromptManagerImpl
+    PromptManagerImpl --&gt; PromptDAO
+    PromptManagerImpl --&gt; PromptApplier
+</code></pre>
+<p><strong>Key Components:</strong></p>
+<ul>
+<li><code>PromptManager</code>: Interface for prompt management operations</li>
+<li><code>PromptManagerImpl</code>: Implementation of prompt management services</li>
+<li><code>PromptApplier</code>: Service for applying templates with variable substitution</li>
+<li><code>PromptDAO</code>: Data access object for prompt storage and retrieval</li>
+</ul>
+<p><strong>Public Interfaces:</strong></p>
+<ul>
+<li>CRUD operations for prompt templates</li>
+<li>Versioning operations (publish, draft, rollback)</li>
+<li>Template application with parameter substitution</li>
+</ul>
+<p><strong>Internal Implementation Details:</strong></p>
+<ul>
+<li>Template syntax with variable substitution using <code>{{variable}}</code> syntax</li>
+<li>Conditional logic with <code>{{#if var}}...{{/if}}</code> syntax</li>
+<li>Variable type validation</li>
+<li>Version history tracking</li>
+<li>Access control based on tenant and role</li>
+</ul>
+<h3 id="model-dto-layer">Model &amp; DTO Layer</h3>
+<p>The Model &amp; DTO Layer defines the data structures used throughout the system for request/response handling and data persistence.</p>
+<pre><code class="language-mermaid">classDiagram
+    class LLMFetchAnswerRequestDTO {
+        &lt;&lt;dto&gt;&gt;
+        +prompt: String
+        +maxTokens: Integer
+        +temperature: Float
+        +provider: String
+        +options: Map~String, Object~
+    }
+
+    class LLMFetchAnswerResponseDTO {
+        &lt;&lt;dto&gt;&gt;
+        +response: String
+        +provider: String
+        +model: String
+        +usageMetrics: Map~String, Object~
+        +tokenCount: Integer
+    }
+
+    class LLMFetchChatAnswerRequestDTO {
+        &lt;&lt;dto&gt;&gt;
+        +messages: List~ChatMessageDTO~
+        +maxTokens: Integer
+        +temperature: Float
+        +provider: String
+        +options: Map~String, Object~
+        +functionDefinitions: List~FunctionDefinition~
+    }
+
+    class ChatMessageDTO {
+        &lt;&lt;dto&gt;&gt;
+        +role: String
+        +content: String
+    }
+
+    class LLMPromptDTO {
+        &lt;&lt;dto&gt;&gt;
+        +id: String
+        +name: String
+        +description: String
+        +template: String
+        +parameters: List~PromptParamDTO~
+        +version: String
+        +status: String
+        +createdBy: String
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    class PromptParamDTO {
+        &lt;&lt;dto&gt;&gt;
+        +name: String
+        +type: String
+        +description: String
+        +required: boolean
+        +defaultValue: Object
+    }
+
+    LLMFetchChatAnswerRequestDTO --&gt; ChatMessageDTO
+    LLMPromptDTO --&gt; PromptParamDTO
+</code></pre>
+<p><strong>Key Components:</strong></p>
+<ul>
+<li>Request/response DTOs for different API endpoints</li>
+<li>Chat message models for conversation interfaces</li>
+<li>Function calling models for tool usage</li>
+<li>Prompt and parameter definitions</li>
+<li>Provider-specific model DTOs</li>
+</ul>
+<p><strong>Public Interfaces:</strong></p>
+<ul>
+<li>Serialization/deserialization via Jackson annotations</li>
+<li>Validation constraints using Bean Validation API</li>
+</ul>
+<p><strong>Internal Implementation Details:</strong></p>
+<ul>
+<li>Immutable objects with builders for thread safety</li>
+<li>Conversion utilities between DTOs and domain models</li>
+<li>Type adapters for different serialization formats</li>
+</ul>
+<h3 id="cache-system">Cache System</h3>
+<p>The Cache System provides mechanisms for storing and retrieving LLM responses to improve performance and reduce costs.</p>
+<pre><code class="language-mermaid">classDiagram
+    class LLMCache {
+        &lt;&lt;service&gt;&gt;
+        +get(req: LLMCacheReq) Optional~Object~
+        +put(req: LLMCacheReq, response: Object) void
+        +delete(key: String) void
+        +clear() void
+        +stats() Map~String, Object~
+    }
+
+    class LLMCacheReq {
+        &lt;&lt;value&gt;&gt;
+        +key: String
+        +ttl: Duration
+        +namespace: String
+        +metadata: Map~String, Object~
+    }
+
+    class LLMCacheTenantConfig {
+        &lt;&lt;config&gt;&gt;
+        +enabled: boolean
+        +defaultTTL: Duration
+        +maxEntries: Integer
+        +allowedNamespaces: Set~String~
+    }
+
+    class TenantConfigCache {
+        &lt;&lt;service&gt;&gt;
+        -configs: Map~String, LLMCacheTenantConfig~
+        +getConfig(tenantId) LLMCacheTenantConfig
+        +updateConfig(tenantId, config) void
+        +isEnabled(tenantId) boolean
+    }
+
+    LLMCache --&gt; LLMCacheReq
+    LLMCache --&gt; TenantConfigCache
+    TenantConfigCache --&gt; LLMCacheTenantConfig
+</code></pre>
+<p><strong>Key Components:</strong></p>
+<ul>
+<li><code>LLMCache</code>: Service for caching LLM responses</li>
+<li><code>LLMCacheReq</code>: Request object for cache operations</li>
+<li><code>LLMCacheTenantConfig</code>: Tenant-specific cache configuration</li>
+<li><code>TenantConfigCache</code>: Service for managing tenant-specific configurations</li>
+</ul>
+<p><strong>Public Interfaces:</strong></p>
+<ul>
+<li>Get/put operations for cache interactions</li>
+<li>Configuration management per tenant</li>
+<li>Cache statistics and monitoring</li>
+</ul>
+<p><strong>Internal Implementation Details:</strong></p>
+<ul>
+<li>Redis-based distributed cache implementation</li>
+<li>Hash-based cache keys from normalized requests</li>
+<li>TTL-based expiration strategy</li>
+<li>Tenant isolation for multi-tenant deployments</li>
+<li>Cache invalidation on prompt updates</li>
+</ul>
+<h3 id="utility-services">Utility Services</h3>
+<p>The Utility Services module provides cross-cutting functionality used by multiple components.</p>
+<pre><code class="language-mermaid">classDiagram
+    class LlmAnalyticsHandler {
+        &lt;&lt;service&gt;&gt;
+        +recordUsage(req, resp) void
+        +recordLatency(clientType, operation, latency) void
+        +recordError(clientType, errorType) void
+        +getUsageMetrics() Map~String, Object~
+    }
+
+    class MetricUtils {
+        &lt;&lt;utility&gt;&gt;
+        +recordLatency(name, value) void
+        +incrementCounter(name) void
+        +recordGauge(name, value) void
+        +getMetrics() Map~String, Object~
+    }
+
+    class Constants {
+        &lt;&lt;utility&gt;&gt;
+        +DEFAULT_MAX_TOKENS: Integer
+        +DEFAULT_TEMPERATURE: Float
+        +MAX_CONTEXT_LENGTH: Map~String, Integer~
+        +DEFAULT_MODEL: Map~ClientType, String~
+    }
+
+    class ClientTypeUtils {
+        &lt;&lt;utility&gt;&gt;
+        +fromString(name) ClientType
+        +getDefaultModel(type) String
+        +supportsStreaming(type) boolean
+        +getMaxContextLength(type, model) Integer
+    }
+
+    class RestUtils {
+        &lt;&lt;utility&gt;&gt;
+        +handleException(e) ResponseEntity
+        +validateRequest(req) void
+        +createSuccessResponse(data) ResponseEntity
+    }
+
+    LlmAnalyticsHandler --&gt; MetricUtils
+    ClientTypeUtils --&gt; Constants
+</code></pre>
+<p><strong>Key Components:</strong></p>
+<ul>
+<li><code>LlmAnalyticsHandler</code>: Service for collecting and processing analytics</li>
+<li><code>MetricUtils</code>: Utilities for metric collection and reporting</li>
+<li><code>Constants</code>: System-wide constants and default values</li>
+<li><code>ClientTypeUtils</code>: Utilities specific to client type operations</li>
+<li><code>RestUtils</code>: Utilities for REST API handling</li>
+</ul>
+<p><strong>Public Interfaces:</strong></p>
+<ul>
+<li>Analytics recording and retrieval</li>
+<li>Metric collection and reporting</li>
+<li>Constants and default configurations</li>
+<li>Exception handling utilities</li>
+</ul>
+<p><strong>Internal Implementation Details:</strong></p>
+<ul>
+<li>Integration with metrics collection systems</li>
+<li>Thread-safe implementation of shared utilities</li>
+<li>Tenant-aware analytics collection</li>
+<li>Performance optimization for frequently used operations</li>
+</ul>
+<h2 id="module-dependencies">Module Dependencies</h2>
+<p>The following diagram shows the key dependencies between modules:</p>
+<pre><code class="language-mermaid">graph TD
+    API[API &amp; Controller Layer] --&gt; Execution[Execution Management]
+    API --&gt; Prompt[Prompt Management]
+    API --&gt; Model[Model &amp; DTO Layer]
+
+    Execution --&gt; Client[Client Management]
+    Execution --&gt; Cache[Cache System]
+    Execution --&gt; Utility[Utility Services]
+
+    Client --&gt; Model
+    Client --&gt; Utility
+
+    Prompt --&gt; Model
+    Prompt --&gt; Utility
+
+    Cache --&gt; Utility
+</code></pre>
+<h2 id="extension-points">Extension Points</h2>
+<p>The LLM Gateway architecture provides several extension points for adding new functionality:</p>
+<ol>
+<li><strong>New LLM Provider Integration</strong></li>
+<li>Implement the <code>ClientManager</code> interface</li>
+<li>Register with <code>ClientRegistry</code></li>
+<li>Add corresponding <code>ClientType</code> enum value</li>
+<li>
+<p>Implement provider-specific DTOs and transformations</p>
+</li>
+<li>
+<p><strong>Custom Prompt Processors</strong></p>
+</li>
+<li>Extend the <code>PromptApplier</code> with custom processing logic</li>
+<li>
+<p>Register as a Spring component with appropriate priority</p>
+</li>
+<li>
+<p><strong>Cache Implementations</strong></p>
+</li>
+<li>Provide alternative implementations of <code>LLMCache</code></li>
+<li>
+<p>Configure through Spring dependency injection</p>
+</li>
+<li>
+<p><strong>Custom Analytics Handlers</strong></p>
+</li>
+<li>Extend the analytics pipeline with custom processors</li>
+<li>Register through dependency injection</li>
+</ol>
+<h2 id="architectural-patterns">Architectural Patterns</h2>
+<p>The LLM Gateway employs several architectural patterns:</p>
+<ol>
+<li><strong>Interface-based Design</strong></li>
+<li>Core components defined through interfaces</li>
+<li>
+<p>Implementation classes clearly separated</p>
+</li>
+<li>
+<p><strong>Factory Pattern</strong></p>
+</li>
+<li><code>ClientRegistry</code> acts as a factory for <code>ClientManager</code> implementations</li>
+<li>
+<p>Dynamic selection based on request parameters</p>
+</li>
+<li>
+<p><strong>Strategy Pattern</strong></p>
+</li>
+<li>Different client implementations provide alternative strategies</li>
+<li>
+<p>Runtime selection based on configuration and request</p>
+</li>
+<li>
+<p><strong>Builder Pattern</strong></p>
+</li>
+<li>Used in DTO creation for fluent interfaces</li>
+<li>
+<p>Ensures immutability and thread safety</p>
+</li>
+<li>
+<p><strong>Decorator Pattern</strong></p>
+</li>
+<li>Used in the execution pipeline to add cross-cutting concerns</li>
+<li>
+<p>Allows for composable behavior</p>
+</li>
+<li>
+<p><strong>Repository Pattern</strong></p>
+</li>
+<li>Data access encapsulated in DAO classes</li>
+<li>
+<p>Abstracts underlying storage details</p>
+</li>
+<li>
+<p><strong>Dependency Injection</strong></p>
+</li>
+<li>Spring-based dependency injection throughout</li>
+<li>Enables flexible component wiring and testing</li>
+</ol>
+<hr />
+<p><strong>Previous</strong>: <a href="system-architecture-overview.html">System Architecture Overview</a> | <strong>Next</strong>: <a href="data-flow-storage-design.html">Data Flow and Storage Design</a></p>
+</body>
+</html>
