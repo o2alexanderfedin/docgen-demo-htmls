@@ -167,9 +167,33 @@ def copy_non_md_files(input_dir, output_dir):
                 rel_path = os.path.relpath(src_path, input_dir)
                 dst_path = os.path.join(output_dir, rel_path)
                 
+                # Skip if destination already exists
+                if os.path.exists(dst_path) and os.path.getsize(dst_path) == os.path.getsize(src_path):
+                    continue
+                
                 ensure_dir(os.path.dirname(dst_path))
                 shutil.copy2(src_path, dst_path)
                 print(f"Copied {src_path} to {dst_path}")
+    
+    # Find image directories specifically and ensure they're copied
+    for root, dirs, files in os.walk(input_dir):
+        for dir_name in dirs:
+            if dir_name == "images":
+                img_dir = os.path.join(root, dir_name)
+                rel_path = os.path.relpath(img_dir, input_dir)
+                dst_dir = os.path.join(output_dir, rel_path)
+                
+                ensure_dir(dst_dir)
+                
+                # Copy all files in the images directory
+                for img_file in os.listdir(img_dir):
+                    src_img = os.path.join(img_dir, img_file)
+                    dst_img = os.path.join(dst_dir, img_file)
+                    
+                    if os.path.isfile(src_img):
+                        if not os.path.exists(dst_img) or os.path.getsize(dst_img) != os.path.getsize(src_img):
+                            shutil.copy2(src_img, dst_img)
+                            print(f"Copied image {src_img} to {dst_img}")
 
 def install_mermaid_cli():
     """Install Mermaid CLI if not already installed."""
@@ -372,14 +396,38 @@ def add_client_side_mermaid_scripts(soup):
 
 def main():
     """Main function to convert all markdown files."""
-    input_dir = './input'
-    output_dir = './output'
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Convert Markdown files to HTML with Mermaid diagrams as SVG')
+    parser.add_argument('--input', dest='input_dir', default='./input', 
+                        help='Input directory containing Markdown files (default: ./input)')
+    parser.add_argument('--output', dest='output_dir', default='./output', 
+                        help='Output directory for HTML files (default: ./output)')
+    parser.add_argument('--clean', action='store_true', 
+                        help='Clean output directory before conversion')
+    parser.add_argument('--batch-size', type=int, default=20,
+                        help='Number of files to process in each batch (default: 20)')
+    args = parser.parse_args()
+    
+    input_dir = args.input_dir
+    output_dir = args.output_dir
     
     if not os.path.exists(input_dir):
         print(f"Input directory {input_dir} does not exist.")
         sys.exit(1)
     
     ensure_dir(output_dir)
+    
+    # Clean output directory if requested
+    if args.clean and os.path.exists(output_dir):
+        print(f"Cleaning output directory {output_dir}...")
+        for item in os.listdir(output_dir):
+            item_path = os.path.join(output_dir, item)
+            if os.path.isfile(item_path):
+                os.remove(item_path)
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)
     
     # Install Mermaid CLI for diagram conversion
     mermaid_cli_available = install_mermaid_cli()
@@ -405,7 +453,7 @@ def main():
     print(f"Converting {total_count} markdown files...")
     
     # Process files in batches to avoid timeouts
-    batch_size = 20
+    batch_size = args.batch_size
     for i in range(0, len(md_files), batch_size):
         batch = md_files[i:i+batch_size]
         print(f"Processing batch {i//batch_size + 1} of {(len(md_files) + batch_size - 1) // batch_size}: files {i+1}-{min(i+batch_size, len(md_files))}")
@@ -415,7 +463,7 @@ def main():
             output_path = os.path.join(output_dir, os.path.relpath(file, input_dir))
             output_path = output_path[:-3] + '.html'  # Change extension
             
-            if os.path.exists(output_path):
+            if os.path.exists(output_path) and not args.clean:
                 print(f"Skipping already converted {file}")
                 success_count += 1
                 continue
